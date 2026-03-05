@@ -4,14 +4,16 @@ namespace App\Http\Controllers;
     
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Skill;
+use App\Models\Tag;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
-use DB;
-use Hash;
 use Illuminate\Support\Arr;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
-    
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+
 class UserController extends Controller
 {
     /**
@@ -23,7 +25,7 @@ class UserController extends Controller
     {
         $this->authorize('user-show');
 
-        $data = User::latest()->paginate(50);
+        $data = User::with(['primarySkills','secondarySkills','tags'])->latest()->paginate(50);
   
         return view('users.index',compact('data'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
@@ -39,8 +41,10 @@ class UserController extends Controller
         $this->authorize('user-create');
 
         $roles = Role::pluck('name','name')->all();
+        $skills = Skill::all();
+        $tags = Tag::all();
 
-        return view('users.create',compact('roles'));
+        return view('users.create',compact('roles','skills','tags'));
     }
     
     /**
@@ -60,14 +64,36 @@ class UserController extends Controller
             'roles' => 'required'
         ]);
     
-        $input = $request->all();
+        $input = $request->only([
+            'name',
+            'email',
+            'password',
+            'user_type',
+            'employee_id',
+            'joining_date',
+            'phone_no',
+            'alt_phone_no',
+            'experience'
+        ]);
+
         $input['password'] = Hash::make($input['password']);
     
         $user = User::create($input);
         $user->assignRole($request->input('roles'));
     
-        return redirect()->route('users.index')
-                        ->with('success','User created successfully');
+        if ($request->has('primary_skills')) {
+            $user->primarySkills()->sync($request->primary_skills);
+        }
+
+        if ($request->has('secondary_skills')) {
+            $user->secondarySkills()->sync($request->secondary_skills);
+        }
+        
+        if ($request->has('tags')) {
+            $user->tags()->sync($request->tags);
+        }
+
+        return redirect()->route('users.index')->with('success','User created successfully');
     }
     
     /**
@@ -80,7 +106,7 @@ class UserController extends Controller
     {
         $this->authorize('user-show');
 
-        $user = User::find($id);
+        $user = User::with(['primarySkills', 'secondarySkills', 'tags'])->findOrFail($id);
 
         return view('users.show',compact('user'));
     }
@@ -95,11 +121,18 @@ class UserController extends Controller
     {
         $this->authorize('user-edit');
 
-        $user = User::find($id);
+        $user = User::with(['primarySkills', 'secondarySkills', 'tags'])->findOrFail($id);
         $roles = Role::pluck('name','name')->all();
         $userRole = $user->roles->pluck('name','name')->all();
-    
-        return view('users.edit',compact('user','roles','userRole'));
+
+        $skills = Skill::all();
+        $tags = Tag::all();
+
+        $userPrimarySkills = $user->primarySkills->pluck('id')->toArray();
+        $userSecondarySkills = $user->secondarySkills->pluck('id')->toArray();
+        $userTags = $user->tags->pluck('id')->toArray();
+
+        return view('users.edit',compact('user','roles','userRole','skills','tags', 'userPrimarySkills', 'userSecondarySkills', 'userTags'));
     }
     
     /**
@@ -132,7 +165,13 @@ class UserController extends Controller
         DB::table('model_has_roles')->where('model_id',$id)->delete();
     
         $user->assignRole($request->input('roles'));
-    
+
+        $user->primarySkills()->sync($request->primary_skills ?? []);
+
+        $user->secondarySkills()->sync($request->secondary_skills ?? []);
+
+        $user->tags()->sync($request->tags ?? []);
+
         return redirect()->route('users.index')
                         ->with('success','User updated successfully');
     }

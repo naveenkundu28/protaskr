@@ -21,6 +21,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'user_type',
+        'employee_id',
+        'joining_date',
+        'phone_no',
+        'alt_phone_no',
+        'experience',
         'manual'
     ];
 
@@ -74,5 +80,20 @@ class User extends Authenticatable
     public function trackerHistories(): HasMany
     {
         return $this->hasMany(TrackerHistory::class);
+    }
+
+    public function primarySkills()
+    {
+        return $this->belongsToMany(Skill::class, 'user_primary_skills')->withTimestamps();
+    }
+
+    public function secondarySkills()
+    {
+        return $this->belongsToMany(Skill::class, 'user_secondary_skills')->withTimestamps();
+    }
+
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'user_tag')->withTimestamps();
     }
 }
