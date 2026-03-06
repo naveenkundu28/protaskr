@@ -14,41 +14,77 @@
         {{ $value }}
     </div>
 @endsession
+<div class="table-responsive">
+    <table class="table table-bordered table-sm text-nowrap">
+        <tr>
+            <th>No</th>
+            <th>User Type</th>
+            <th>Employee ID</th>
+            <th>Joining Date</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone No</th>
+            <th>Alternate Phone No</th>
+            <th>Experience</th>
+            <th>Primary Skills</th>
+            <th>Secondary Skills</th>
+            <th>Tags</th>
+            <th>Roles</th>
+            <th width="280px">Action</th>
+        </tr>
+        @foreach ($data as $key => $user)
+        <tr>
+            <td>{{ ++$i }}</td>
+            <td>{{ $user->user_type }}</td>
+            <td>{{ $user->employee_id }}</td>
+            <td>{{ \Carbon\Carbon::parse($user->joining_date)->format('d-M-Y') }}</td>
+            <td>{{ $user->name }}</td>
+            <td>{{ $user->email }}</td>
+            <td>{{ $user->phone_no }}</td>
+            <td>{{ $user->alt_phone_no }}</td>
+            <td>{{ $user->experience }}</td>
+            <td>
+                @if(!empty($user->primarySkills))
+                    @foreach($user->primarySkills as $skill)
+                        <span class="badge bg-primary">{{ $skill->name }}</span>
+                    @endforeach
+                @endif
+            </td>
+            <td>
+                @if(!empty($user->secondarySkills))
+                    @foreach($user->secondarySkills as $skill)
+                        <span class="badge bg-secondary">{{ $skill->name }}</span>
+                    @endforeach
+                @endif
+            </td>
+            <td>
+                @if(!empty($user->tags))
+                    @foreach($user->tags as $tag)
+                        <span class="badge bg-info">{{ $tag->name }}</span>
+                    @endforeach
+                @endif
+            </td>
+            <td>
+            @if(!empty($user->getRoleNames()))
+                @foreach($user->getRoleNames() as $v)
+                <label class="badge bg-success">{{ $v }}</label>
+                @endforeach
+            @endif
+            </td>
+            <td>
+                <a class="btn btn-info btn-sm" href="{{ route('users.show',$user->id) }}"><i class="fa-solid fa-list"></i> Show</a>
+                <a class="btn btn-primary btn-sm" href="{{ route('users.edit',$user->id) }}"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
+                <form method="POST" action="{{ route('users.destroy', $user->id) }}" style="display:inline">
+                    @csrf
+                    @method('DELETE')
 
-<table class="table table-bordered">
-   <tr>
-       <th>No</th>
-       <th>Name</th>
-       <th>Email</th>
-       <th>Roles</th>
-       <th width="280px">Action</th>
-   </tr>
-   @foreach ($data as $key => $user)
-    <tr>
-        <td>{{ ++$i }}</td>
-        <td>{{ $user->name }}</td>
-        <td>{{ $user->email }}</td>
-        <td>
-          @if(!empty($user->getRoleNames()))
-            @foreach($user->getRoleNames() as $v)
-               <label class="badge bg-success">{{ $v }}</label>
-            @endforeach
-          @endif
-        </td>
-        <td>
-             <a class="btn btn-info btn-sm" href="{{ route('users.show',$user->id) }}"><i class="fa-solid fa-list"></i> Show</a>
-             <a class="btn btn-primary btn-sm" href="{{ route('users.edit',$user->id) }}"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
-              <form method="POST" action="{{ route('users.destroy', $user->id) }}" style="display:inline">
-                  @csrf
-                  @method('DELETE')
-
-                  <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i> Delete</button>
-              </form>
-        </td>
-    </tr>
- @endforeach
-</table>
-
+                    <button type="submit" class="btn btn-danger btn-sm"><i class="fa-solid fa-trash"></i> Delete</button>
+                </form>
+            </td>
+        </tr>
+    @endforeach
+    </table>
+</div>
 {!! $data->links('pagination::bootstrap-5') !!}
 </div>
 @endsection
