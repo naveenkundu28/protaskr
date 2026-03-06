@@ -13,8 +13,8 @@
                         <a href="{{ route('projects.create') }}" class="btn btn-primary">Add Project</a>
                     @endcan
                 @endif
-                <button class="btn btn-success" onclick="changeView('cards')" id="cardsbtn"><i class="bi bi-grid"></i></button>
-                <button class="btn btn-secondary" onclick="changeView('table')" id="tablebtn"><i class="bi bi-list-task"></i></button>
+                <button class="btn btn-secondary" onclick="changeView('cards')" id="cardsbtn"><i class="bi bi-grid"></i></button>
+                <button class="btn btn-success" onclick="changeView('table')" id="tablebtn"><i class="bi bi-list-task"></i></button>
             </div>
         </div>
 
@@ -24,7 +24,7 @@
             </div>
         @endif
 
-        <div class="row" id="cards">
+        <div style="display: none" class="row" id="cards">
             @foreach ($projects as $project)
                 <div class="col-md-4 mb-4">
                     <div class="card">
@@ -89,7 +89,7 @@
         </div>
 
         {{-- Table view --}}
-        <div style="display: none" id="table">
+        <div id="table">
         <table class="table table-bordered">
             <tr>
                 <th>No</th>

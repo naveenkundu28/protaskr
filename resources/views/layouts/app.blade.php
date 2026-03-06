@@ -43,7 +43,7 @@
                                 <!-- Projects text with link -->
                                 <a class="nav-link d-flex align-items-center w-100 {{ request()->is('projects*') ? 'active' : '' }}"
                                     href="{{ route('projects.index') }}">
-                                    <i class="bi bi-folder"></i> Projects
+                                    <i class="bi bi-folder"></i> Clients
                                 </a>
 
                                 <!-- Arrow button for dropdown -->
