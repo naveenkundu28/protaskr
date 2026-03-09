@@ -1,30 +1,51 @@
 @extends('layouts.app')
 @section('title')
-    Create Project
+    Create Client
 @endsection
 @section('content')
     <div class="container mb-3">
-        <h2 class="mb-4 shadow-sm p-3 rounded bg-white">Create Project</h2>
+        <h2 class="mb-4 shadow-sm p-3 rounded bg-white">Create Client</h2>
         <div class="card border-0 shadow-sm m-auto" style="max-width: 600px;">
             <div class="card-body">
-                <form action="{{ route('projects.store') }}" method="POST">
+                <form action="{{ route('clients.store') }}" method="POST">
                     @csrf
                     <div class="mb-3">
                         <label for="employee" class="form-label">Employee</label>
-                        <select name="employee[]" id="employee" class="form-select" required>
-                            <option value="">Select Employee</option>
+                        <select name="employee[]" id="employee" class="form-select select2" required multiple>
+                            {{-- <option value="">Select Employee</option> --}}
                             @foreach($employees as $employee)
                             <option value="{{$employee->id}}">{{$employee->name}}</option>
                             @endforeach
                         </select>
-                        @error('status')
+                        @error('employee')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
                     <div class="mb-3">
-                        <label for="name" class="form-label">Name</label>
+                        <label for="name" class="form-label">Client Name</label>
                         <input type="text" name="name" id="name" class="form-control" required>
                         @error('name')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Client Email</label>
+                        <input type="email" name="client_email" id="email" class="form-control" required>
+                        @error('client_email')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label for="code" class="form-label">Client Code</label>
+                        <input type="text" name="client_code" id="code" class="form-control" required>
+                        @error('client_code')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+                    <div class="mb-3">
+                        <label for="project_name" class="form-label">Project Name</label>
+                        <input type="text" name="project_name" id="project_name" class="form-control" required>
+                        @error('project_name')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
@@ -35,6 +56,7 @@
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
+                    
                     <div class="mb-3">
                         <label for="start_date" class="form-label">Start Date</label>
                         <input type="date" name="start_date" id="start_date" class="form-control">

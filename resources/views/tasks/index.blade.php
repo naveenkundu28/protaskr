@@ -107,7 +107,7 @@
                     <td>{{ $loop->iteration }}</td>
                     <td> <a href="{{ route('tasks.show', $task->id) }}"> {{ $task->title }} </a></td>
                     <td>{{ $task->project?->name }}</td>
-                    <td class="text-nowrap">{{ $task->due_date }}</td>
+                    <td class="text-nowrap">{{ \Carbon\Carbon::parse($task->due_date)->format('j F Y') }}</td>
                     <td class="text-nowrap">{{ $task->user->name }}</td>
                     <td class="text-nowrap">{{ $task->getTotalElapsedTime() }}</td>
                     <td>

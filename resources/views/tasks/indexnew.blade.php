@@ -99,7 +99,7 @@
             aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
-                    <form action="{{ route('projects.tasks.store', $project->id) }}" method="POST">
+                    <form action="{{ route('clients.tasks.store', $project->id) }}" method="POST">
                         @csrf
                         <div class="modal-header">
                             <h5 class="modal-title" id="createTaskModalLabel">Create Task</h5>

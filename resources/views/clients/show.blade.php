@@ -1,10 +1,10 @@
 @extends('layouts.app')
 @section('title')
-    {{ $project->name }} - Project Details
+    {{ $client->name }} - Project Details
 @endsection
 @section('content')
     <div class="container">
-        <h2 class="mb-4 shadow-sm p-3 rounded bg-white text-center"> {{ $project->name }}</h2>
+        <h2 class="mb-4 shadow-sm p-3 rounded bg-white text-center"> {{ $client->name }}</h2>
 
         @if (session('success'))
             <div class="alert alert-success">
@@ -15,21 +15,21 @@
             <div class="col-md-7">
                 <div class="card mb-4 shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">{{ $project->name }}</h5>
-                        <p class="card-text">{{ $project->description }}</p>
+                        <h5 class="card-title">{{ $client->name }}</h5>
+                        <p class="card-text">{{ $client->description }}</p>
                         <p class="card-text"><strong>Start Date:</strong>
-                            {{ \Carbon\Carbon::parse($project->start_date)->format('Y-m-d') }}</p>
+                            {{ \Carbon\Carbon::parse($client->start_date)->format('j F Y') }}</p>
                         <p class="card-text"><strong>End Date:</strong>
-                            {{ \Carbon\Carbon::parse($project->end_date)->format('Y-m-d') }}</p>
+                            {{ \Carbon\Carbon::parse($client->end_date)->format('j F Y') }}</p>
                         <p class="card-text"><strong>Status:</strong>
-                            {{ $project->status == 'pending' ? 'Pending' : ($project->status == 'on_going' ? 'In Progress' : 'Completed') }}
+                            {{ $client->status == 'pending' ? 'Pending' : ($client->status == 'on_going' ? 'In Progress' : 'Completed') }}
                         </p>
-                        <p class="card-text"><strong>Budget:</strong> ${{ $project->budget }}</p>
+                        <p class="card-text"><strong>Budget:</strong> ${{ $client->budget }}</p>
 
                         <h5 class="mt-4">Project Progress</h5>
                         @php
-                            $totalTasks = $project->tasks->count();
-                            $completedTasks = $project->tasks->where('status', 'completed')->count();
+                            $totalTasks = $client->tasks->count();
+                            $completedTasks = $client->tasks->where('status', 'completed')->count();
                             $progress = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
                         @endphp
                         <div class="progress mb-4">
@@ -38,7 +38,7 @@
                                 {{ round($progress) }}%</div>
                         </div>
 
-                        <a href="{{ route('projects.index') }}" class="btn btn-secondary mt-3">Back to Projects</a>
+                        <a href="{{ route('clients.index') }}" class="btn btn-secondary mt-3">Back to Projects</a>
                     </div>
                 </div>
             </div>
@@ -66,9 +66,9 @@
                                                     </div>
                                                     @can('project-edit')
                                                     <div>
-                                                        <form action="{{ route('projects.removeMember') }}" method="POST" style="display:inline;">
+                                                        <form action="{{ route('clients.removeMember') }}" method="POST" style="display:inline;">
                                                             @csrf
-                                                            <input type="hidden" name="project_id" value="{{ $project->id }}">
+                                                            <input type="hidden" name="project_id" value="{{ $client->id }}">
                                                             <input type="hidden" name="user_id" value="{{ $user->id }}">
                                                             
                                                             <button type="submit" class="btn btn-danger btn-sm" 
@@ -98,9 +98,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form action="{{ route('projects.addMember')}}" method="POST">
+                    <form action="{{ route('clients.addMember')}}" method="POST">
                         @csrf
-                        <input type="hidden" name="project_id" value="{{ $project->id }}">
+                        <input type="hidden" name="project_id" value="{{ $client->id }}">
                         <div class="mb-3">
                             <label for="user_id" class="form-label">Select User</label>
                             <select class="form-select" name="user_id" id="">

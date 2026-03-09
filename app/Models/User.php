@@ -43,7 +43,7 @@ class User extends Authenticatable
     /**
      * Get the attributes that should be cast.
      *
-        * @var array
+     * @var array
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -54,7 +54,7 @@ class User extends Authenticatable
      */
     public function projects()
     {
-        return $this->hasMany(Project::class);
+        return $this->hasMany(Client::class);
     }
 
     public function tasks()
@@ -69,7 +69,7 @@ class User extends Authenticatable
 
     public function projectMembers()
     {
-        return $this->belongsToMany(Project::class, 'project_teams', 'user_id', 'project_id');
+        return $this->belongsToMany(Client::class, 'client_teams', 'user_id', 'client_id');
     }
 
     /**
@@ -95,5 +95,10 @@ class User extends Authenticatable
     public function tags()
     {
         return $this->belongsToMany(Tag::class, 'user_tag')->withTimestamps();
+    }
+
+    public function services()
+    {
+        return $this->belongsToMany(Service::class);
     }
 }

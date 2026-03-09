@@ -12,7 +12,7 @@
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">Tasks</h5>
                         <p class="card-text flex-grow-1">You have <strong>{{ $tasksCount }}</strong> tasks pending.</p>
-                        <a href="{{ route('projects.index') }}" class="btn btn-primary mt-auto">View Tasks</a>
+                        <a href="{{ route('clients.index') }}" class="btn btn-primary mt-auto">View Tasks</a>
                     </div>
                 </div>
             </div>

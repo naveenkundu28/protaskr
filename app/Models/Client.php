@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Project extends Model
+class Client extends Model
 {
-    use HasFactory,SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -19,7 +19,10 @@ class Project extends Model
         'end_date',
         'status',
         'budget',
-        'deleted_at'
+        'deleted_at',
+        'client_email',
+        'client_code',
+        'project_name'
     ];
 
     protected $dates = [
@@ -65,12 +68,13 @@ class Project extends Model
 
     public function teamProjects()
     {
-        return $this->belongsToMany(ProjectTeam::class, 'project_teams', 'project_id', 'user_id');
+        // return $this->belongsToMany(ClientTeam::class, 'client_teams', 'client_id', 'user_id');
+        return $this->belongsToMany(User::class, 'client_teams', 'client_id', 'user_id');
     }
 
     public function users()
     {
-        return $this->belongsToMany(User::class, 'project_teams', 'project_id', 'user_id');
+        return $this->belongsToMany(User::class, 'client_teams', 'client_id', 'user_id');
     }
 
     public function sortedUsers()
@@ -86,5 +90,10 @@ class Project extends Model
                 return $user->id == auth()->id();
             })
             ->values();
+    }
+
+    public function services()
+    {
+        return $this->hasMany(Service::class);
     }
 }

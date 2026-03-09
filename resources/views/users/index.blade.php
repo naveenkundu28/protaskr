@@ -37,7 +37,7 @@
             <td>{{ ++$i }}</td>
             <td>{{ $user->user_type }}</td>
             <td>{{ $user->employee_id }}</td>
-            <td>{{ \Carbon\Carbon::parse($user->joining_date)->format('d-M-Y') }}</td>
+            <td>{{ $user->joining_date ? \Carbon\Carbon::parse($user->joining_date)->format('j F Y') : '' }}</td>
             <td>{{ $user->name }}</td>
             <td>{{ $user->email }}</td>
             <td>{{ $user->phone_no }}</td>

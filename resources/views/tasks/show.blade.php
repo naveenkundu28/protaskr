@@ -12,7 +12,7 @@
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editTaskModal">
                             <i class="bi bi-pencil-square"></i> </button>
                     @endif
-                    <a href="{{ route('projects.tasks.index', $task->project->id) }}" class="btn btn-secondary">
+                    <a href="{{ route('clients.tasks.index', $task->project->id) }}" class="btn btn-secondary">
                         <i class="bi bi-arrow-90deg-left"></i> </a>
                 </div>
             </div>

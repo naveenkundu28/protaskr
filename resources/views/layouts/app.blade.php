@@ -44,7 +44,7 @@
                                 id="headingProjects">
                                 <!-- Projects text with link -->
                                 <a class="nav-link d-flex align-items-center w-100 {{ request()->is('projects*') ? 'active' : '' }}"
-                                    href="{{ route('projects.index') }}">
+                                    href="{{ route('clients.index') }}">
                                     <i class="bi bi-folder"></i> Clients
                                 </a>
 
@@ -60,7 +60,14 @@
                                 data-bs-parent="#projectsAccordion">
                                 <div class="accordion-body">
                                     <ul class="list-group custom-h">
-                                        @foreach ($projectsDropdown as $item)
+                                        <li class="list-group-item f-14">
+                                            <a class="nav-link"
+                                                href="{{ route('clients.index') }}">
+                                                List Clients
+
+                                            </a>
+                                        </li>
+                                        {{-- @foreach ($projectsDropdown as $item)
                                             <li class="list-group-item f-14">
                                                 <a class="nav-link"
                                                     href="{{ route('tasks.index', ['project_id' => $item->id]) }}">
@@ -68,7 +75,7 @@
 
                                                 </a>
                                             </li>
-                                        @endforeach
+                                        @endforeach --}}
                                     </ul>
                                 </div>
                             </div>
@@ -103,7 +110,7 @@
                 @if (Auth::user()->hasRole('Admin'))
                     <li class="nav-item">
                         <a class="nav-link {{ request('type') == 'archived' ? 'active' : '' }}"
-                            href="{{ route('projects.index', ['type' => 'archived']) }}">
+                            href="{{ route('clients.index', ['type' => 'archived']) }}">
                             <i class="bi bi-sticky"></i> Archived Projects
                         </a>
                     </li>

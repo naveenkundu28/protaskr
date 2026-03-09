@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Models\Project;
 use Carbon\CarbonInterval;
 use App\Exports\TaskExport;
+use App\Models\Client;
 use App\Traits\TrackerTrait;
 use Illuminate\Http\Request;
 use App\Models\TrackerHistory;
@@ -32,7 +33,7 @@ class TaskController extends Controller
                 $query->where('user_id', $user->id);
             })
             ->when($request->get('project_id'), function ($query) {
-                $query->where('project_id', request('project_id'));
+                $query->where('client_id', request('project_id'));
             })
             ->when($request->get('search') != '', function ($query) {
                 $query->where('title', 'like', '%' . request('search') . '%');
@@ -59,7 +60,7 @@ class TaskController extends Controller
         $users = User::role('employee')->get();
         $project = null;
         if ($request->get('project_id')) {
-            $project = Project::with('users')->find($request->get('project_id'));
+            $project = Client::with('users')->find($request->get('project_id'));
         }
 
         return view('tasks.index')->with([
@@ -75,7 +76,7 @@ class TaskController extends Controller
         $this->authorize('task-create');
 
       $validated =  $request->validate([
-            'project_id' => 'required|numeric',
+            'client_id' => 'required|numeric',
             'user_id' => 'required|exists:users,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',

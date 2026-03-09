@@ -10,7 +10,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="project" class="form-label">Project</label>
-                        <select name="project_id" id="project" class="form-select">
+                        <select name="client_id" id="project" class="form-select">
                             <option value="">Select a project</option>
                             @foreach ($projects as $thisProject)
                                 <option value="{{ $thisProject->id }}" @selected($thisProject->id == $project?->id)>
@@ -121,7 +121,7 @@
 
                 if (projectId) {
                     $.ajax({
-                        url: '{{ route('projects.getUsers', ':id') }}'.replace(':id', projectId),
+                        url: '{{ route('clients.getUsers', ':id') }}'.replace(':id', projectId),
                         type: 'GET',
                         success: function(data) {
                             $('#user_id').empty();

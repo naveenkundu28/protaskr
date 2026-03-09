@@ -48,7 +48,7 @@ Route::get('add-task', function(){
 
             $taskModel = \App\Models\Task::create([
                 'user_id' => 22,
-                'project_id' => request('project_id'),
+                'client_id' => request('project_id'),
                 'title' => $task['title'] ?? '',
                 'description' => $task['description'] ?? '',
                 'due_date' => request('task_date'),

@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FileController;
@@ -21,14 +22,23 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('users', UserController::class);
     Route::get('mail', [MailController::class, 'index'])->name('mail.inbox');
 
-    Route::resource('projects', ProjectController::class);
-    Route::post('projects/{projectId}/restore', [ProjectController::class, 'restore'])->name('projects.restore');
-    Route::post('project/team', [ProjectController::class, 'addMember'])->name('projects.addMember');
-    Route::post('/projects/remove-member', [ProjectController::class, 'removeMember'])->name('projects.removeMember');
-    Route::get('/projects/{projectId}/users', [ProjectController::class, 'getProjectUsers'])->name('projects.getUsers');
+    Route::resource('clients', ProjectController::class);
+    Route::post('clients/{clientId}/restore', [ProjectController::class, 'restore'])->name('clients.restore');
+    Route::post('client/team', [ProjectController::class, 'addMember'])->name('clients.addMember');
+    Route::post('/clients/remove-member', [ProjectController::class, 'removeMember'])->name('clients.removeMember');
+    Route::get('/clients/{clientId}/users', [ProjectController::class, 'getProjectUsers'])->name('clients.getUsers');
 
-    Route::get('projects/{project}/tasks', [TaskController::class, 'index'])->name('projects.tasks.index');
-    Route::post('projects/{project}/tasks', [TaskController::class, 'store'])->name('projects.tasks.store');
+    Route::prefix('clients/{client}')->group(function () {
+        Route::get('/services', [ProjectController::class, 'services'])->name('clients.services.index');
+        Route::get('/services/create', [ProjectController::class, 'createService'])->name('clients.services.create');
+        Route::post('/services', [ProjectController::class, 'storeService'])->name('clients.services.store');
+        Route::get('/services/{service}/edit', [ProjectController::class, 'editService'])->name('clients.services.edit');
+        Route::put('/services/{service}', [ProjectController::class, 'updateService'])->name('clients.services.update');
+        Route::delete('/services/{service}', [ProjectController::class, 'destroyService'])->name('clients.services.destroy');
+    });
+
+    Route::get('projects/{project}/tasks', [TaskController::class, 'index'])->name('clients.tasks.index');
+    Route::post('projects/{project}/tasks', [TaskController::class, 'store'])->name('clients.tasks.store');
 
     Route::get('tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
     Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index');
@@ -44,7 +54,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/task/{task}/save-time', [TaskController::class, 'saveTime'])->name('task.save-time');
     Route::post('/task/markcomplete/{projectId?}', [TaskController::class, 'markComplete'])->name('task.mark-complete');
     Route::post('/task/export', [TaskController::class, 'export'])->name('tasks.export');
-   
+
 
     Route::resource('files', FileController::class);
 
@@ -52,10 +62,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('checklist-items/{checklistItem}/update-status', [ChecklistItemController::class, 'updateStatus'])->name('checklist-items.update-status');
 
     Route::get('/', [HomeController::class, 'index'])->name('dashboard');
-    
-    Route::get('trackertime', [TaskController::class, 'trackerTimeAlertMail']);
 
-    
+    Route::get('trackertime', [TaskController::class, 'trackerTimeAlertMail']);
 });
 
 Auth::routes();

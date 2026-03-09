@@ -35,7 +35,7 @@ class TaskExport implements FromCollection, WithHeadings
                 $query->where('user_id', $user->id);
             })
             ->when($this->projectid != null, function ($query) {
-                $query->where('project_id', $this->projectid);
+                $query->where('client_id', $this->projectid);
             })
             ->whereBetween('created_at', [
                 $this->fromDate, 

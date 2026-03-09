@@ -29,7 +29,7 @@
     <div class="col-md-6 mb-3">
         <div class="form-group">
             <strong>Joining Date:</strong><br>
-            {{ $user->joining_date }}
+            {{ $user->joining_date ? \Carbon\Carbon::parse($user->joining_date)->format('j F Y') : '' }}
         </div>
     </div>
     <div class="col-md-6 mb-3">
