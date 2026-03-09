@@ -56,7 +56,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/task/export', [TaskController::class, 'export'])->name('tasks.export');
 
 
-    Route::resource('files', FileController::class);
+    Route::resource('task.files', FileController::class);
 
     Route::resource('checklist-items', ChecklistItemController::class);
     Route::get('checklist-items/{checklistItem}/update-status', [ChecklistItemController::class, 'updateStatus'])->name('checklist-items.update-status');

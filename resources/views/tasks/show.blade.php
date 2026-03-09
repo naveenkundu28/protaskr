@@ -104,16 +104,16 @@
                             <div class="col-md-12 mt-3">
                                 <div class="d-flex justify-content-between align-items-center border-top pt-2">
                                     <h5>Uploads</h5>
-                                    <a target="_blank" href="{{ route('files.create', ['tid' => $task->id]) }}"
+                                    <a target="_blank" href="{{ route('task.files.create', $task->id) }}"
                                         class="btn btn-primary"><i class="bi bi-plus-circle"></i></a>
                                 </div>
 
                                 <!-- Checklist items -->
                                 <div class="list-group mt-2" id="checklist-items">
-                                    <div class="row">
+                                    <div class="row gap-2">
                                         @foreach ($files as $file)
                                             <div
-                                                class=" col-md-6 mb-4 list-group-item d-flex justify-content-between align-items-center">
+                                                class=" col-md-auto mb-4 list-group-item d-flex justify-content-between align-items-center">
                                                 <div class="card">
                                                     <div class="card-body">
                                                         <h5 class="card-title">{{ $file->name }}</h5>
@@ -121,10 +121,10 @@
                                                         <a href="{{ Storage::url($file->path) }}" target="_blank"
                                                             class="btn btn-primary"> <i class="bi bi-eye"></i> </a>
                                                         @if (auth()->id() == $task->user_id || Auth::user()->hasRole('Admin'))
-                                                            <a href="{{ route('files.edit', $file->id) }}"
+                                                            <a href="{{ route('task.files.edit', [$task->id, $file->id]) }}"
                                                                 class="btn btn-warning"> <i class="bi bi-pencil-square"></i>
                                                             </a>
-                                                            <form action="{{ route('files.destroy', $file->id) }}"
+                                                            <form action="{{ route('task.files.destroy', [$task->id, $file->id]) }}"
                                                                 method="POST" class="d-inline"
                                                                 onsubmit="return confirm('Are you sure you want to delete this file?');">
                                                                 @csrf
