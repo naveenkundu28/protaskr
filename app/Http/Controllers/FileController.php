@@ -5,43 +5,42 @@ use App\Models\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Task;
 
 class FileController extends Controller
 {
-    public function index()
+    public function index(Task $task)
     {
-        $files = Auth::user()->files()->latest()->get();
-        return view('files.index', compact('files'));
+        $files = Auth::user()->files()->where('task_id', $task->id)->latest()->get();
+        return view('files.index', compact('files', 'task'));
     }
 
-    public function create()
+    public function create(Task $task)
     {
-        return view('files.create');
+        return view('files.create', compact('task'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, Task $task)
     {
 		
-       
-dd($request);
         $path = $request->file('file')->store('uploads', 'public');
 
         Auth::user()->files()->create([
             'name' => $request->name,
-            'task_id' => $request->tid,
+            'task_id' => $task->id,
             'path' => $path,
             'type' => $request->type,
         ]);
 
-        return redirect()->route('files.index')->with('success', 'File uploaded successfully.');
+        return redirect()->route('task.files.index', $task->id)->with('success', 'File uploaded successfully.');
     }
 
-    public function edit(File $file)
+    public function edit(Task $task, File $file)
     {
-        return view('files.edit', compact('file'));
+        return view('files.edit', compact('file', 'task'));
     }
 
-    public function update(Request $request, File $file)
+    public function update(Request $request, Task $task, File $file)
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -58,13 +57,13 @@ dd($request);
 
         $file->update($data);
 
-        return redirect()->route('files.index')->with('success', 'File updated successfully.');
+        return redirect()->route('task.files.index', $task->id)->with('success', 'File updated successfully.');
     }
 
-    public function destroy(File $file)
+    public function destroy(Task $task,File $file)
     {
         Storage::disk('public')->delete($file->path);
         $file->delete();
-        return redirect()->route('files.index')->with('success', 'File deleted successfully.');
+        return redirect()->route('task.files.index', $task->id)->with('success', 'File deleted successfully.');
     }
 }
