@@ -5,7 +5,7 @@
         <h2 class="mb-4 shadow-sm p-3 rounded bg-white">Edit File</h2>
         <div class="card border-0 shadow-sm m-auto" style="max-width: 600px;">
             <div class="card-body">
-                <form action="{{ route('files.update', $file->id) }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('task.files.update', [$task->id, $file->id]) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     <div class="mb-3">

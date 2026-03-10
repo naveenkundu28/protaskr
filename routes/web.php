@@ -12,6 +12,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ProjectFileController;
 use App\Http\Controllers\ChecklistItemController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\SkillController;
 
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
@@ -56,7 +57,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/task/export', [TaskController::class, 'export'])->name('tasks.export');
 
 
-    Route::resource('files', FileController::class);
+    Route::resource('task.files', FileController::class);
+
+    Route::resource('skills', SkillController::class);
 
     Route::resource('checklist-items', ChecklistItemController::class);
     Route::get('checklist-items/{checklistItem}/update-status', [ChecklistItemController::class, 'updateStatus'])->name('checklist-items.update-status');

@@ -5,9 +5,8 @@
         <h2 class="mb-4 shadow-sm p-3 rounded bg-white">Upload File</h2>
         <div class="card border-0 shadow-sm m-auto" style="max-width: 600px;">
             <div class="card-body">
-                <form action="{{ route('files.store') }}" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('task.files.store', $task->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
-                    <input type="hidden" value="{{request()->get('tid')}}" name="tid">
                     <div class="mb-3">
                         <label for="name" class="form-label">File Name</label>
                         <input type="text" name="name" id="name" class="form-control" required>

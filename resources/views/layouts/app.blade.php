@@ -99,6 +99,13 @@
                     </a>
                 </li>
             @endcan
+            @can('user-show')
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('skills*') ? 'active' : '' }}" href="{{ route('skills.index') }}">
+                        <i class="bi bi-people"></i> Master Skills
+                    </a>
+                </li>
+            @endcan
             @can('role-show')
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('roles*') ? 'active' : '' }}" href="{{ route('roles.index') }}">
@@ -196,7 +203,7 @@
           ['color', ['color']],
           ['para', ['ul', 'ol', 'paragraph']],
           ['table', ['table']],
-          ['insert', ['link', 'picture']],
+          ['insert', ['link']],
           ['view', []]
         ]
       });
