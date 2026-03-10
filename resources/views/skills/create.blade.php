@@ -5,7 +5,7 @@
         <div class="row">
             <div class="col-lg-12 mb-4 margin-tb d-flex align-items-center justify-content-between">
                 <div class="pull-left">
-                    <h2>Create Master Skills</h2>
+                    <h2>Create Skills</h2>
                 </div>
                 <div class="pull-right">
                     <a class="btn btn-primary btn-sm mb-2" href="{{ route('skills.index') }}"><i class="fa fa-arrow-left"></i>
