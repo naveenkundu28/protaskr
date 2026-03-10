@@ -85,6 +85,48 @@
 
 
             @endcan
+            @can('user-show')
+                <li class="nav-item">
+                    <div class="accordion" id="mastersAccordion">
+                        <div class="accordion-item position-relative">
+                            <h6 class="accordion-header d-flex justify-content-between align-items-center"
+                                id="headingMasters">
+                                <a data-bs-toggle="collapse" data-bs-target="#collapseMasters" aria-expanded="false" aria-controls="collapseMasters" class="nav-link d-flex align-items-center w-100  {{ request()->is('masters*') ? 'active' : '' }}"
+                                    href="javascript:void(0)">
+                                    <i class="bi bi-folder"></i> Masters
+                                </a>
+
+                                <!-- Arrow button for dropdown -->
+                                <button
+                                    class="text-white accordion-button collapsed border-0 bg-transparent shadow-none p-0 position-absolute end-0 w-25"
+                                    type="button" data-bs-toggle="collapse" data-bs-target="#collapseMasters"
+                                    aria-expanded="false" aria-controls="collapseMasters">
+                                </button>
+                            </h6>
+
+                            <div id="collapseMasters" class="accordion-collapse collapse" aria-labelledby="headingMasters"
+                                data-bs-parent="#mastersAccordion">
+                                <div class="accordion-body">
+                                    <ul class="list-group custom-h" style="padding-left: 14px">
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->is('skills*') ? 'active' : '' }}" href="{{ route('skills.index') }}">
+                                                <i class="bi bi-people"></i>Skills
+                                            </a>
+                                        </li>
+                                       <li class="nav-item">
+                                            <a class="nav-link {{ request()->is('tags*') ? 'active' : '' }}" href="{{ route('tags.index') }}">
+                                                <i class="bi bi-people"></i>Tags
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+
+
+            @endcan
             @can('task-show')
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('tasks*') ? 'active' : '' }}" href="{{ route('tasks.index') }}">
@@ -96,13 +138,6 @@
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('users*') ? 'active' : '' }}" href="{{ route('users.index') }}">
                         <i class="bi bi-people"></i> Users
-                    </a>
-                </li>
-            @endcan
-            @can('user-show')
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('skills*') ? 'active' : '' }}" href="{{ route('skills.index') }}">
-                        <i class="bi bi-people"></i> Master Skills
                     </a>
                 </li>
             @endcan
@@ -146,7 +181,7 @@
                                     {{ Auth::user()->name }}
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                    <li><a class="dropdown-item" href="#">Settings</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Update Profile</a></li>
                                     <li>
                                         <form method="POST" action="{{ route('logout') }}" id="logout-form">
                                             @csrf

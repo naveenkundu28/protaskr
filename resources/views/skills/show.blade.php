@@ -5,7 +5,7 @@
 <div class="row">
     <div class="col-lg-12 margin-tb d-flex align-items-center justify-content-between mb-4">
         <div class="pull-left">
-            <h2> Show Master Skills</h2>
+            <h2> Show Skills</h2>
         </div>
         <div class="pull-right">
             <a class="btn btn-primary" href="{{ route('skills.index') }}"> Back</a>
