@@ -52,8 +52,7 @@
                             </p>
 
                             @if (request('type') == 'archived')
-                                <form action="{{ route('clients.restore', $project->id) }}" method="POST"
-                                    class="d-inline">
+                                <form action="{{ route('clients.restore', $project->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-success"
                                         onclick="return confirm('Are you sure you want to restore this project?')">
@@ -71,7 +70,7 @@
 
                                 @can('service-show')
                                     <a href="{{ route('clients.services.index', $project->id) }}" class="btn btn-info">
-                                        <i class="bi bi-gear"></i>&nbsp;Services
+                                        <i class="bi bi-gear"></i>
                                     </a>
                                 @endcan
 
@@ -155,70 +154,79 @@
                                 <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                     Actions
                                 </button>
-                                <ul class="dropdown-menu">
+                                <ul class="dropdown-menu py-0">
                                     @if (request('type') == 'archived')
-                                        <li class="px-2">
+                                        <li class="px-2 py-2">
                                             <form action="{{ route('clients.restore', $project->id) }}" method="POST"
                                                 class="d-inline">
                                                 @csrf
-                                                <button type="submit" class="btn btn-success"
+                                                <button type="submit" class="border-0 py-2 text-danger text-start w-100 bg-white"
                                                     onclick="return confirm('Are you sure you want to restore this project?')">
-                                                    <i class="bi bi-arrow-clockwise"></i>&nbsp;Restore
+                                                    Restore
                                                 </button>
                                             </form>
                                         </li>
                                     @else
-                                        <li class="px-2">
+                                        <li class="px-2 py-2">
                                             <a href="{{ route('tasks.index', ['project_id' => $project->id]) }}"
-                                                class="btn btn-primary">
-                                                <i class="bi bi-list"></i>&nbsp;Tasks
+                                                class="w-100 text-decoration-none">
+                                                Tasks
                                             </a>
-                                        </li>
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        <li class="px-2">
-                                            <a href="{{ route('clients.show', $project->id) }}" class="btn btn-primary">
-                                                <i class="bi bi-eye"></i>&nbsp;View
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <hr class="dropdown-divider">
                                         </li>
 
+                                        <li>
+                                            <hr class="my-1" />
+                                        </li>
+
+                                        <li class="px-2 py-2">
+                                            <a href="{{ route('clients.show', $project->id) }}"
+                                                class="w-100 text-decoration-none text-success">
+                                                View
+                                            </a>
+                                        </li>
+
+
                                         @can('service-show')
-                                            <li class="px-2">
+                                            <li>
+                                                <hr class="my-1" />
+                                            </li>
+
+                                            <li class="px-2 py-2">
                                                 <a href="{{ route('clients.services.index', $project->id) }}"
-                                                    class="btn btn-info">
-                                                    <i class="bi bi-gear"></i>&nbsp;Services
+                                                    class="w-100 text-decoration-none text-warning">
+                                                    Services
                                                 </a>
                                             </li>
                                         @endcan
 
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
 
                                         @can('project-edit')
-                                            <li class="px-2">
-                                                <a href="{{ route('clients.edit', $project->id) }}" class="btn btn-warning">
-                                                    <i class="bi bi-pencil-square"></i>&nbsp; Edit
-                                                </a>
-                                            </li>
                                             <li>
-                                                <hr class="dropdown-divider">
+                                                <hr class="my-1" />
+                                            </li>
+
+                                            <li class="px-2 py-2">
+                                                <a href="{{ route('clients.edit', $project->id) }}"
+                                                    class="w-100 text-decoration-none text-info">
+                                                    Edit
+                                                </a>
                                             </li>
                                         @endcan
 
                                         @can('project-delete')
-                                            <li class="px-2">
+                                            <li>
+                                                <hr class="my-1" />
+                                            </li>
+
+                                            <li>
                                                 <form action="{{ route('clients.destroy', $project->id) }}" method="POST"
                                                     class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger"
+                                                    <button type="submit"
+                                                        class="border-0 py-2 text-danger text-start w-100 bg-white"
                                                         onclick="return confirm('Are you sure you want to delete this project?')">
-                                                        <i class="bi bi-trash"></i>&nbsp;Delete
+                                                        Delete
                                                     </button>
                                                 </form>
                                             </li>

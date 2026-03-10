@@ -76,6 +76,10 @@ class Client extends Model
     {
         return $this->belongsToMany(User::class, 'client_teams', 'client_id', 'user_id');
     }
+    public function allUsers()
+    {
+        return $this->belongsToMany(User::class, 'client_teams', 'client_id', 'user_id')->withTrashed();
+    }
 
     public function sortedUsers()
     {
