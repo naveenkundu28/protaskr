@@ -106,6 +106,13 @@
                     </a>
                 </li>
             @endcan
+            @can('user-show')
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('year*') ? 'active' : '' }}" href="{{ route('master.hours.create') }}">
+                        <i class="bi bi-clock"></i> Master Hours
+                    </a>
+                </li>
+            @endcan
             @can('role-show')
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('roles*') ? 'active' : '' }}" href="{{ route('roles.index') }}">

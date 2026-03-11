@@ -13,6 +13,8 @@ use App\Http\Controllers\ProjectFileController;
 use App\Http\Controllers\ChecklistItemController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SkillController;
+use App\Http\Controllers\HourController;
+
 
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
@@ -22,6 +24,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('roles', RoleController::class);
     Route::resource('users', UserController::class);
     Route::get('mail', [MailController::class, 'index'])->name('mail.inbox');
+
+    Route::get('/master-hours', [HourController::class, 'create'])->name('master.hours.create');
+    Route::post('/master-hours', [HourController::class, 'store'])->name('master.hours.store');
 
     Route::resource('clients', ProjectController::class);
     Route::post('clients/{clientId}/restore', [ProjectController::class, 'restore'])->name('clients.restore');
