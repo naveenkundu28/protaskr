@@ -169,6 +169,38 @@
                 width: '100%'
             });
 
+            function filterSkills() {
+                let primary = $('select[name="primary_skills[]"]').val() || [];
+                let secondary = $('select[name="secondary_skills[]"]').val() || [];
+
+                $('select[name="primary_skills[]"] option').each(function() {
+
+                    if (secondary.includes($(this).val())) {
+                        $(this).prop('disabled', true);
+                    } else {
+                        $(this).prop('disabled', false);
+                    }
+
+                });
+
+                $('select[name="secondary_skills[]"] option').each(function() {
+
+                    if (primary.includes($(this).val())) {
+                        $(this).prop('disabled', true);
+                    } else {
+                        $(this).prop('disabled', false);
+                    }
+
+                });
+
+                $('select').trigger('change.select2');
+
+            }
+
+            $('select[name="primary_skills[]"]').on('change', filterSkills);
+            $('select[name="secondary_skills[]"]').on('change', filterSkills);
+
+            filterSkills();
         });
     </script>
 @endpush
