@@ -107,7 +107,7 @@ main {
 }
 
 .list-group-item {
-    background-color: none;
+    background-color: #343a40;
     border: none;
     color: white;
 }

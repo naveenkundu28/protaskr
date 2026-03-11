@@ -4,8 +4,8 @@
 <div class="container">
 <div class="row">
     <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
-        <h2>Master Skills Management</h2>
-        <a href="{{ route('skills.create') }}" class="btn btn-primary">Create New Master Skills</a>
+        <h2>Skills Management</h2>
+        <a href="{{ route('skills.create') }}" class="btn btn-primary">Create New Skills</a>
     </div>
 </div>
 

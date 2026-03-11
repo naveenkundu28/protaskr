@@ -12,9 +12,11 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\ProjectFileController;
 use App\Http\Controllers\ChecklistItemController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\HourController;
 
+use App\Http\Controllers\TagController;
 
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
@@ -65,6 +67,10 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('task.files', FileController::class);
 
     Route::resource('skills', SkillController::class);
+    Route::resource('tags', TagController::class);
+
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::resource('checklist-items', ChecklistItemController::class);
     Route::get('checklist-items/{checklistItem}/update-status', [ChecklistItemController::class, 'updateStatus'])->name('checklist-items.update-status');
