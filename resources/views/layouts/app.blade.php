@@ -67,15 +67,6 @@
 
                                             </a>
                                         </li>
-                                        {{-- @foreach ($projectsDropdown as $item)
-                                            <li class="list-group-item f-14">
-                                                <a class="nav-link"
-                                                    href="{{ route('tasks.index', ['project_id' => $item->id]) }}">
-                                                    {{ $item->name }} - {{ '(' . ($item->to_do_tasks + $item->in_progress_tasks + $item->in_review_tasks) . ')' }}
-
-                                                </a>
-                                            </li>
-                                        @endforeach --}}
                                     </ul>
                                 </div>
                             </div>
@@ -138,6 +129,13 @@
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('users*') ? 'active' : '' }}" href="{{ route('users.index') }}">
                         <i class="bi bi-people"></i> Users
+                    </a>
+                </li>
+            @endcan
+            @can('user-show')
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('year*') ? 'active' : '' }}" href="{{ route('master.hours.create') }}">
+                        <i class="bi bi-clock"></i> Master Hours
                     </a>
                 </li>
             @endcan

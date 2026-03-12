@@ -5,7 +5,10 @@
         <div class="row">
             <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
                 <h2>Users Management</h2>
-                <a href="{{ route('users.create') }}" class="btn btn-primary">Create New User</a>
+                <div>
+                    <a href="{{ route('resign.users.index') }}" class="btn btn-warning">Resigned Users</a>
+                    <a href="{{ route('users.create') }}" class="btn btn-primary">Create New User</a>
+                </div>
             </div>
         </div>
 
@@ -81,8 +84,9 @@
 
                                     @can('user-show')
                                         <li class="px-2 py-2">
-                                            <a class="w-100 text-decoration-none text-info" href="{{ route('users.show', $user->id) }}"><i
-                                                    class="fa-solid fa-list"></i> Show</a>
+                                            <a class="w-100 text-decoration-none text-info"
+                                                href="{{ route('users.show', $user->id) }}"><i class="fa-solid fa-list"></i>
+                                                Show</a>
                                         </li>
                                     @endcan
 
@@ -92,7 +96,8 @@
                                             <hr class="my-1" />
                                         </li>
                                         <li class="px-2 py-2">
-                                            <a class="w-100 text-decoration-none text-primary" href="{{ route('users.edit', $user->id) }}"><i
+                                            <a class="w-100 text-decoration-none text-primary"
+                                                href="{{ route('users.edit', $user->id) }}"><i
                                                     class="fa-solid fa-pen-to-square"></i> Edit</a>
                                         </li>
                                     @endcan

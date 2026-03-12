@@ -202,14 +202,7 @@ class ProjectController extends Controller
         return view('clients.services.index', compact('services', 'client', 'employees'));
     }
 
-    public function createService(Client $client)
-    {
-        $this->authorize('service-create');
-
-        $employees = $client->users()->role('Employee')->get();
-
-        return view('clients.services.create', compact('client', 'employees'));
-    }
+    
 
     public function storeService(Request $request, Client $client)
     {
@@ -262,20 +255,9 @@ class ProjectController extends Controller
             ->with('success', 'Service created successfully');
     }
 
-    public function editService(Client $client, Service $service)
-    {
-        $this->authorize('service-edit');
-
-        $service->load('users');
-        $employees = $client->users()->role('Employee')->get();
-
-        return view('clients.services.edit', compact('service', 'employees', 'client'));
-    }
 
     public function updateService(Request $request, Client $client, Service $service)
     {
-        // print_r($service);
-        // exit;
         $this->authorize('service-edit');
 
         $duplicateExists = Service::where('service_id', $request->service_id)

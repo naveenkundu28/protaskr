@@ -14,6 +14,8 @@ use App\Http\Controllers\ChecklistItemController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SkillController;
+use App\Http\Controllers\HourController;
+
 use App\Http\Controllers\TagController;
 
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -22,8 +24,13 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('roles', RoleController::class);
+    Route::get('/users/resigned', [UserController::class, 'resignedUsers'])->name('resign.users.index');
     Route::resource('users', UserController::class);
+
     Route::get('mail', [MailController::class, 'index'])->name('mail.inbox');
+
+    Route::get('/master-hours', [HourController::class, 'create'])->name('master.hours.create');
+    Route::post('/master-hours', [HourController::class, 'store'])->name('master.hours.store');
 
     Route::resource('clients', ProjectController::class);
     Route::post('clients/{clientId}/restore', [ProjectController::class, 'restore'])->name('clients.restore');
