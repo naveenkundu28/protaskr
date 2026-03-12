@@ -75,13 +75,13 @@
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                    Actions
+                                    <i class="bi bi-list-task"></i>
                                 </button>
                                 <ul class="dropdown-menu py-0">
 
                                     @can('user-show')
-                                        <li class="px-2 py-2">
-                                            <a class="w-100 text-decoration-none text-info" href="{{ route('users.show', $user->id) }}"><i
+                                        <li>
+                                            <a class="px-2 py-2 d-block text-decoration-none text-info" href="{{ route('users.show', $user->id) }}"><i
                                                     class="fa-solid fa-list"></i> Show</a>
                                         </li>
                                     @endcan
@@ -91,8 +91,8 @@
                                         <li>
                                             <hr class="my-1" />
                                         </li>
-                                        <li class="px-2 py-2">
-                                            <a class="w-100 text-decoration-none text-primary" href="{{ route('users.edit', $user->id) }}"><i
+                                        <li>
+                                            <a class="px-2 py-2 d-block text-decoration-none text-primary" href="{{ route('users.edit', $user->id) }}"><i
                                                     class="fa-solid fa-pen-to-square"></i> Edit</a>
                                         </li>
                                     @endcan
@@ -104,8 +104,8 @@
                                             <hr class="my-1" />
                                         </li>
 
-                                        <li class="px-2 py-2">
-                                            <button class="border-0 px-0 text-danger text-start w-100 bg-white resignBtn"
+                                        <li >
+                                            <button class="px-2 py-2 border-0 px-0 text-danger text-start w-100 bg-white resignBtn"
                                                 data-id="{{ $user->id }}" data-bs-toggle="modal"
                                                 data-bs-target="#resignModal">
                                                 Resign
