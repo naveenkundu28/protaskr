@@ -2,14 +2,16 @@
 
 @section('content')
     <div class="container">
-        <div class="row">
-            <div class="col-lg-12 mb-4 margin-tb d-flex align-items-center justify-content-between">
-                <div class="pull-left">
-                    <h2>Create Skills</h2>
-                </div>
-                <div class="pull-right">
-                    <a class="btn btn-primary btn-sm mb-2" href="{{ route('skills.index') }}"><i class="fa fa-arrow-left"></i>
-                        Back</a>
+        <div style="padding: 0px 8px;">
+            <div class="row">
+                <div class="mb-4 margin-tb d-flex align-items-center justify-content-between bg-white shadow-sm p-3 rounded">
+                    <div class="pull-left">
+                        <h2>Create Skills</h2>
+                    </div>
+                    <div class="pull-right">
+                        <a class="btn btn-primary btn-sm" href="{{ route('skills.index') }}"><i class="fa fa-arrow-left"></i>
+                            Back</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -25,22 +27,24 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('skills.store') }}">
-            @csrf
-            <div class="row">
-                <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                    <div class="form-group">
-                        <strong>Skill Name:</strong>
-                        <input type="text" name="name" placeholder="Skill Name" class="form-control">
+        <div class="card border-0 p-4 mb-4 shadow-sm m-auto">
+            <form method="POST" action="{{ route('skills.store') }}">
+                @csrf
+                <div class="row">
+                    <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
+                        <div class="form-group">
+                            <strong>Skill Name:</strong>
+                            <input type="text" name="name" placeholder="Skill Name" class="form-control mt-2">
+                        </div>
+                    </div>
+
+                    <div class="col-xs-12 col-sm-12 col-md-12 text-center">
+                        <button type="submit" class="btn btn-primary btn-sm mt-2 mb-3"><i class="fa-solid fa-floppy-disk"></i>
+                            Submit</button>
                     </div>
                 </div>
-
-                <div class="col-xs-12 col-sm-12 col-md-12 text-center">
-                    <button type="submit" class="btn btn-primary btn-sm mt-2 mb-3"><i class="fa-solid fa-floppy-disk"></i>
-                        Submit</button>
-                </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 @endsection
 

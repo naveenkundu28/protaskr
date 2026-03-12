@@ -168,12 +168,6 @@
     <script>
         $(document).ready(function() {
 
-            $('.select2').select2({
-                placeholder: "Select options",
-                allowClear: true,
-                width: '100%'
-            });
-
             function filterSkills() {
                 let primary = $('select[name="primary_skills[]"]').val() || [];
                 let secondary = $('select[name="secondary_skills[]"]').val() || [];

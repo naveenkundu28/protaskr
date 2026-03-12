@@ -21,7 +21,7 @@ class DailyReportController extends Controller
             $year = date('Y');
         }
 
-        $users = User::orderBy('created_at')->get();
+        $users = User::whereDoesntHave('roles', function ($q) {$q->where('name', 'Admin');})->orderBy('created_at')->get();
         $performances = DailyPerformance::all();
 
         $reports = DailyReport::with('performance')

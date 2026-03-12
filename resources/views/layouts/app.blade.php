@@ -223,6 +223,10 @@
                     placeholder: "--Select--",
                     allowClear: true
                 });
+                $('#userFilter').select2({
+                    placeholder: "All Users",
+                    allowClear: true,
+                });
             });
         </script>
     @endpush

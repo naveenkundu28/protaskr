@@ -31,12 +31,12 @@
 
         <div class="table-responsive">
 
-            <table class="table table-bordered table-sm text-center text-nowrap">
+            <table class="table table-bordered table-sm text-center text-nowrap report-table">
                 <thead>
                     <tr class="f-12">
                         <th>#</th>
                         @foreach($users as $key => $user)
-                        <th>
+                        <th data-user="{{ $user->id }}">
                             {{ $key+1 }}
                         </th>
                         @endforeach
@@ -56,7 +56,7 @@
                     <tr class="f-12">
                         <th>Total</th>
                         @foreach($users as $user)
-                        <th>
+                        <th data-user="{{ $user->id }}">
                             @php
                                 $minutes = $totals[$user->id] ?? 0;
                             @endphp
@@ -86,7 +86,7 @@
                     <tr class="f-12">
                         <th>Total</th>
                         @foreach($users as $user)
-                        <th>
+                        <th data-user="{{ $user->id }}">
                             @php
                                 $minutes = $totals[$user->id] ?? 0;
                             @endphp
@@ -99,7 +99,7 @@
         </div>
 
         <h5 class="mt-4">Performance Legend</h5>
-        <div class="d-flex flex-wrap gap-3">
+        <div class="d-flex flex-wrap gap-3 pb-4">
             @foreach($performances as $p)
                 <div style="background: {{ $p->background_color }}; color: {{ $p->font_color }}; padding:6px 12px; border-radius:4px;">
                     {{ $p->title }}
@@ -118,13 +118,20 @@
     $(document).ready(function () {
         $('[title]').tooltip();
     });
+
     $('#userFilter').change(function () {
         let user = $(this).val();
         if (user == '') {
             $('td,th').show();
+            $('.report-table th:first-child, .report-table td:first-child').css('width','auto');
+            $('.report-table th[data-user], .report-table td[data-user]').css('width','auto');
+
         } else {
             $('td[data-user],th[data-user]').hide();
             $('td[data-user=' + user + '],th[data-user=' + user + ']').show();
+            
+            $('.report-table th:first-child, .report-table td:first-child').css('width','50%');
+            $('.report-table th[data-user='+user+'], .report-table td[data-user='+user+']').css('width','50%');
         }
     });
 
