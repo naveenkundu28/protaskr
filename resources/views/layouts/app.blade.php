@@ -148,6 +148,13 @@
                     </a>
                 </li>
             @endcan
+            @can('user-show')
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('daily-report*') ? 'active' : '' }}" href="{{ route('daily.report') }}">
+                        <i class="bi bi-bar-chart"></i> Daily Report
+                    </a>
+                </li>
+            @endcan
             @can('project-show')
                 @if (Auth::user()->hasRole('Admin'))
                     <li class="nav-item">
