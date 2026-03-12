@@ -25,7 +25,13 @@ class TaskController extends Controller
         $this->authorize('task-show');
         $user = Auth::user();
         $tasks = Task::query()
-            ->with('project', 'user')
+            // ->with('project', 'user')
+            ->with([
+                'project',
+                'user' => function ($query) {
+                    $query->withTrashed();
+                }
+            ])
             ->whereHas('project', function ($query) {
                 $query->whereNull('deleted_at');
             })
@@ -57,10 +63,14 @@ class TaskController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        $users = User::role('employee')->get();
+        $users = User::role('employee')->withTrashed()->get();
         $project = null;
         if ($request->get('project_id')) {
-            $project = Client::with('users')->find($request->get('project_id'));
+            // $project = Client::with('users')->find($request->get('project_id'));
+
+            $project = Client::with(['users' => function ($query) {
+                $query->withTrashed();
+            }])->find($request->get('project_id'));
         }
 
         return view('tasks.index')->with([
@@ -75,7 +85,7 @@ class TaskController extends Controller
     {
         $this->authorize('task-create');
 
-      $validated =  $request->validate([
+        $validated =  $request->validate([
             'client_id' => 'required|numeric',
             'user_id' => 'required|exists:users,id',
             'title' => 'required|string|max:255',
@@ -108,7 +118,7 @@ class TaskController extends Controller
     {
         $this->authorize('task-edit');
 
-       $validated = $request->validate([
+        $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'due_date' => 'nullable|date',
@@ -309,8 +319,7 @@ class TaskController extends Controller
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
         $projectid = $request->input('project_id');
-        return Excel::download(new TaskExport($fromDate,$toDate,$projectid), 'tasks.xlsx');
-
+        return Excel::download(new TaskExport($fromDate, $toDate, $projectid), 'tasks.xlsx');
     }
     public function destroy(Task $task)
     {

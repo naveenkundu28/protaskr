@@ -17,13 +17,21 @@ class Service extends Model
         'hours',
         'service_status',
         'start_date',
-        'end_date'
+        'end_date',
+        'front_resource',
+        'working_resource',
+        'reason',
     ];
 
 
-    public function users()
+    public function frontResource()
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsTo(User::class, 'front_resource')->withTrashed();
+    }
+
+    public function workingResource()
+    {
+        return $this->belongsTo(User::class, 'working_resource')->withTrashed();
     }
 
     public function client()

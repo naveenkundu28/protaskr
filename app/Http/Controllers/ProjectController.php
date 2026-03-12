@@ -9,6 +9,7 @@ use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ProjectController extends Controller
 {
@@ -39,7 +40,9 @@ class ProjectController extends Controller
             }
         ]);
 
-        $projects = $projects->with('users')->latest()
+        $projects = $projects->with(['users' => function ($query) {
+            $query->withTrashed();
+        }])->latest()
             ->paginate(50)
             ->withQueryString();
         // dd($projects);
@@ -51,7 +54,7 @@ class ProjectController extends Controller
     {
         $this->authorize('project-create');
 
-        $employees = User::role('Employee')->get();
+        $employees = User::role('Employee')->withTrashed()->get();
         return view('clients.create', compact('employees'));
     }
 
@@ -81,16 +84,19 @@ class ProjectController extends Controller
     public function show(Client $client)
     {
         $this->authorize('project-show');
-        $teamMembers = $client->users()->get();
-        $users = User::all();
+        $teamMembers = $client->allUsers()->get();
+        $users = User::withTrashed()->get();
         return view('clients.show', compact('client', 'teamMembers', 'users'));
     }
     public function edit(Client $client)
     {
         $this->authorize('project-edit');
-        $employees = User::role('Employee')->get();
-        $client->load('teamProjects'); // eager load relation
-
+        $employees = User::role('Employee')->withTrashed()->get();
+        $client->load([
+            'teamProjects' => function ($query) {
+                $query->withTrashed();
+            }
+        ]);
         return view('clients.edit', compact('client', 'employees'));
     }
 
@@ -124,7 +130,7 @@ class ProjectController extends Controller
         // dd($client);
         $this->authorize('project-delete');
 
-        DB::table('client_teams')->where('client_id', $id)->delete();
+        // DB::table('client_teams')->where('client_id', $id)->delete();
 
         Client::findOrFail($id)->delete();
 
@@ -184,9 +190,16 @@ class ProjectController extends Controller
     {
         $this->authorize('service-show');
 
-        $services = $client->services()->with('users')->paginate(10);
+        $services = $client->services()
+            ->with(['frontResource', 'workingResource'])
+            ->latest()
+            ->paginate(10);
 
-        return view('clients.services.index', compact('services', 'client'));
+        // return print_r($services);
+
+        $employees = $client->users()->role('Employee')->withTrashed()->get();
+
+        return view('clients.services.index', compact('services', 'client', 'employees'));
     }
 
     public function createService(Client $client)
@@ -204,17 +217,45 @@ class ProjectController extends Controller
 
         $request->validate([
             'service_type' => 'required|in:direct,proxy,external',
-            'service_id' => 'required|unique:services',
+            'service_id' => 'required|unique:services,service_id',
             'hours' => 'nullable|numeric',
-            'service_status' => 'required|in:new,continuing,closed',
+            'service_status' => 'required|in:new,in_progress,completed,replacement,canceled',
+
+            'front_resource' => 'nullable|exists:users,id',
+            'working_resource' => 'nullable|exists:users,id',
+
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
-            'employee' => 'required|array'
+
+            'reason' => 'nullable|string'
         ]);
 
-        $service = $client->services()->create($request->all());
+        $data = $request->only([
+            'service_type',
+            'service_id',
+            'hours',
+            'service_status',
+            'front_resource',
+            'working_resource',
+            'start_date',
+            'end_date',
+            'reason'
+        ]);
 
-        $service->users()->attach($request->employee);
+        // clean fields depending on status
+        if ($data['service_status'] !== 'new') {
+            $data['start_date'] = null;
+        }
+
+        if ($data['service_status'] !== 'completed') {
+            $data['end_date'] = null;
+        }
+
+        if ($data['service_status'] !== 'canceled') {
+            $data['reason'] = null;
+        }
+
+        $client->services()->create($data);
 
         return redirect()
             ->route('clients.services.index', $client->id)
@@ -233,21 +274,58 @@ class ProjectController extends Controller
 
     public function updateService(Request $request, Client $client, Service $service)
     {
+        // print_r($service);
+        // exit;
         $this->authorize('service-edit');
 
-        $request->validate([
-            'service_type' => 'required|in:direct,proxy,external',
-            'service_id' => 'required|unique:services,service_id,' . $service->id,
-            'hours' => 'nullable|numeric',
-            'service_status' => 'required|in:new,continuing,closed',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'employee' => 'required|array'
+        $duplicateExists = Service::where('service_id', $request->service_id)
+            ->where('id', '!=', $service->id)
+            ->exists();
+
+        $rules = [
+            'service_type'      => 'required|in:direct,proxy,external',
+            'service_id'        => 'required',
+            'hours'             => 'nullable|numeric',
+            'service_status'    => 'required|in:new,in_progress,completed,replacement,canceled',
+            'front_resource'    => 'required|exists:users,id',
+            'working_resource'  => 'required|exists:users,id',
+            'start_date'        => 'nullable|date',
+            'end_date'          => 'nullable|date|after_or_equal:start_date',
+            'reason'         => 'nullable|string'
+        ];
+
+        if ($duplicateExists) {
+            $rules['service_id'] .= '|unique:services,service_id';
+        }
+
+        $request->validate($rules);
+
+        $data = $request->only([
+            'service_type',
+            'service_id',
+            'hours',
+            'service_status',
+            'front_resource',
+            'working_resource',
+            'start_date',
+            'end_date',
+            'reason'
         ]);
 
-        $service->update($request->all());
+        // clean fields depending on status
+        if ($data['service_status'] !== 'new') {
+            $data['start_date'] = null;
+        }
 
-        $service->users()->sync($request->employee);
+        if ($data['service_status'] !== 'completed') {
+            $data['end_date'] = null;
+        }
+
+        if ($data['service_status'] !== 'canceled') {
+            $data['reason'] = null;
+        }
+
+        $service->update($data);
 
         return redirect()
             ->route('clients.services.index', $client->id)
