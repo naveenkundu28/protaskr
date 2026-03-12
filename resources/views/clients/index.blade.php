@@ -32,7 +32,29 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">{{ $project->name }}</h5>
-                            <p class="card-text">{{ $project->project_name }}</p>
+                            @if ($project->client_email)
+                                <p class="card-text">
+                                    <strong>Email:</strong> {{ $project->client_email }}
+                                </p>
+                            @endif
+                            @if ($project->client_code)
+                                <p class="card-text">
+                                    <strong>Code:</strong> {{ $project->client_code }}
+                                </p>
+                            @endif
+
+                            @if ($project->project_name)
+                                <p class="card-text">
+                                    <strong>Project Name:</strong> {{ $project->project_name }}
+                                </p>
+                            @endif
+
+                            @if ($project->start_date)
+                                <p class="card-text">
+                                    <strong>Start Date:</strong>
+                                    {{ \Carbon\Carbon::parse($project->start_date)->format('j F Y') }}
+                                </p>
+                            @endif
 
                             {{-- <p class="card-text">{{ $project->description }}</p> --}}
                             <p class="card-text">
@@ -46,13 +68,14 @@
                                     @endforeach
                                 @endisset
                             </p>
-                            <p class="card-text">
+                            {{-- <p class="card-text">
                                 <strong>Pending Tasks:</strong>
                                 {{ $project->to_do_tasks + $project->in_progress_tasks + $project->in_review_tasks }}
-                            </p>
+                            </p> --}}
 
                             @if (request('type') == 'archived')
-                                <form action="{{ route('clients.restore', $project->id) }}" method="POST" class="d-inline">
+                                <form action="{{ route('clients.restore', $project->id) }}" method="POST"
+                                    class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-success"
                                         onclick="return confirm('Are you sure you want to restore this project?')">
@@ -160,7 +183,8 @@
                                             <form action="{{ route('clients.restore', $project->id) }}" method="POST"
                                                 class="d-inline">
                                                 @csrf
-                                                <button type="submit" class="border-0 py-2 text-danger text-start w-100 bg-white"
+                                                <button type="submit"
+                                                    class="border-0 text-danger text-start w-100 bg-white"
                                                     onclick="return confirm('Are you sure you want to restore this project?')">
                                                     Restore
                                                 </button>
@@ -218,13 +242,13 @@
                                                 <hr class="my-1" />
                                             </li>
 
-                                            <li>
+                                            <li class="py-2">
                                                 <form action="{{ route('clients.destroy', $project->id) }}" method="POST"
                                                     class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit"
-                                                        class="border-0 py-2 text-danger text-start w-100 bg-white"
+                                                        class="border-0 text-danger text-start w-100 bg-white"
                                                         onclick="return confirm('Are you sure you want to delete this project?')">
                                                         Delete
                                                     </button>

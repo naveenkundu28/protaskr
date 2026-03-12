@@ -106,7 +106,7 @@ class UserController extends Controller
     {
         $this->authorize('user-show');
 
-        $user = User::with(['primarySkills', 'secondarySkills', 'tags'])->findOrFail($id);
+        $user = User::with(['primarySkills', 'secondarySkills', 'tags'])->withTrashed()->findOrFail($id);
 
         return view('users.show', compact('user'));
     }
@@ -195,5 +195,15 @@ class UserController extends Controller
         $user->delete();
         return redirect()->route('users.index')
             ->with('success', 'User resigned successfully');
+    }
+
+    public function resignedUsers(Request $request): View
+    {
+        $this->authorize('user-show');
+
+        $data = User::with(['primarySkills', 'secondarySkills', 'tags'])->onlyTrashed()->latest()->paginate(50);
+
+        return view('users.resigned.index', compact('data'))
+            ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 }

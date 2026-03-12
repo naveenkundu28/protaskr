@@ -5,7 +5,10 @@
         <div class="row">
             <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
                 <h2>Users Management</h2>
-                <a href="{{ route('users.create') }}" class="btn btn-primary">Create New User</a>
+                <div>
+                    <a href="{{ route('resign.users.index') }}" class="btn btn-warning">Resigned Users</a>
+                    <a href="{{ route('users.create') }}" class="btn btn-primary">Create New User</a>
+                </div>
             </div>
         </div>
 
