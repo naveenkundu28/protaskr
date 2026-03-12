@@ -3,12 +3,14 @@
 @section('content')
 <div class="container">
     <div class="row">
-        <div class="col-lg-12 margin-tb d-flex align-items-center justify-content-between mb-4">
-            <div class="pull-left">
-                <h2>Edit User</h2>
-            </div>
-            <div class="pull-right">
-                <a class="btn btn-primary btn-sm mb-2" href="{{ route('users.index') }}"><i class="fa fa-arrow-left"></i> Back</a>
+        <div class="col-lg-12 mb-4 margin-tb">
+            <div class="d-flex align-items-center justify-content-between shadow-sm p-3 rounded bg-white">
+                <div class="pull-left">
+                    <h2>Edit User</h2>
+                </div>
+                <div class="pull-right">
+                    <a class="btn btn-primary btn-sm" href="{{ route('users.index') }}"><i class="fa fa-arrow-left"></i> Back</a>
+                </div>
             </div>
         </div>
     </div>
@@ -24,138 +26,140 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('users.update', $user->id) }}">
-        @csrf
-        @method('PUT')
+    <div class="card border-0 p-4 mb-4 shadow-sm m-auto">
+        <form method="POST" action="{{ route('users.update', $user->id) }}">
+            @csrf
+            @method('PUT')
 
-        <div class="row">
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>User Type:</strong>
-                    <select name="user_type" class="form-control">
-                        <option value="Internal" {{ $user->user_type == 'Internal' ? 'selected' : '' }}>Internal</option>
-                        <option value="External" {{ $user->user_type == 'External' ? 'selected' : '' }}>External</option>
-                    </select>
+            <div class="row">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>User Type:</strong>
+                        <select name="user_type" class="form-control mt-2">
+                            <option value="Internal" {{ $user->user_type == 'Internal' ? 'selected' : '' }}>Internal</option>
+                            <option value="External" {{ $user->user_type == 'External' ? 'selected' : '' }}>External</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Employee ID:</strong>
-                    <input type="text" name="employee_id" placeholder="Employee ID" class="form-control" value="{{ $user->employee_id }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Employee ID:</strong>
+                        <input type="text" name="employee_id" placeholder="Employee ID" class="form-control mt-2" value="{{ $user->employee_id }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Joining Date:</strong>
-                    <input type="date" name="joining_date" class="form-control" value="{{ $user->joining_date }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Joining Date:</strong>
+                        <input type="date" name="joining_date" class="form-control mt-2" value="{{ $user->joining_date }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Name:</strong>
-                    <input type="text" name="name" placeholder="Name" class="form-control" value="{{ $user->name }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Name:</strong>
+                        <input type="text" name="name" placeholder="Name" class="form-control mt-2" value="{{ $user->name }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Email:</strong>
-                    <input type="email" name="email" placeholder="Email" class="form-control" value="{{ $user->email }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Email:</strong>
+                        <input type="email" name="email" placeholder="Email" class="form-control mt-2" value="{{ $user->email }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Experience (Years):</strong>
-                    <input type="number" name="experience" placeholder="Experience (Years)" class="form-control" value="{{ $user->experience }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Experience (Years):</strong>
+                        <input type="number" name="experience" placeholder="Experience (Years)" class="form-control mt-2" value="{{ $user->experience }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Phone No:</strong>
-                    <input type="text" name="phone_no" placeholder="Phone No" class="form-control" value="{{ $user->phone_no }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Phone No:</strong>
+                        <input type="text" name="phone_no" placeholder="Phone No" class="form-control mt-2" value="{{ $user->phone_no }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Alternate Phone No:</strong>
-                    <input type="text" name="alt_phone_no" placeholder="Alternate Phone No" class="form-control" value="{{ $user->alt_phone_no }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Alternate Phone No:</strong>
+                        <input type="text" name="alt_phone_no" placeholder="Alternate Phone No" class="form-control mt-2" value="{{ $user->alt_phone_no }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Password:</strong>
-                    <input type="password" name="password" placeholder="Password" class="form-control">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Password:</strong>
+                        <input type="password" name="password" placeholder="Password" class="form-control mt-2">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Confirm Password:</strong>
-                    <input type="password" name="confirm-password" placeholder="Confirm Password" class="form-control">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Confirm Password:</strong>
+                        <input type="password" name="confirm-password" placeholder="Confirm Password" class="form-control mt-2">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Primary Skills:</strong>
-                    <select name="primary_skills[]" class="form-control select2" multiple>
-                        @foreach($skills as $skill)
-                            <option value="{{ $skill->id }}" {{ in_array($skill->id,$userPrimarySkills) ? 'selected' : '' }}>{{ $skill->name }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Primary Skills:</strong>
+                        <select name="primary_skills[]" class="form-control mt-2 select2" multiple>
+                            @foreach($skills as $skill)
+                                <option value="{{ $skill->id }}" {{ in_array($skill->id,$userPrimarySkills) ? 'selected' : '' }}>{{ $skill->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Secondary Skills:</strong>
-                    <select name="secondary_skills[]" class="form-control select2" multiple>
-                        @foreach($skills as $skill)
-                            <option value="{{ $skill->id }}"  {{ in_array($skill->id,$userSecondarySkills) ? 'selected' : '' }}>{{ $skill->name }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Secondary Skills:</strong>
+                        <select name="secondary_skills[]" class="form-control mt-2 select2" multiple>
+                            @foreach($skills as $skill)
+                                <option value="{{ $skill->id }}"  {{ in_array($skill->id,$userSecondarySkills) ? 'selected' : '' }}>{{ $skill->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Tags:</strong>
-                    <select name="tags[]" class="form-control select2" multiple>
-                        @foreach($tags as $tag)
-                            <option value="{{ $tag->id }}" {{ in_array($tag->id,$userTags) ? 'selected' : '' }}>{{ $tag->name }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Tags:</strong>
+                        <select name="tags[]" class="form-control mt-2 select2" multiple>
+                            @foreach($tags as $tag)
+                                <option value="{{ $tag->id }}" {{ in_array($tag->id,$userTags) ? 'selected' : '' }}>{{ $tag->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Allow Manual Tracking:</strong>
-                    <select name="manual" class="form-control select2">
-                        <option value="1" {{ $user->manual ? 'selected':'' }}>
-                            Yes
-                        </option>
-                        <option value="0" {{ !$user->manual ? 'selected':'' }}>
-                            No
-                        </option>
-
-                    </select>
-                </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-4">
-                <div class="form-group">
-                    <strong>Role:</strong>
-                    <select name="roles[]" class="form-control select2" multiple="multiple">
-                        @foreach ($roles as $value => $label)
-                            <option value="{{ $value }}" {{ isset($userRole[$value]) ? 'selected' : '' }}>
-                                {{ $label }}
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Allow Manual Tracking:</strong>
+                        <select name="manual" class="form-control mt-2 select2">
+                            <option value="1" {{ $user->manual ? 'selected':'' }}>
+                                Yes
                             </option>
-                        @endforeach
-                    </select>
+                            <option value="0" {{ !$user->manual ? 'selected':'' }}>
+                                No
+                            </option>
+
+                        </select>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-4">
+                    <div class="form-group">
+                        <strong>Role:</strong>
+                        <select name="roles[]" class="form-control mt-2 select2" multiple="multiple">
+                            @foreach ($roles as $value => $label)
+                                <option value="{{ $value }}" {{ isset($userRole[$value]) ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="col-xs-12 col-sm-12 col-md-12 text-center">
+                    <button type="submit" class="btn btn-primary btn-sm mt-2 mb-3"><i class="fa-solid fa-floppy-disk"></i> Submit</button>
                 </div>
             </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 text-center">
-                <button type="submit" class="btn btn-primary btn-sm mt-2 mb-3"><i class="fa-solid fa-floppy-disk"></i> Submit</button>
-            </div>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 @endsection
 
