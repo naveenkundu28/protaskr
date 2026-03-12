@@ -14,13 +14,14 @@ class Service extends Model
         'service_type',
         'client_id',
         'service_id',
+        'month',
         'hours',
         'service_status',
         'start_date',
         'end_date',
         'front_resource',
         'working_resource',
-        'reason',
+        'cancel_reason',
     ];
 
 

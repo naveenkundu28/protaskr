@@ -202,7 +202,7 @@ class ProjectController extends Controller
         return view('clients.services.index', compact('services', 'client', 'employees'));
     }
 
-    
+
 
     public function storeService(Request $request, Client $client)
     {
@@ -210,29 +210,45 @@ class ProjectController extends Controller
 
         $request->validate([
             'service_type' => 'required|in:direct,proxy,external',
-            'service_id' => 'required|unique:services,service_id',
-            'hours' => 'nullable|numeric',
+            'service_id' => 'required',
+            'month' => 'required|numeric',
+            'hours' => 'required|numeric',
             'service_status' => 'required|in:new,in_progress,completed,replacement,canceled',
 
             'front_resource' => 'nullable|exists:users,id',
             'working_resource' => 'nullable|exists:users,id',
 
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'start_date' => [
+                'nullable',
+                'date',
+                Rule::requiredIf($request->service_status === 'new')
+            ],
 
-            'reason' => 'nullable|string'
+            'end_date' => [
+                'nullable',
+                'date',
+                'after_or_equal:start_date',
+                Rule::requiredIf($request->service_status === 'completed' || $request->service_status === 'canceled')
+            ],
+
+            'cancel_reason' => [
+                'nullable',
+                'string',
+                Rule::requiredIf($request->service_status === 'canceled')
+            ]
         ]);
 
         $data = $request->only([
             'service_type',
             'service_id',
+            'month',
             'hours',
             'service_status',
             'front_resource',
             'working_resource',
             'start_date',
             'end_date',
-            'reason'
+            'cancel_reason'
         ]);
 
         // clean fields depending on status
@@ -240,12 +256,12 @@ class ProjectController extends Controller
             $data['start_date'] = null;
         }
 
-        if ($data['service_status'] !== 'completed') {
+        if ($data['service_status'] !== 'completed' || $data['service_status'] !== 'canceled') {
             $data['end_date'] = null;
         }
 
         if ($data['service_status'] !== 'canceled') {
-            $data['reason'] = null;
+            $data['cancel_reason'] = null;
         }
 
         $client->services()->create($data);
@@ -255,43 +271,66 @@ class ProjectController extends Controller
             ->with('success', 'Service created successfully');
     }
 
+    public function servicesShow(Client $client, Service $service)
+    {
+        $this->authorize('service-show');
+        $service->load(['frontResource', 'workingResource']);
+        return view('clients.services.show', compact('client', 'service'));
+    }
 
     public function updateService(Request $request, Client $client, Service $service)
     {
         $this->authorize('service-edit');
 
-        $duplicateExists = Service::where('service_id', $request->service_id)
-            ->where('id', '!=', $service->id)
-            ->exists();
+        // $duplicateExists = Service::where('service_id', $request->service_id)
+        //     ->where('id', '!=', $service->id)
+        //     ->exists();
 
         $rules = [
             'service_type'      => 'required|in:direct,proxy,external',
             'service_id'        => 'required',
-            'hours'             => 'nullable|numeric',
+            'month'             => 'required|numeric',
+            'hours'             => 'required|numeric',
             'service_status'    => 'required|in:new,in_progress,completed,replacement,canceled',
             'front_resource'    => 'required|exists:users,id',
             'working_resource'  => 'required|exists:users,id',
-            'start_date'        => 'nullable|date',
-            'end_date'          => 'nullable|date|after_or_equal:start_date',
-            'reason'         => 'nullable|string'
+            'start_date' => [
+                'nullable',
+                'date',
+                Rule::requiredIf($request->service_status === 'new')
+            ],
+
+            'end_date' => [
+                'nullable',
+                'date',
+                'after_or_equal:start_date',
+                Rule::requiredIf($request->service_status === 'completed' || $request->service_status === 'canceled')
+            ],
+
+            'cancel_reason' => [
+                'nullable',
+                'string',
+                Rule::requiredIf($request->service_status === 'canceled')
+            ]
         ];
 
-        if ($duplicateExists) {
-            $rules['service_id'] .= '|unique:services,service_id';
-        }
+        // if ($duplicateExists) {
+        //     $rules['service_id'] .= '|unique:services,service_id';
+        // }
 
         $request->validate($rules);
 
         $data = $request->only([
             'service_type',
             'service_id',
+            'month',
             'hours',
             'service_status',
             'front_resource',
             'working_resource',
             'start_date',
             'end_date',
-            'reason'
+            'cancel_reason'
         ]);
 
         // clean fields depending on status
@@ -299,12 +338,12 @@ class ProjectController extends Controller
             $data['start_date'] = null;
         }
 
-        if ($data['service_status'] !== 'completed') {
+        if ($data['service_status'] !== 'completed' && $data['service_status'] !== 'canceled') {
             $data['end_date'] = null;
         }
 
         if ($data['service_status'] !== 'canceled') {
-            $data['reason'] = null;
+            $data['cancel_reason'] = null;
         }
 
         $service->update($data);
