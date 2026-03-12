@@ -24,7 +24,9 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('roles', RoleController::class);
+    Route::get('/users/resigned', [UserController::class, 'resignedUsers'])->name('resign.users.index');
     Route::resource('users', UserController::class);
+
     Route::get('mail', [MailController::class, 'index'])->name('mail.inbox');
 
     Route::get('/master-hours', [HourController::class, 'create'])->name('master.hours.create');

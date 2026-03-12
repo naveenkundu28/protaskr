@@ -5,10 +5,10 @@
 <div class="row">
     <div class="col-lg-12 margin-tb d-flex align-items-center justify-content-between mb-4">
         <div class="pull-left">
-            <h2> Show User</h2>
+            <h2> {{ $user->deleted_at == null ? 'Show User' : 'Show Resign User' }}</h2>
         </div>
         <div class="pull-right">
-            <a class="btn btn-primary" href="{{ route('users.index') }}"> Back</a>
+            <a class="btn btn-primary" href="{{ route($user->deleted_at == null ? 'users.index' : 'resign.users.index') }}"> Back</a>
         </div>
     </div>
 </div>

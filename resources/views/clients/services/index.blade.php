@@ -119,7 +119,7 @@
                         </div>
 
 
-                        <div class="col-md-6 mb-3 d-none" id="start_date_div">
+                        <div class="col-md-4 mb-3 d-none" id="start_date_div">
                             <label>Start Date</label>
                             <input type="date" name="start_date" id="start_date" class="form-control">
                             @error('start_date')
@@ -128,7 +128,7 @@
                         </div>
 
 
-                        <div class="col-md-6 mb-3 d-none" id="end_date_div">
+                        <div class="col-md-4 mb-3 d-none" id="end_date_div">
                             <label>End Date</label>
                             <input type="date" name="end_date" id="end_date" class="form-control">
                             @error('end_date')
@@ -137,7 +137,7 @@
                         </div>
 
 
-                        <div class="col-md-12 mb-3 d-none" id="reason_div">
+                        <div class="col-md-4 mb-3 d-none" id="reason_div">
                             <label>Reason</label>
                             <textarea name="reason" id="reason" class="form-control"></textarea>
                             @error('reason')
@@ -214,9 +214,9 @@
 
                     <td>{{ ucfirst(str_replace('_', ' ', $service->service_status)) }}</td>
 
-                    <td>{{ $service->start_date }}</td>
+                    <td>{{ $service->start_date ? \Carbon\Carbon::parse($service->start_date)->format('j F Y') : '' }}</td>
 
-                    <td>{{ $service->end_date }}</td>
+                    <td>{{ $service->end_date ? \Carbon\Carbon::parse($service->end_date)->format('j F Y') : '' }}</td>
 
                     <td>
                         <div class="dropdown">
@@ -228,7 +228,7 @@
                                 @can('service-edit')
                                     <li class="px-2 py-2">
 
-                                        <button class="border-0 py-2 text-info text-start w-100 bg-white editService"
+                                        <button class="border-0 text-info text-start w-100 bg-white editService"
                                             data-service='@json($service)'>
                                             Edit
                                         </button>
@@ -241,7 +241,7 @@
                                         <hr class="my-1" />
                                     </li>
                                     <li class="px-2 py-2">
-                                        <button class="border-0 py-2 text-success text-start w-100 bg-white copyService"
+                                        <button class="border-0 text-success text-start w-100 bg-white copyService"
                                             data-service='@json($service)'>
                                             Copy
                                         </button>
@@ -262,7 +262,7 @@
                                             @csrf
                                             @method('DELETE')
 
-                                            <button class="border-0 py-2 text-danger text-start w-100 bg-white"
+                                            <button class="border-0 text-danger text-start w-100 bg-white"
                                                 onclick="return confirm('Are you sure you want to delete this service?')">
                                                 Delete
                                             </button>

@@ -9,6 +9,7 @@ class HourController extends Controller
 {
     public function create()
     {
+        $this->authorize('user-create');
         $currentYear = date('Y');
 
         $years = range($currentYear - 10, $currentYear + 10);
@@ -33,6 +34,7 @@ class HourController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('user-create');
         $months = [
             'January',
             'February',
