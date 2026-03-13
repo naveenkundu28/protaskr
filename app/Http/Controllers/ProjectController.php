@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Service;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -192,8 +193,21 @@ class ProjectController extends Controller
 
         $services = $client->services()
             ->with(['frontResource', 'workingResource'])
+            ->select('*')
+            ->selectSub(function ($query) {
+                $query->from('services as s2')
+                    ->select('start_date')
+                    ->whereColumn('s2.service_id', 'services.service_id')
+                    ->where('service_status', 'new')
+                    ->limit(1);
+            }, 'main_start_date')
             ->latest()
             ->paginate(10);
+
+        // $services = $client->services()
+        //     ->with(['frontResource', 'workingResource'])
+        //     ->latest()
+        //     ->paginate(10);
 
         // return print_r($services);
 
@@ -211,7 +225,7 @@ class ProjectController extends Controller
         $request->validate([
             'service_type' => 'required|in:direct,proxy,external',
             'service_id' => 'required',
-            'month' => 'required|numeric',
+            // 'month' => 'required|numeric',
             'hours' => 'required|numeric',
             'service_status' => 'required|in:new,in_progress,completed,replacement,canceled',
 
@@ -235,33 +249,67 @@ class ProjectController extends Controller
                 'nullable',
                 'string',
                 Rule::requiredIf($request->service_status === 'canceled')
-            ]
+            ],
+            'replacement_reason' => [
+                'nullable',
+                'string',
+                Rule::requiredIf($request->service_status === 'replacement')
+            ],
         ]);
 
         $data = $request->only([
             'service_type',
             'service_id',
-            'month',
+            // 'month',
             'hours',
             'service_status',
             'front_resource',
             'working_resource',
             'start_date',
             'end_date',
-            'cancel_reason'
+            'cancel_reason',
+            'replacement_reason',
         ]);
+
+
+        // START: check if same month(created_at), same service_id & same front & working resource then record cant be inserted or updated, it can be inserted if different month
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
+
+        $exists = $client->services()
+            ->where('service_id', $request->service_id)
+            ->where('front_resource', $request->front_resource)
+            ->where('working_resource', $request->working_resource)
+            ->whereMonth('created_at', $currentMonth)
+            ->whereYear('created_at', $currentYear)
+            ->exists();
+
+        if ($exists) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors([
+                    'service_id' => 'This service already exists for the same resources in the current month.'
+                ]);
+        }
+
+        // END: check if same month(created_at), same service_id & same front & working resource then record cant be inserted or updated, it can be inserted if different month
 
         // clean fields depending on status
         if ($data['service_status'] !== 'new') {
             $data['start_date'] = null;
         }
 
-        if ($data['service_status'] !== 'completed' || $data['service_status'] !== 'canceled') {
+        if ($data['service_status'] !== 'completed' || $data['service_status'] !== 'canceled' || $data['service_status'] !== 'replacement') {
             $data['end_date'] = null;
         }
 
         if ($data['service_status'] !== 'canceled') {
             $data['cancel_reason'] = null;
+        }
+
+        if ($data['service_status'] !== 'replacement') {
+            $data['replacement_reason'] = null;
         }
 
         $client->services()->create($data);
@@ -282,14 +330,12 @@ class ProjectController extends Controller
     {
         $this->authorize('service-edit');
 
-        // $duplicateExists = Service::where('service_id', $request->service_id)
-        //     ->where('id', '!=', $service->id)
-        //     ->exists();
+
 
         $rules = [
             'service_type'      => 'required|in:direct,proxy,external',
             'service_id'        => 'required',
-            'month'             => 'required|numeric',
+            // 'month'             => 'required|numeric',
             'hours'             => 'required|numeric',
             'service_status'    => 'required|in:new,in_progress,completed,replacement,canceled',
             'front_resource'    => 'required|exists:users,id',
@@ -311,39 +357,73 @@ class ProjectController extends Controller
                 'nullable',
                 'string',
                 Rule::requiredIf($request->service_status === 'canceled')
-            ]
+            ],
+            'replacement_reason' => [
+                'nullable',
+                'string',
+                Rule::requiredIf($request->service_status === 'replacement')
+            ],
         ];
 
-        // if ($duplicateExists) {
-        //     $rules['service_id'] .= '|unique:services,service_id';
-        // }
+
 
         $request->validate($rules);
 
         $data = $request->only([
             'service_type',
             'service_id',
-            'month',
+            // 'month',
             'hours',
             'service_status',
             'front_resource',
             'working_resource',
             'start_date',
             'end_date',
-            'cancel_reason'
+            'cancel_reason',
+            'replacement_reason'
         ]);
+
+
+        // START: check if same month(created_at), same service_id & same front & working resource then record cant be inserted or updated, it can be inserted if different month
+        $currentMonth = Carbon::now()->month;
+        $currentYear = Carbon::now()->year;
+
+        $exists = $client->services()
+            ->where('service_id', $request->service_id)
+            ->where('id', '!=', $service->id)
+            ->where('front_resource', $request->front_resource)
+            ->where('working_resource', $request->working_resource)
+            ->whereMonth('created_at', $currentMonth)
+            ->whereYear('created_at', $currentYear)
+            ->exists();
+
+        if ($exists) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors([
+                    'service_id' => 'This service already exists for the same resources in the current month.'
+                ]);
+        }
+
+        // END: check if same month(created_at), same service_id & same front & working resource then record cant be inserted or updated, it can be inserted if different month
+
+
 
         // clean fields depending on status
         if ($data['service_status'] !== 'new') {
             $data['start_date'] = null;
         }
 
-        if ($data['service_status'] !== 'completed' && $data['service_status'] !== 'canceled') {
+        if ($data['service_status'] !== 'completed' && $data['service_status'] !== 'canceled' && $data['service_status'] !== 'replacement') {
             $data['end_date'] = null;
         }
 
         if ($data['service_status'] !== 'canceled') {
             $data['cancel_reason'] = null;
+        }
+        if ($data['service_status'] !== 'replacement') {
+            $data['replacement_reason'] = null;
         }
 
         $service->update($data);

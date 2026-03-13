@@ -58,24 +58,6 @@
                             @enderror
                         </div>
 
-                        <div class="col-md-4 mb-3">
-                            <label>Month</label>
-                            <select name="month" id="month" class="form-control" required>
-                                <option value="">Select Month</option>
-
-                                @foreach (range(1, 12) as $m)
-                                    <option value="{{ $m }}" {{ old('month') == $m ? 'selected' : '' }}>
-                                        {{ \Carbon\Carbon::create()->month($m)->format('F') }}
-                                    </option>
-                                @endforeach
-
-                            </select>
-
-                            @error('month')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-
 
                         <div class="col-md-4 mb-3">
                             <label>Hours</label>
@@ -168,6 +150,14 @@
                             @enderror
                         </div>
 
+                        <div class="col-md-4 mb-3 d-none" id="replacement_reason_div">
+                            <label>Replacement Reason</label>
+                            <textarea name="replacement_reason" id="replacement_reason" class="form-control"></textarea>
+                            @error('replacement_reason')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+
 
                     </div>
 
@@ -192,7 +182,7 @@
         <table class="table table-bordered">
 
             <tr>
-                <th>ID</th>
+                <th>S.No</th>
                 <th>Type</th>
                 <th>Front Resource</th>
                 <th>Working Resource</th>
@@ -202,22 +192,22 @@
                 <th>Status</th>
                 <th>Start Date</th>
                 <th>End Date</th>
-                <th>Cancel Reason</th>
-                <th width="220">Action</th>
+                <th style="width:250px">Reason</th>
+                <th>Action</th>
             </tr>
 
 
             @foreach ($services as $service)
                 <tr>
 
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $services->firstItem() + $loop->index }}</td>
 
                     <td>{{ ucfirst($service->service_type) }}</td>
 
                     <td>
 
                         @if ($service->frontResource)
-                            <span class="badge bg-primary">
+                            <span>
                                 {{ $service->frontResource->name }}
                             </span>
                         @endif
@@ -226,7 +216,7 @@
                     <td>
 
                         @if ($service->workingResource)
-                            <span class="badge bg-success">
+                            <span>
                                 {{ $service->workingResource->name }}
                             </span>
                         @endif
@@ -235,23 +225,32 @@
 
                     <td>{{ $service->service_id }}</td>
 
-                    <td>{{ $service->month ? \Carbon\Carbon::create()->month($service->month)->format('F') : '' }}</td>
+                    <td>{{ $service->created_at ? $service->created_at->format('F') : '' }}</td>
                     <td>{{ $service->hours }}</td>
 
                     <td>{{ ucfirst(str_replace('_', ' ', $service->service_status)) }}</td>
 
-                    <td>{{ $service->start_date ? \Carbon\Carbon::parse($service->start_date)->format('j F Y') : '' }}</td>
+                    <td>
+                        {{ $service->start_date
+                            ? \Carbon\Carbon::parse($service->start_date)->format('j F Y')
+                            : ($service->main_start_date
+                                ? \Carbon\Carbon::parse($service->main_start_date)->format('j F Y')
+                                : '') }}
+                    </td>
 
                     <td>{{ $service->end_date ? \Carbon\Carbon::parse($service->end_date)->format('j F Y') : '' }}</td>
 
-                    <td>{{ $service->cancel_reason }}</td>
+                    <td style="width:250px">
+                        {{ $service->cancel_reason ?? ($service->replacement_reason ?? '') }}
+                    </td>
 
                     <td>
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                Actions
+                                <i class="bi bi-list-task"></i>
                             </button>
                             <ul class="dropdown-menu py-0">
+
                                 @can('service-show')
                                     <li class="px-2 py-2">
                                         <a href="{{ route('clients.services.show', [$client->id, $service->id]) }}"
@@ -327,6 +326,41 @@
     <script>
         $(document).ready(function() {
 
+            // --------------to handle service type & resources--------------
+            function handleResource() {
+                let serviceType = $('#service_type').val();
+
+                if (serviceType !== 'proxy') {
+                    $('#working_resource').val($('#front_resource').val());
+                    $('#working_resource')
+                        .addClass('bg-light')
+                        .css('pointer-events', 'none') // prevents change
+                    // $('#working_resource').prop('disabled', true);
+                } else {
+                    // $('#working_resource').prop('disabled', false);
+                    $('#working_resource')
+                        .removeClass('bg-light')
+                        .css('pointer-events', 'auto');
+                }
+            }
+
+            // when service type changes
+            $('#service_type').change(function() {
+                handleResource();
+            });
+
+            // when front resource changes
+            $('#front_resource').change(function() {
+                if ($('#service_type').val() !== 'proxy') {
+                    $('#working_resource').val($(this).val());
+                }
+            });
+
+            handleResource(); // run on page load
+
+            // --------------END: to handle service type & resources--------------
+
+
 
             function toggleFields() {
 
@@ -335,6 +369,7 @@
                 $('#start_date_div').addClass('d-none')
                 $('#end_date_div').addClass('d-none')
                 $('#reason_div').addClass('d-none')
+                $('#replacement_reason_div').addClass('d-none')
 
                 if (status === 'new')
                     $('#start_date_div').removeClass('d-none')
@@ -344,6 +379,10 @@
 
                 if (status === 'canceled') {
                     $('#reason_div').removeClass('d-none')
+                    $('#end_date_div').removeClass('d-none')
+                }
+                if (status === 'replacement') {
+                    $('#replacement_reason_div').removeClass('d-none')
                     $('#end_date_div').removeClass('d-none')
                 }
 
@@ -369,6 +408,7 @@
                 $('#start_date').val(service.start_date)
                 $('#end_date').val(service.end_date)
                 $('#reason').val(service.cancel_reason)
+                $('#replacement_reason').val(service.replacement_reason)
 
                 toggleFields()
 

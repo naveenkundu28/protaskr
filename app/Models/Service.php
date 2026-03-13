@@ -22,6 +22,7 @@ class Service extends Model
         'front_resource',
         'working_resource',
         'cancel_reason',
+        'replacement_reason',
     ];
 
 
