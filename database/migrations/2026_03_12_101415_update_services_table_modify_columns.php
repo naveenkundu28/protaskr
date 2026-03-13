@@ -24,7 +24,6 @@ return new class extends Migration
     {
         Schema::table('services', function (Blueprint $table) {
             $table->unique('service_id');
-            $table->dropColumn('month');
         });
 
         DB::statement('ALTER TABLE `services` CHANGE `cancel_reason` `reason` TEXT NULL');
