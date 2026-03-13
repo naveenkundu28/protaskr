@@ -182,7 +182,7 @@
         <table class="table table-bordered">
 
             <tr>
-                <th>ID</th>
+                <th>S.No</th>
                 <th>Type</th>
                 <th>Front Resource</th>
                 <th>Working Resource</th>
@@ -193,14 +193,14 @@
                 <th>Start Date</th>
                 <th>End Date</th>
                 <th style="width:250px">Reason</th>
-                <th width="220">Action</th>
+                <th>Action</th>
             </tr>
 
 
             @foreach ($services as $service)
                 <tr>
 
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ $services->firstItem() + $loop->index }}</td>
 
                     <td>{{ ucfirst($service->service_type) }}</td>
 
