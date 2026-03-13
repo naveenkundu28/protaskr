@@ -187,6 +187,7 @@
                 <th>Front Resource</th>
                 <th>Working Resource</th>
                 <th>Service ID</th>
+                <th>Month</th>
                 <th>Hours</th>
                 <th>Status</th>
                 <th>Start Date</th>
@@ -224,6 +225,7 @@
 
                     <td>{{ $service->service_id }}</td>
 
+                    <td>{{ $service->created_at ? $service->created_at->format('F') : '' }}</td>
                     <td>{{ $service->hours }}</td>
 
                     <td>{{ ucfirst(str_replace('_', ' ', $service->service_status)) }}</td>
@@ -245,9 +247,10 @@
                     <td>
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                Actions
+                                <i class="bi bi-list-task"></i>
                             </button>
                             <ul class="dropdown-menu py-0">
+
                                 @can('service-show')
                                     <li class="px-2 py-2">
                                         <a href="{{ route('clients.services.show', [$client->id, $service->id]) }}"

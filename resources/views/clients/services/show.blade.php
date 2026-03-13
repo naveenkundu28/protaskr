@@ -46,7 +46,7 @@
     
                 <div class="col-md-6 mb-3">
                     <strong>Month:</strong><br>
-                    {{ $service->month ? \Carbon\Carbon::create()->month($service->month)->format('F') : '' }}
+                    <td>{{ $service->created_at ? $service->created_at->format('F') : '' }}</td>
                 </div>
     
                 <div class="col-md-6 mb-3">
