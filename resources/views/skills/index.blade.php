@@ -45,7 +45,7 @@
                         <span class="badge bg-success">{{ $user->name }}</span>
                     </a>
                 @empty
-                    <span class="badge bg-secondary">No Resource</span>
+                    <span class="badge bg-warning">No Resource</span>
                 @endforelse
             </td>
             <td>

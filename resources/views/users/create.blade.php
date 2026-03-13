@@ -120,7 +120,7 @@
                     <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                         <div class="form-group">
                             <strong>Tags:</strong>
-                            <select name="tags[]" class="form-control select2 mt-2" multiple>
+                            <select name="tags[]" class="form-control select2 mt-2">
                                 @foreach($tags as $tag)
                                 <option value="{{ $tag->id }}">{{ $tag->name }}</option>
                                 @endforeach

@@ -87,12 +87,19 @@ body {
     color: #0f172a;
 }
 
+@media (min-width: 1200px) {
+    .task-navbar .nav-item.dropdown:hover > .dropdown-menu {
+        display: block;
+        margin-top: 0;
+    }
+}
+
 .task-navbar-meta {
     color: #e2e8f0;
 }
 
 .current-datetime {
-    font-size: .9rem;
+    font-size: .78rem;
     white-space: nowrap;
 }
 
@@ -258,6 +265,38 @@ main {
 .userListingTable th, .userListingTable td{
     padding: 8px;
     font-size: 14px;
+}
+
+.skill-item {
+    display: inline-block;
+    background: #000; /* light black */
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin: 2px;
+}
+
+.skill-bg-secondary{
+    background:#2f2f2f;
+}
+
+.admin-bg{
+    background-color: #198754;
+    font-weight: bold;
+}
+
+
+@media (max-width: 1480px) {
+    .task-navbar .navbar-nav .nav-link{
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+
+    .current-datetime{
+        font-size: 12px;
+    }
+
+    
 }
 
 @media (max-width: 1199.98px) {

@@ -39,20 +39,41 @@
                         <ul class="navbar-nav align-items-xl-center gap-xl-1">
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-                                    <i class="bi bi-house-door"></i> Home
+                                    <i class="bi bi-house-door"></i> Dashboard
                                 </a>
                             </li>
                             @can('project-show')
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle {{ request()->is('projects*') ? 'active' : '' }}"
+                                    <a class="nav-link dropdown-toggle {{ request()->is('clients*') ? 'active' : '' }}"
                                         href="{{ route('clients.index') }}" role="button" data-bs-toggle="dropdown"
                                         aria-expanded="false">
                                         <i class="bi bi-folder"></i> Clients
                                     </a>
                                     <ul class="dropdown-menu">
                                         <li>
-                                            <a class="dropdown-item" href="{{ route('clients.index') }}">List Clients</a>
+                                            <a class="dropdown-item {{ request()->is('clients?type=archived*') ? 'active' : '' }}" href="{{ route('clients.index') }}">
+                                                <i class="bi bi-list-ul me-2"></i> List Clients
+                                            </a>
                                         </li>
+                                        <li>
+                                            <a class="dropdown-item {{ request()->routeIs('services.listing') ? 'active' : '' }}"
+                                                href="{{ route('services.listing') }}">
+                                                <i class="bi bi-table me-2"></i> Service Listing
+                                            </a>
+                                        </li>
+                                        @if (Auth::user()->hasRole('Admin'))
+                                            <li>
+                                                <a class="dropdown-item {{ request('type') == 'archived' ? 'active' : '' }}"
+                                                    href="{{ route('clients.index', ['type' => 'archived']) }}">
+                                                    <i class="bi bi-archive me-2"></i> Archived Clients
+                                                </a>
+                                            </li>
+                                        @endif
+                                        {{-- <li>
+                                            <a class="dropdown-item {{ request()->is('clients*') ? 'active' : '' }}" href="{{ route('clients.index') }}">
+                                                <i class="bi bi-list-ul me-2"></i> Services List
+                                            </a>
+                                        </li> --}}
                                     </ul>
                                 </li>
                             @endcan
@@ -66,13 +87,13 @@
                                         <li>
                                             <a class="dropdown-item {{ request()->is('skills*') ? 'active' : '' }}"
                                                 href="{{ route('skills.index') }}">
-                                                <i class="bi bi-people"></i> Skills
+                                                <i class="bi bi-lightbulb me-2"></i> Skills
                                             </a>
                                         </li>
                                         <li>
                                             <a class="dropdown-item {{ request()->is('tags*') ? 'active' : '' }}"
                                                 href="{{ route('tags.index') }}">
-                                                <i class="bi bi-people"></i> Tags
+                                                <i class="bi bi-tags me-2"></i> Tags
                                             </a>
                                         </li>
                                         <li>
@@ -83,22 +104,36 @@
                                     </ul>
                                 </li>
                             @endcan
+
+                            @can('user-show')
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle {{ request()->is('users*') || request()->is('users/resigned*') ? 'active' : '' }}"
+                                        href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-people"></i> Users
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item {{ request()->is('users') ? 'active' : '' }}"
+                                                href="{{ route('users.index') }}">
+                                                <i class="bi bi-people"></i> Users list
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {{ request()->is('users/resigned*') ? 'active' : '' }}"
+                                                href="{{ route('resign.users.index') }}">
+                                                <i class="bi "></i> Resigned Users
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            @endcan
+                            
                             @can('task-show')
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('tasks*') ? 'active' : '' }}" href="{{ route('tasks.index') }}">
                                         <i class="bi bi-check2-square"></i> My Tasks
                                     </a>
                                 </li>
-                            @endcan
-                            @can('user-show')
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('users*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-                                        <i class="bi bi-people"></i> Users
-                                    </a>
-                                </li>
-                            @endcan
-                            @can('user-show')
-                                
                             @endcan
                             @can('role-show')
                                 <li class="nav-item">
@@ -113,16 +148,6 @@
                                         <i class="bi bi-bar-chart"></i> Daily Report
                                     </a>
                                 </li>
-                            @endcan
-                            @can('project-show')
-                                @if (Auth::user()->hasRole('Admin'))
-                                    <li class="nav-item">
-                                        <a class="nav-link {{ request('type') == 'archived' ? 'active' : '' }}"
-                                            href="{{ route('clients.index', ['type' => 'archived']) }}">
-                                            <i class="bi bi-sticky"></i> Archived Projects
-                                        </a>
-                                    </li>
-                                @endif
                             @endcan
                         </ul>
                         <div class="task-navbar-meta ms-xl-auto d-flex flex-column flex-xl-row align-items-xl-center gap-2 gap-xl-3">

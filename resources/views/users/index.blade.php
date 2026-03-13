@@ -24,13 +24,12 @@
                 <tr>
                     <th>No</th>
                     <th>User Type</th>
-                    <th>Employee ID</th>
+                    <th>Emp ID</th>
                     <th>Joining Date</th>
                     <th>Name</th>
                     <th>Email</th>
-                    <th>Phone No</th>
-                    <th>Alternate Phone No</th>
-                    <th>Experience</th>
+                    <th>Phone Nos</th>
+                    <th>Exp</th>
                     <th>Primary Skills</th>
                     <th>Secondary Skills</th>
                     <th>Tags</th>
@@ -46,34 +45,37 @@
                         </td>
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
-                        <td>{{ $user->phone_no }}</td>
-                        <td>{{ $user->alt_phone_no }}</td>
+                        <td>{{ implode(' , ', array_filter([$user->phone_no, $user->alt_phone_no])) }}</td>
                         <td>{{ $user->experience }}</td>
-                        <td>
+                        <td class="text-wrap">
                             @if (!empty($user->primarySkills))
                                 @foreach ($user->primarySkills as $skill)
-                                    <span class="badge bg-primary">{{ $skill->name }}</span>
+                                    <span class="skill-item">{{ $skill->name }}</span>
                                 @endforeach
                             @endif
                         </td>
-                        <td>
+                        <td class="text-wrap">
                             @if (!empty($user->secondarySkills))
                                 @foreach ($user->secondarySkills as $skill)
-                                    <span class="badge bg-secondary">{{ $skill->name }}</span>
+                                    <span class="skill-item skill-bg-secondary">{{ $skill->name }}</span>
                                 @endforeach
                             @endif
                         </td>
                         <td>
                             @if (!empty($user->tags))
                                 @foreach ($user->tags as $tag)
-                                    <span class="badge bg-info">{{ $tag->name }}</span>
+                                    <span>{{ $tag->name }}</span>
                                 @endforeach
                             @endif
                         </td>
                         <td>
                             @if (!empty($user->getRoleNames()))
                                 @foreach ($user->getRoleNames() as $v)
-                                    <label class="badge bg-success">{{ $v }}</label>
+                                    @if ($v == 'Admin')
+                                        <label class="skill-item admin-bg">{{ $v }}</label>
+                                    @else
+                                        <label class="">{{ $v }}</label>
+                                    @endif
                                 @endforeach
                             @endif
                         </td>

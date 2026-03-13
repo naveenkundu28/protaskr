@@ -34,6 +34,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/master-hours', [HourController::class, 'store'])->name('master.hours.store');
 
     Route::resource('clients', ProjectController::class);
+    Route::get('/service-listing', [ProjectController::class, 'serviceListing'])->name('services.listing');
     Route::post('clients/{clientId}/restore', [ProjectController::class, 'restore'])->name('clients.restore');
     Route::post('client/team', [ProjectController::class, 'addMember'])->name('clients.addMember');
     Route::post('/clients/remove-member', [ProjectController::class, 'removeMember'])->name('clients.removeMember');
