@@ -9,28 +9,24 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Drop unique index from service_id
         Schema::table('services', function (Blueprint $table) {
-            $table->dropUnique(['service_id']);
-
-            // Rename column
-            $table->renameColumn('reason', 'cancel_reason');
-
-            // add month
-            $table->unsignedTinyInteger('month')->nullable()->after('hours');
+            if (collect(DB::select("SHOW INDEX FROM `services` WHERE Key_name = 'services_service_id_unique'"))->isNotEmpty()) {
+                $table->dropUnique(['service_id']);
+            }
+            // $table->unsignedTinyInteger('month')->nullable()->after('hours');
         });
+
+        // Use CHANGE COLUMN for compatibility with MariaDB < 10.5.2
+        DB::statement('ALTER TABLE `services` CHANGE `reason` `cancel_reason` TEXT NULL');
     }
 
     public function down(): void
     {
-        // Add unique back
         Schema::table('services', function (Blueprint $table) {
             $table->unique('service_id');
-
-            // Revert column name
-            $table->renameColumn('cancel_reason', 'reason');
-
             $table->dropColumn('month');
         });
+
+        DB::statement('ALTER TABLE `services` CHANGE `cancel_reason` `reason` TEXT NULL');
     }
 };
