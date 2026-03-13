@@ -3,13 +3,15 @@
     Roles
 @endsection
 @section('content')
-<div class="container">
-<div class="row">
-    <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
-        <h2>Role Management</h2>
-        <a href="{{ route('roles.create') }}" class="btn btn-primary">Create New Role</a>
+<div class="container-fluid">
+    <div style="padding: 0px 12px;">
+        <div class="row">
+            <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
+                <h2>Role Management</h2>
+                <a href="{{ route('roles.create') }}" class="btn btn-primary">Create New Role</a>
+            </div>
+        </div>
     </div>
-</div>
 
 @session('success')
     <div class="alert alert-success" role="alert"> 

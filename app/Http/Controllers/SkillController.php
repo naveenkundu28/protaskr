@@ -11,7 +11,10 @@ class SkillController extends Controller
     public function index(Request $request)
     {
         $this->authorize('user-show');
-        $skills = Skill::latest()->paginate(50);
+        $skills = Skill::with([
+            'primaryUsers:id,name',
+            'secondaryUsers:id,name',
+        ])->latest()->paginate(50);
 
         return view('skills.index', compact('skills'))->with('i', ($request->input('page', 1) - 1) * 5);
     }

@@ -68,7 +68,7 @@
                 <tbody>
                     @foreach($dates as $date)
                     <tr class="f-12">
-                        <td>{{ date('d-M-Y (l)',strtotime($date)) }}</td>
+                        <td>{{ date('d (D)', strtotime($date)) }}</td>
                         @foreach($users as $user)
                             @php
                                 $report = $reports[$date][$user->id][0] ?? null;

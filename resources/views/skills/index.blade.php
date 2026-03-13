@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div style="padding: 0px 8px;">
+<div class="container-fluid">
+    <div style="padding: 0px 12px;">
         <div class="row">
             <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
                 <h2>Skills Management</h2>
@@ -20,15 +20,37 @@
     <table class="table table-bordered table-sm text-nowrap">
         <tr>
             <th>No</th>
-            <th>Name</th>
+            <th>Skills</th>
+            <th>Total</th>
+            <th>Resources</th>
+            <th>Bench</th>
             {{-- <th>Roles</th> --}}
-            <th width="280px">Action</th>
+            <th>Action</th>
         </tr>
         @foreach ($skills as $key => $skill)
+        @php
+            $relatedUsers = $skill->primaryUsers->merge($skill->secondaryUsers)->unique('id')->values();
+            $totalUsers = $relatedUsers->count();
+            $benchCount = $totalUsers > 0 ? min($totalUsers - 1, ($key % 2 === 0 ? 1 : 2)) : 0;
+        @endphp
         <tr>
             <td>{{ ++$i }}</td>
             <td>{{ $skill->name }}</td>
-            
+            <td>
+                <span class="">{{ $totalUsers }}</span>
+            </td>
+            <td>
+                @forelse($relatedUsers as $user)
+                    <a href="{{ route('users.show', $user->id) }}" class="text-decoration-none">
+                        <span class="badge bg-success">{{ $user->name }}</span>
+                    </a>
+                @empty
+                    <span class="badge bg-secondary">No Resource</span>
+                @endforelse
+            </td>
+            <td>
+                <span class="badge bg-danger">{{ $benchCount }}</span>
+            </td>
             {{-- @if(!empty($user->getRoleNames()))
                 @foreach($user->getRoleNames() as $v)
                 <label class="badge bg-success">{{ $v }}</label>

@@ -1,8 +1,6 @@
 body {
-    display: flex;
-    height: 100vh;
+    min-height: 100vh;
     margin: 0;
-    overflow: hidden;
     background-color: rgb(241 245 249);
     font-family: "Noto Sans", sans-serif !important;
 }
@@ -18,32 +16,10 @@ body {
     font-size: .875rem !important;
 }
 
-.sidebar {
-    width: 250px;
-    background-color: #343a40;
-    color: white;
-    flex-shrink: 0;
+.app-shell {
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-}
-
-.sidebar .nav-link {
-    color: white;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid #495057;
-}
-
-.sidebar .nav-link:hover,
-.sidebar .nav-link.active {
-    background-color: #495057;
-    border-radius: 0.25rem;
-}
-
-.sidebar .nav-link .bi {
-    margin-right: 10px;
 }
 
 .content {
@@ -56,21 +32,68 @@ body {
 .topnav {
     flex-shrink: 0;
     width: 100%;
-    background-color: #ffffff;
+    background: linear-gradient(90deg, #1f2937 0%, #334155 100%);
     box-shadow: 0 .125rem .25rem rgba(0, 0, 0, .075) !important;
+    position: sticky;
+    top: 0;
+    z-index: 1030;
 }
 
 .navbar-brand {
     font-weight: bold;
-    color: #343a40;
+    color: #fff;
 }
 
-.navbar-nav .nav-link {
-    color: #343a40;
+.task-navbar {
+    padding-top: .75rem;
+    padding-bottom: .75rem;
 }
 
-.navbar-nav .nav-link:hover {
-    color: #007bff;
+.task-logo img {
+    max-height: 42px;
+    width: auto;
+    filter: invert(100%) brightness(200%);
+}
+
+.task-navbar .navbar-toggler {
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.task-navbar .navbar-toggler-icon {
+    filter: invert(1);
+}
+
+.task-navbar .navbar-nav .nav-link {
+    color: rgba(255, 255, 255, 0.88);
+    border-radius: 999px;
+    padding: .5rem .85rem;
+}
+
+.task-navbar .navbar-nav .nav-link:hover,
+.task-navbar .navbar-nav .nav-link.active,
+.task-navbar .navbar-nav .show > .nav-link {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+.task-navbar .dropdown-menu {
+    border: none;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+}
+
+.task-navbar .dropdown-item.active,
+.task-navbar .dropdown-item:active {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+.task-navbar-meta {
+    color: #e2e8f0;
+}
+
+.current-datetime {
+    font-size: .9rem;
+    white-space: nowrap;
 }
 
 .card {
@@ -86,6 +109,7 @@ footer {
 
 main {
     flex-grow: 1;
+    padding: 0 0 1.5rem;
 }
 
 .accordion-button {
@@ -234,4 +258,18 @@ main {
 .userListingTable th, .userListingTable td{
     padding: 8px;
     font-size: 14px;
+}
+
+@media (max-width: 1199.98px) {
+    .task-navbar .navbar-collapse {
+        padding-top: 1rem;
+    }
+
+    .task-navbar .navbar-nav {
+        gap: .35rem;
+    }
+
+    .current-datetime {
+        white-space: normal;
+    }
 }

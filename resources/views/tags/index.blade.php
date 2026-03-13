@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div style="padding: 0px 8px;">
+<div class="container-fluid">
+    <div style="padding: 0px 12px;">
         <div class="row">
             <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
                 <h2>Tags Management</h2>
