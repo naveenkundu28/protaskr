@@ -11,7 +11,7 @@ class HourController extends Controller
     {
         $this->authorize('user-create');
         $currentYear = date('Y');
-
+        $hours = Hour::where('year', $currentYear)->get()->keyBy('month');
         $years = range($currentYear, $currentYear + 10);
 
         $months = [
@@ -29,7 +29,7 @@ class HourController extends Controller
             'December'
         ];
 
-        return view('hours.create', compact('years', 'months', 'currentYear'));
+        return view('hours.create', compact('years', 'months', 'currentYear','hours'));
     }
 
     public function store(Request $request)

@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="container">
-
+{{-- {{ dd($hours) }} --}}
         <div class="card">
             <div class="card-header">
                 <h4>Master Hours</h4>
@@ -47,7 +47,7 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">{{ $month }}</label>
 
-                                <input type="number" name="months[{{ $month }}]" class="form-control" value="{{ old('months.'.$month) }}" placeholder="Enter hours">
+                                <input type="number" name="months[{{ $month }}]" class="form-control" value="{{ old('months.'.$month, $hours[$month]->hours ?? '') }}" placeholder="Enter hours">
 
                                 @error('months.' . $month)
                                     <span class="text-danger">
