@@ -22,180 +22,154 @@
 </head>
 
 <body>
-    <div class="sidebar d-flex flex-column p-3">
-        <h4 class="mb-4 text-center">
-            <a href="{{ route('dashboard') }}">
-                <img style="filter: invert(100%) brightness(200%);"
-                    src="{{ asset('assets/img/logo-circle-horizontal.png') }}" class="img-fluid" width="100%"
-                    alt="task manager">
-            </a>
-        </h4>
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-                    <i class="bi bi-house-door"></i> Home
-                </a>
-            </li>
-            @can('project-show')
-                <li class="nav-item">
-                    <div class="accordion" id="projectsAccordion">
-                        <div class="accordion-item position-relative">
-                            <h6 class="accordion-header d-flex justify-content-between align-items-center"
-                                id="headingProjects">
-                                <!-- Projects text with link -->
-                                <a class="nav-link d-flex align-items-center w-100 {{ request()->is('projects*') ? 'active' : '' }}"
-                                    href="{{ route('clients.index') }}">
-                                    <i class="bi bi-folder"></i> Clients
-                                </a>
-
-                                <!-- Arrow button for dropdown -->
-                                <button
-                                    class="text-white accordion-button collapsed border-0 bg-transparent shadow-none p-0 position-absolute end-0 w-25"
-                                    type="button" data-bs-toggle="collapse" data-bs-target="#collapseProjects"
-                                    aria-expanded="false" aria-controls="collapseProjects">
-                                </button>
-                            </h6>
-
-                            <div id="collapseProjects" class="accordion-collapse collapse" aria-labelledby="headingProjects"
-                                data-bs-parent="#projectsAccordion">
-                                <div class="accordion-body">
-                                    <ul class="list-group custom-h">
-                                        <li class="list-group-item f-14">
-                                            <a class="nav-link"
-                                                href="{{ route('clients.index') }}">
-                                                List Clients
-
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </li>
-
-
-            @endcan
-            @can('user-show')
-                <li class="nav-item">
-                    <div class="accordion" id="mastersAccordion">
-                        <div class="accordion-item position-relative">
-                            <h6 class="accordion-header d-flex justify-content-between align-items-center"
-                                id="headingMasters">
-                                <a data-bs-toggle="collapse" data-bs-target="#collapseMasters" aria-expanded="false" aria-controls="collapseMasters" class="nav-link d-flex align-items-center w-100  {{ request()->is('masters*') ? 'active' : '' }}"
-                                    href="javascript:void(0)">
-                                    <i class="bi bi-folder"></i> Masters
-                                </a>
-
-                                <!-- Arrow button for dropdown -->
-                                <button
-                                    class="text-white accordion-button collapsed border-0 bg-transparent shadow-none p-0 position-absolute end-0 w-25"
-                                    type="button" data-bs-toggle="collapse" data-bs-target="#collapseMasters"
-                                    aria-expanded="false" aria-controls="collapseMasters">
-                                </button>
-                            </h6>
-
-                            <div id="collapseMasters" class="accordion-collapse collapse" aria-labelledby="headingMasters"
-                                data-bs-parent="#mastersAccordion">
-                                <div class="accordion-body">
-                                    <ul class="list-group custom-h" style="padding-left: 14px">
-                                        <li class="nav-item">
-                                            <a class="nav-link {{ request()->is('skills*') ? 'active' : '' }}" href="{{ route('skills.index') }}">
-                                                <i class="bi bi-people"></i>Skills
-                                            </a>
-                                        </li>
-                                       <li class="nav-item">
-                                            <a class="nav-link {{ request()->is('tags*') ? 'active' : '' }}" href="{{ route('tags.index') }}">
-                                                <i class="bi bi-people"></i>Tags
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </li>
-
-
-            @endcan
-            @can('task-show')
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('tasks*') ? 'active' : '' }}" href="{{ route('tasks.index') }}">
-                        <i class="bi bi-check2-square"></i> My Tasks
-                    </a>
-                </li>
-            @endcan
-            @can('user-show')
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('users*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-                        <i class="bi bi-people"></i> Users
-                    </a>
-                </li>
-            @endcan
-            @can('user-show')
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('year*') ? 'active' : '' }}" href="{{ route('master.hours.create') }}">
-                        <i class="bi bi-clock"></i> Master Hours
-                    </a>
-                </li>
-            @endcan
-            @can('role-show')
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('roles*') ? 'active' : '' }}" href="{{ route('roles.index') }}">
-                        <i class="bi bi-sticky"></i> Roles
-                    </a>
-                </li>
-            @endcan
-            @can('user-show')
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('daily-report*') ? 'active' : '' }}" href="{{ route('daily.report') }}">
-                        <i class="bi bi-bar-chart"></i> Daily Report
-                    </a>
-                </li>
-            @endcan
-            @can('project-show')
-                @if (Auth::user()->hasRole('Admin'))
-                    <li class="nav-item">
-                        <a class="nav-link {{ request('type') == 'archived' ? 'active' : '' }}"
-                            href="{{ route('clients.index', ['type' => 'archived']) }}">
-                            <i class="bi bi-sticky"></i> Archived Projects
-                        </a>
-                    </li>
-                @endif
-            @endcan
-        </ul>
-    </div>
-
-    <div class="content d-flex flex-column">
+    <div class="app-shell">
         <header class="topnav mb-4">
-            <nav class="navbar navbar-expand-lg navbar-light">
+            <nav class="navbar navbar-expand-xl task-navbar">
                 <div class="container-fluid">
-                    <a class="navbar-brand" href="{{ route('dashboard') }}">
-                        <span class="fw-normal" id="currentDateTime"></span>
+                    <a class="navbar-brand task-logo" href="{{ route('dashboard') }}">
+                        <img src="{{ asset('assets/img/logo-circle-horizontal.png') }}" class="img-fluid"
+                            alt="task manager">
                     </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                         data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false"
                         aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
-                    <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
-                        <ul class="navbar-nav">
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                    {{ Auth::user()->name }}
+                    <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                        <ul class="navbar-nav align-items-xl-center gap-xl-1">
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                                    <i class="bi bi-house-door"></i> Dashboard
                                 </a>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                    <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Update Profile</a></li>
-                                    <li>
-                                        <form method="POST" action="{{ route('logout') }}" id="logout-form">
-                                            @csrf
-                                            <button type="submit" class="dropdown-item">Logout</button>
-                                        </form>
-                                    </li>
-                                </ul>
                             </li>
+                            @can('project-show')
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle {{ request()->is('clients*') ? 'active' : '' }}"
+                                        href="{{ route('clients.index') }}" role="button" data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                        <i class="bi bi-folder"></i> Clients
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item {{ request()->is('clients?type=archived*') ? 'active' : '' }}" href="{{ route('clients.index') }}">
+                                                <i class="bi bi-list-ul me-2"></i> List Clients
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {{ request()->routeIs('services.listing') ? 'active' : '' }}"
+                                                href="{{ route('services.listing') }}">
+                                                <i class="bi bi-table me-2"></i> Service Listing
+                                            </a>
+                                        </li>
+                                        @if (Auth::user()->hasRole('Admin'))
+                                            <li>
+                                                <a class="dropdown-item {{ request('type') == 'archived' ? 'active' : '' }}"
+                                                    href="{{ route('clients.index', ['type' => 'archived']) }}">
+                                                    <i class="bi bi-archive me-2"></i> Archived Clients
+                                                </a>
+                                            </li>
+                                        @endif
+                                        {{-- <li>
+                                            <a class="dropdown-item {{ request()->is('clients*') ? 'active' : '' }}" href="{{ route('clients.index') }}">
+                                                <i class="bi bi-list-ul me-2"></i> Services List
+                                            </a>
+                                        </li> --}}
+                                    </ul>
+                                </li>
+                            @endcan
+                            @can('user-show')
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle {{ request()->is('skills*') || request()->is('tags*') ? 'active' : '' }}"
+                                        href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-folder"></i> Masters
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item {{ request()->is('skills*') ? 'active' : '' }}"
+                                                href="{{ route('skills.index') }}">
+                                                <i class="bi bi-lightbulb me-2"></i> Skills
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {{ request()->is('tags*') ? 'active' : '' }}"
+                                                href="{{ route('tags.index') }}">
+                                                <i class="bi bi-tags me-2"></i> Tags
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {{ request()->is('year*') ? 'active' : '' }}" href="{{ route('master.hours.create') }}">
+                                                <i class="bi bi-clock"></i> Hours
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            @endcan
+
+                            @can('user-show')
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle {{ request()->is('users*') || request()->is('users/resigned*') ? 'active' : '' }}"
+                                        href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="bi bi-people"></i> Users
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item {{ request()->is('users') ? 'active' : '' }}"
+                                                href="{{ route('users.index') }}">
+                                                <i class="bi bi-people"></i> Users list
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {{ request()->is('users/resigned*') ? 'active' : '' }}"
+                                                href="{{ route('resign.users.index') }}">
+                                                <i class="bi "></i> Resigned Users
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            @endcan
+                            
+                            @can('task-show')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('tasks*') ? 'active' : '' }}" href="{{ route('tasks.index') }}">
+                                        <i class="bi bi-check2-square"></i> My Tasks
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('role-show')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('roles*') ? 'active' : '' }}" href="{{ route('roles.index') }}">
+                                        <i class="bi bi-sticky"></i> Roles
+                                    </a>
+                                </li>
+                            @endcan
+                            @can('user-show')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('daily-report*') ? 'active' : '' }}" href="{{ route('daily.report') }}">
+                                        <i class="bi bi-bar-chart"></i> Daily Report
+                                    </a>
+                                </li>
+                            @endcan
                         </ul>
+                        <div class="task-navbar-meta ms-xl-auto d-flex flex-column flex-xl-row align-items-xl-center gap-2 gap-xl-3">
+                            <span class="current-datetime" id="currentDateTime"></span>
+                            <ul class="navbar-nav">
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                        {{ Auth::user()->name }}
+                                    </a>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                        <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Update Profile</a></li>
+                                        <li>
+                                            <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                                                @csrf
+                                                <button type="submit" class="dropdown-item">Logout</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </nav>

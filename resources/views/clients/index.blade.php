@@ -3,7 +3,7 @@
     Projects
 @endsection
 @section('content')
-    <div class="container">
+    <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center bg-white mb-4 shadow-sm p-3 rounded">
             <h2>{{ request('type') == 'archived' ? 'Archived Clients' : 'Clients' }}</h2>
             <div>
@@ -175,7 +175,7 @@
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                    Actions
+                                    <i class="bi bi-list-task"></i> 
                                 </button>
                                 <ul class="dropdown-menu py-0">
                                     @if (request('type') == 'archived')

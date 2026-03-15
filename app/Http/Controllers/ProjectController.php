@@ -216,6 +216,25 @@ class ProjectController extends Controller
         return view('clients.services.index', compact('services', 'client', 'employees'));
     }
 
+    public function serviceListing()
+    {
+        $this->authorize('service-show');
+
+        $services = Service::with(['client', 'frontResource', 'workingResource'])
+            ->select('*')
+            ->selectSub(function ($query) {
+                $query->from('services as s2')
+                    ->select('start_date')
+                    ->whereColumn('s2.service_id', 'services.service_id')
+                    ->where('service_status', 'new')
+                    ->limit(1);
+            }, 'main_start_date')
+            ->latest()
+            ->paginate(20);
+
+        return view('clients.services.listing', compact('services'));
+    }
+
 
 
     public function storeService(Request $request, Client $client)

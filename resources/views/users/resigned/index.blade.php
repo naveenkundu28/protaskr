@@ -1,32 +1,33 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
-        <div class="row">
-            <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
-                <h2>Resigned Users</h2>
+    <div class="container-fluid">
+        <div style="padding: 0px 12px">
+            <div class="row">
+                <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
+                    <h2>Resigned Users</h2>
+                </div>
             </div>
         </div>
 
 
-        <div class="table-responsive">
+        <div class="table-responsive pb-4">
             <table class="table table-bordered table-sm text-nowrap">
                 <tr>
                     <th>No</th>
                     <th>User Type</th>
-                    <th>Employee ID</th>
+                    <th>Emp ID</th>
                     <th>Joining Date</th>
                     <th>Name</th>
                     <th>Email</th>
-                    <th>Phone No</th>
-                    <th>Alternate Phone No</th>
-                    <th>Experience</th>
+                    <th>Phone Nos</th>
+                    <th>Exp</th>
                     <th>Primary Skills</th>
                     <th>Secondary Skills</th>
                     <th>Tags</th>
                     <th>Roles</th>
                     <th>Resign Reason</th>
-                    <th width="280px">Action</th>
+                    <th>Action</th>
                 </tr>
                 @foreach ($data as $key => $user)
                     <tr>
@@ -37,34 +38,37 @@
                         </td>
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
-                        <td>{{ $user->phone_no }}</td>
-                        <td>{{ $user->alt_phone_no }}</td>
+                        <td>{{ implode(' , ', array_filter([$user->phone_no, $user->alt_phone_no])) }}</td>
                         <td>{{ $user->experience }}</td>
-                        <td>
+                        <td class="text-wrap">
                             @if (!empty($user->primarySkills))
                                 @foreach ($user->primarySkills as $skill)
-                                    <span class="badge bg-primary">{{ $skill->name }}</span>
+                                    <span class="skill-item">{{ $skill->name }}</span>
                                 @endforeach
                             @endif
                         </td>
-                        <td>
+                        <td class="text-wrap">
                             @if (!empty($user->secondarySkills))
                                 @foreach ($user->secondarySkills as $skill)
-                                    <span class="badge bg-secondary">{{ $skill->name }}</span>
+                                    <span class="skill-item skill-bg-secondary">{{ $skill->name }}</span>
                                 @endforeach
                             @endif
                         </td>
                         <td>
                             @if (!empty($user->tags))
                                 @foreach ($user->tags as $tag)
-                                    <span class="badge bg-info">{{ $tag->name }}</span>
+                                    <span>{{ $tag->name }}</span>
                                 @endforeach
                             @endif
                         </td>
                         <td>
                             @if (!empty($user->getRoleNames()))
                                 @foreach ($user->getRoleNames() as $v)
-                                    <label class="badge bg-success">{{ $v }}</label>
+                                    @if ($v == 'Admin')
+                                        <label class="skill-item admin-bg">{{ $v }}</label>
+                                    @else
+                                        <label class="">{{ $v }}</label>
+                                    @endif
                                 @endforeach
                             @endif
                         </td>
@@ -74,7 +78,7 @@
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                    Actions
+                                    <i class="bi bi-list-task"></i>
                                 </button>
                                 <ul class="dropdown-menu py-0">
                                     @can('user-show')

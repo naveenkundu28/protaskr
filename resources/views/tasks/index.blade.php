@@ -3,24 +3,26 @@
     {{ isset($project) ? $project->name : 'All Tasks' }}
 @endsection
 @section('content')
-    <div class="container">
-        <div class="row">
-            <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
-                <h2> {{ isset($project) ? $project->name : 'All' }} - Tasks</h2>
-                <div>
-                    <a class="btn btn-warning"
-                    href="{{ route('tasks.index', ['filter' => 1] + (isset($project) ? ['project_id' => $project->id] : [])) }}">
-                    Filters
-                </a>
-                   
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#exportModal" class="btn btn-secondary"
-                        data-status="to_do">Export</a>
-                        @can('mark-task-complete')
-                        <button id="markCompleteBtn" onclick="submitCompletedTasks()" disabled type="submit"
-                            class="btn btn-success">Mark Tasks As Complete</button>
-                    @endcan
-                        <a href="#" data-bs-toggle="modal" data-bs-target="#createTaskModal" class="btn btn-primary"
-                        data-status="to_do">New Task</a>
+    <div class="container-fluid">
+        <div style="padding: 0px 12px;">
+            <div class="row">
+                <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
+                    <h2> {{ isset($project) ? $project->name : 'All' }} - Tasks</h2>
+                    <div>
+                        <a class="btn btn-warning"
+                        href="{{ route('tasks.index', ['filter' => 1] + (isset($project) ? ['project_id' => $project->id] : [])) }}">
+                        Filters
+                    </a>
+                    
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#exportModal" class="btn btn-secondary"
+                            data-status="to_do">Export</a>
+                            @can('mark-task-complete')
+                            <button id="markCompleteBtn" onclick="submitCompletedTasks()" disabled type="submit"
+                                class="btn btn-success">Mark Tasks As Complete</button>
+                        @endcan
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#createTaskModal" class="btn btn-primary"
+                            data-status="to_do">New Task</a>
+                    </div>
                 </div>
             </div>
         </div>

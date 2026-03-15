@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
-{{-- {{ dd($hours) }} --}}
+    <div class="container-fluid">
+
         <div class="card">
             <div class="card-header">
                 <h4>Master Hours</h4>
