@@ -1,13 +1,23 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container-fluid">
+    <div class="container">
+
+        <div class="row">
+            <div class="col-lg-12 mb-4 margin-tb">
+                <div class="d-flex align-items-center justify-content-between shadow-sm p-3 rounded bg-white">
+                    <div class="pull-left">
+                        <h2>Master Hours</h2>
+                    </div>
+                    {{-- <div class="pull-right">
+                        <a class="btn btn-primary btn-sm" href="{{ route('master.hours.create') }}"><i class="fa fa-arrow-left"></i>
+                            Back</a>
+                    </div> --}}
+                </div>
+            </div>
+        </div>
 
         <div class="card">
-            <div class="card-header">
-                <h4>Master Hours</h4>
-            </div>
-
             <div class="card-body">
 
                 @if (session('success'))
@@ -45,7 +55,7 @@
                     <div class="row">
 
                         @foreach ($months as $month)
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-2 mb-3">
                                 <label class="form-label">{{ $month }}</label>
 
                                 <input id="month_{{ $month }}" type="number" name="months[{{ $month }}]"
