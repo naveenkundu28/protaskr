@@ -299,20 +299,61 @@ class ProjectController extends Controller
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        $exists = $client->services()
+        // $exists = $client->services()
+        //     ->where('service_id', $request->service_id)
+        //     ->where('front_resource', $request->front_resource)
+        //     // ->where('working_resource', $request->working_resource)
+        //     ->whereMonth('created_at', $currentMonth)
+        //     ->whereYear('created_at', $currentYear)
+        //     ->exists();
+
+        // if ($exists) {
+        //     return redirect()
+        //         ->back()
+        //         ->withInput()
+        //         ->withErrors([
+        //             'service_id' => 'This service already exists for the same resources in the current month.'
+        //         ]);
+        // }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Rule 1: Same service + same front resource in same month/year
+        |--------------------------------------------------------------------------
+        */
+        $sameServiceExists = $client->services()
             ->where('service_id', $request->service_id)
             ->where('front_resource', $request->front_resource)
-            // ->where('working_resource', $request->working_resource)
             ->whereMonth('created_at', $currentMonth)
             ->whereYear('created_at', $currentYear)
             ->exists();
 
-        if ($exists) {
+        if ($sameServiceExists) {
             return redirect()
                 ->back()
                 ->withInput()
                 ->withErrors([
-                    'service_id' => 'This service already exists for the same resources in the current month.'
+                    'service_id' => 'This service already exists for this resource in the current month.'
+                ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Rule 2: Same front resource cannot repeat in same month/year
+        |--------------------------------------------------------------------------
+        */
+        $resourceExists = $client->services()
+            ->where('front_resource', $request->front_resource)
+            ->whereMonth('created_at', $currentMonth)
+            ->whereYear('created_at', $currentYear)
+            ->exists();
+
+        if ($resourceExists) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors([
+                    'front_resource' => 'This resource is already assigned for this month.'
                 ]);
         }
 
