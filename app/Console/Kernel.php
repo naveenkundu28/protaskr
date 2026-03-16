@@ -14,7 +14,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('email:tracker-alert')->daily();
-        $schedule->command('app:generate-reports')->dailyAt('23:59');
+        $schedule->command('app:generate-reports')->daily();
         $schedule->command('app:generate-backfill-reports');
     }
 

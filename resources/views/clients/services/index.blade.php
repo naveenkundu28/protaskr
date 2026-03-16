@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-    <div class="container">
+    <div class="container-fluid">
 
         <div class="d-flex justify-content-between align-items-center bg-white mb-4 shadow-sm p-3 rounded">
             <h2>Services - {{ $client->name }}</h2>
@@ -161,10 +161,11 @@
 
                     </div>
 
-
-                    <button class="btn btn-primary" id="submitBtn">
-                        Create Service
-                    </button>
+                    <div class="text-center">
+                        <button class="btn btn-primary" id="submitBtn">
+                            Create Service
+                        </button>
+                    </div>
 
                     <button type="button" class="btn btn-secondary d-none" id="cancelEdit">
                         Cancel
@@ -178,144 +179,145 @@
 
 
         {{-- ================= TABLE ================= --}}
+        <div class="table-responsive service-table-responsive">
+            <table class="table table-bordered">
 
-        <table class="table table-bordered">
-
-            <tr>
-                <th>S.No</th>
-                <th>Type</th>
-                <th>Front Resource</th>
-                <th>Working Resource</th>
-                <th>Service ID</th>
-                <th>Month</th>
-                <th>Hours</th>
-                <th>Status</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th style="width:250px">Reason</th>
-                <th>Action</th>
-            </tr>
-
-
-            @foreach ($services as $service)
                 <tr>
-
-                    <td>{{ $services->firstItem() + $loop->index }}</td>
-
-                    <td>{{ ucfirst($service->service_type) }}</td>
-
-                    <td>
-
-                        @if ($service->frontResource)
-                            <span>
-                                {{ $service->frontResource->name }}
-                            </span>
-                        @endif
-
-                    </td>
-                    <td>
-
-                        @if ($service->workingResource)
-                            <span>
-                                {{ $service->workingResource->name }}
-                            </span>
-                        @endif
-
-                    </td>
-
-                    <td>{{ $service->service_id }}</td>
-
-                    <td>{{ $service->created_at ? $service->created_at->format('F') : '' }}</td>
-                    <td>{{ $service->hours }}</td>
-
-                    <td>{{ ucfirst(str_replace('_', ' ', $service->service_status)) }}</td>
-
-                    <td>
-                        {{ $service->start_date
-                            ? \Carbon\Carbon::parse($service->start_date)->format('j F Y')
-                            : ($service->main_start_date
-                                ? \Carbon\Carbon::parse($service->main_start_date)->format('j F Y')
-                                : '') }}
-                    </td>
-
-                    <td>{{ $service->end_date ? \Carbon\Carbon::parse($service->end_date)->format('j F Y') : '' }}</td>
-
-                    <td style="width:250px">
-                        {{ $service->cancel_reason ?? ($service->replacement_reason ?? '') }}
-                    </td>
-
-                    <td>
-                        <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-list-task"></i>
-                            </button>
-                            <ul class="dropdown-menu py-0">
-
-                                @can('service-show')
-                                    <li class="px-2 py-2">
-                                        <a href="{{ route('clients.services.show', [$client->id, $service->id]) }}"
-                                            class="px-1 text-primary text-decoration-none d-block">
-                                            Show
-                                        </a>
-                                    </li>
-                                @endcan
-
-                                @can('service-edit')
-                                    <li>
-                                        <hr class="my-1" />
-                                    </li>
-                                    <li class="px-2 py-2">
-                                        <button class="border-0 text-info text-start w-100 bg-white editService"
-                                            data-service='@json($service)'>
-                                            Edit
-                                        </button>
-                                    </li>
-                                @endcan
-
-
-                                @can('service-create')
-                                    <li>
-                                        <hr class="my-1" />
-                                    </li>
-                                    <li class="px-2 py-2">
-                                        <button class="border-0 text-success text-start w-100 bg-white copyService"
-                                            data-service='@json($service)'>
-                                            Copy
-                                        </button>
-                                    </li>
-                                @endcan
-
-
-
-                                @can('service-delete')
-                                    <li>
-                                        <hr class="my-1" />
-                                    </li>
-
-                                    <li class="px-2 py-2">
-                                        <form action="{{ route('clients.services.destroy', [$client->id, $service->id]) }}"
-                                            method="POST" style="display:inline">
-
-                                            @csrf
-                                            @method('DELETE')
-
-                                            <button class="border-0 text-danger text-start w-100 bg-white"
-                                                onclick="return confirm('Are you sure you want to delete this service?')">
-                                                Delete
-                                            </button>
-
-                                        </form>
-                                    </li>
-                                @endcan
-
-                            </ul>
-                        </div>
-                    </td>
-
+                    <th>S.No</th>
+                    <th>Type</th>
+                    <th>Front Resource</th>
+                    <th>Working Resource</th>
+                    <th>Service ID</th>
+                    <th>Month</th>
+                    <th>Hours</th>
+                    <th>Status</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th style="width:250px">Reason</th>
+                    <th>Action</th>
                 </tr>
-            @endforeach
 
-        </table>
+
+                @foreach ($services as $service)
+                    <tr>
+
+                        <td>{{ $services->firstItem() + $loop->index }}</td>
+
+                        <td>{{ ucfirst($service->service_type) }}</td>
+
+                        <td>
+
+                            @if ($service->frontResource)
+                                <span>
+                                    {{ $service->frontResource->name }}
+                                </span>
+                            @endif
+
+                        </td>
+                        <td>
+
+                            @if ($service->workingResource)
+                                <span>
+                                    {{ $service->workingResource->name }}
+                                </span>
+                            @endif
+
+                        </td>
+
+                        <td>{{ $service->service_id }}</td>
+
+                        <td>{{ $service->created_at ? $service->created_at->format('F') : '' }}</td>
+                        <td>{{ $service->hours }}</td>
+
+                        <td>{{ ucfirst(str_replace('_', ' ', $service->service_status)) }}</td>
+
+                        <td>
+                            {{ $service->start_date
+                                ? \Carbon\Carbon::parse($service->start_date)->format('j F Y')
+                                : ($service->main_start_date
+                                    ? \Carbon\Carbon::parse($service->main_start_date)->format('j F Y')
+                                    : '') }}
+                        </td>
+
+                        <td>{{ $service->end_date ? \Carbon\Carbon::parse($service->end_date)->format('j F Y') : '' }}</td>
+
+                        <td style="width:250px">
+                            {{ $service->cancel_reason ?? ($service->replacement_reason ?? '') }}
+                        </td>
+
+                        <td>
+                            <div class="dropdown service-action-dropdown">
+                                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-list-task"></i>
+                                </button>
+                                <ul class="dropdown-menu py-0">
+
+                                    @can('service-show')
+                                        <li class="px-2 py-2">
+                                            <a href="{{ route('clients.services.show', [$client->id, $service->id]) }}"
+                                                class="px-1 text-primary text-decoration-none d-block">
+                                                Show
+                                            </a>
+                                        </li>
+                                    @endcan
+
+                                    @can('service-edit')
+                                        <li>
+                                            <hr class="my-1" />
+                                        </li>
+                                        <li class="px-2 py-2">
+                                            <button class="border-0 text-info text-start w-100 bg-white editService"
+                                                data-service='@json($service)'>
+                                                Edit
+                                            </button>
+                                        </li>
+                                    @endcan
+
+
+                                    @can('service-create')
+                                        <li>
+                                            <hr class="my-1" />
+                                        </li>
+                                        <li class="px-2 py-2">
+                                            <button class="border-0 text-success text-start w-100 bg-white copyService"
+                                                data-service='@json($service)'>
+                                                Copy
+                                            </button>
+                                        </li>
+                                    @endcan
+
+
+
+                                    @can('service-delete')
+                                        <li>
+                                            <hr class="my-1" />
+                                        </li>
+
+                                        <li class="px-2 py-2">
+                                            <form action="{{ route('clients.services.destroy', [$client->id, $service->id]) }}"
+                                                method="POST" style="display:inline">
+
+                                                @csrf
+                                                @method('DELETE')
+
+                                                <button class="border-0 text-danger text-start w-100 bg-white"
+                                                    onclick="return confirm('Are you sure you want to delete this service?')">
+                                                    Delete
+                                                </button>
+
+                                            </form>
+                                        </li>
+                                    @endcan
+
+                                </ul>
+                            </div>
+                        </td>
+
+                    </tr>
+                @endforeach
+
+            </table>
+        </div>
 
         {{ $services->links('pagination::bootstrap-5') }}
 
@@ -325,6 +327,25 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
+            $('.service-action-dropdown').on('show.bs.dropdown', function() {
+                const $dropdown = $(this);
+                const $menu = $dropdown.find('.dropdown-menu');
+                const offset = $dropdown.find('[data-bs-toggle="dropdown"]').offset();
+
+                $menu.appendTo('body').css({
+                    position: 'absolute',
+                    top: offset.top + $dropdown.outerHeight(),
+                    left: offset.left,
+                    zIndex: 1080
+                }).addClass('show');
+            });
+
+            $('.service-action-dropdown').on('hide.bs.dropdown', function() {
+                const $dropdown = $(this);
+                const $menu = $('body > .dropdown-menu.show');
+
+                $menu.removeClass('show').removeAttr('style').appendTo($dropdown);
+            });
 
             // --------------to handle service type & resources--------------
             function handleResource() {

@@ -8,11 +8,22 @@
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center bg-white mb-4 shadow-sm p-3 rounded">
             <h2>Service Listing</h2>
+            @can('service-create')
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importServicesModal">
+                    <i class="bi bi-upload me-1"></i> Import
+                </button>
+            @endcan
         </div>
 
         @if (session('success'))
             <div class="alert alert-success">
                 {{ session('success') }}
+            </div>
+        @endif
+
+        @if ($errors->has('services_file'))
+            <div class="alert alert-danger">
+                {!! nl2br(e($errors->first('services_file'))) !!}
             </div>
         @endif
 
@@ -92,5 +103,44 @@
         </div>
 
         {{ $services->links('pagination::bootstrap-5') }}
+
+        @can('service-create')
+            <div class="modal fade" id="importServicesModal" tabindex="-1" aria-labelledby="importServicesModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form action="{{ route('services.import') }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="importServicesModalLabel">Import Services</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label for="services_file" class="form-label">Upload Excel File</label>
+                                    <input type="file" class="form-control" id="services_file" name="services_file" accept=".xls,.xlsx" required>
+                                    <div class="form-text">
+                                        Accepted columns: client name, client_id, type, front_resource_id, back_end_resource_id, service_id, hours, status, start/end dates, reason fields.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Import Services</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endcan
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            @if ($errors->has('services_file'))
+                new bootstrap.Modal(document.getElementById('importServicesModal')).show();
+            @endif
+        });
+    </script>
+@endpush

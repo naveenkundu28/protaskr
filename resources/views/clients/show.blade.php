@@ -3,7 +3,7 @@
     {{ $client->name }} - Project Details
 @endsection
 @section('content')
-    <div class="container">
+    <div class="container-fluid">
         <h2 class="mb-4 shadow-sm p-3 rounded bg-white text-center"> {{ $client->name }}</h2>
 
         @if (session('success'))

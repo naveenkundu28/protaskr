@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <div style="padding: 0px 8px;">
+<div class="container-fluid">
+    <div style="padding: 0px 12px;">
         <div class="row">
             <div class="col-lg-12 margin-tb d-flex align-items-center justify-content-between mb-4 bg-white shadow-sm p-3 rounded">
                 <div class="pull-left">
