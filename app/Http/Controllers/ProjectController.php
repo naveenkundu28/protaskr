@@ -536,11 +536,12 @@ class ProjectController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Rule 2: Same front resource cannot repeat in same month/year
+        | Rule 2: Same service cannot repeat in same month/year
         |--------------------------------------------------------------------------
         */
         $resourceExists = $client->services()
-            ->where('front_resource', $request->front_resource)
+            ->where('service_id', $request->service_id)
+            // ->where('front_resource', $request->front_resource)
             ->whereMonth('created_at', $currentMonth)
             ->whereYear('created_at', $currentYear)
             ->exists();
@@ -550,7 +551,7 @@ class ProjectController extends Controller
                 ->back()
                 ->withInput()
                 ->withErrors([
-                    'front_resource' => 'This resource is already assigned for this month.'
+                    'front_resource' => 'This service is already assigned to somebody for this month.'
                 ]);
         }
 

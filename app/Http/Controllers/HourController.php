@@ -55,11 +55,11 @@ class HourController extends Controller
         ];
 
         foreach ($months as $month) {
-            $rules["months.$month"] = 'required|integer|min:0|max:744';
+            $rules["months.$month"] = 'nullable|integer|min:0|max:744';
         }
 
         $messages = [
-            'months.*.required' => 'Please enter hours for :attribute',
+            // 'months.*.required' => 'Please enter hours for :attribute',
             'months.*.integer' => 'Hours must be a number.',
             'months.*.min' => 'Hours cannot be negative.',
             'months.*.max' => 'Hours cannot exceed 744 in a month.',
@@ -76,20 +76,28 @@ class HourController extends Controller
 
         foreach ($request->months as $month => $hours) {
 
-            Hour::updateOrCreate(
-                [
-                    'year' => $request->year,
-                    'month' => $month
-                ],
-                [
-                    'hours' => $hours
-                ]
-            );
+            if ($hours !== '' && $hours !== null) {
+
+                Hour::updateOrCreate(
+                    [
+                        'year' => $request->year,
+                        'month' => $month
+                    ],
+                    [
+                        'hours' => $hours
+                    ]
+                );
+            } else {
+
+                Hour::where('year', $request->year)
+                    ->where('month', $month)
+                    ->delete();
+            }
         }
 
         return redirect()->route('master.hours.create')->with('success', 'Master hours saved successfully');
     }
-    
+
     public function getHoursByYear($year)
     {
         $hours = Hour::where('year', $year)->get()->keyBy('month');
