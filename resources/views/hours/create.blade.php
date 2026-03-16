@@ -22,10 +22,11 @@
                     <div class="mb-4">
                         <label class="form-label">Select Year</label>
 
-                        <select name="year" class="form-control">
+                        <select name="year" id="year_select" class="form-control">
 
                             @foreach ($years as $year)
-                                <option value="{{ $year }}" {{ old('year', $currentYear) == $year ? 'selected' : '' }}>
+                                <option value="{{ $year }}"
+                                    {{ old('year', $currentYear) == $year ? 'selected' : '' }}>
                                     {{ $year }}
                                 </option>
                             @endforeach
@@ -47,7 +48,9 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">{{ $month }}</label>
 
-                                <input type="number" name="months[{{ $month }}]" class="form-control" value="{{ old('months.'.$month, $hours[$month]->hours ?? '') }}" placeholder="Enter hours">
+                                <input id="month_{{ $month }}" type="number" name="months[{{ $month }}]"
+                                    class="form-control" value="{{ old('months.' . $month, $hours[$month]->hours ?? '') }}"
+                                    placeholder="Enter hours">
 
                                 @error('months.' . $month)
                                     <span class="text-danger">
@@ -70,3 +73,24 @@
 
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $('#year_select').change(function() {
+
+            let year = $(this).val()
+
+            $.get("{{ route('master.hours.get', '') }}/" + year, function(data) {
+
+                // clear all inputs first
+                $('input[id^="month_"]').val('')
+
+                // fill returned data
+                $.each(data, function(month, item) {
+                    $('#month_' + month).val(item.hours)
+                })
+
+            })
+        })
+    </script>
+@endpush

@@ -88,9 +88,23 @@
                                                 Show</a>
                                         </li>
                                     @endcan
+                                    @can('user-edit')
+                                        <li>
+                                            <hr class="my-1">
+                                        </li>
+                                        <li class="px-2 py-2">
+                                            <form action="{{ route('users.restore', $user->id) }}" method="POST">
+                                                @csrf
+                                                <button class="border-0 text-success text-start w-100 bg-white px-0"
+                                                    onclick="return confirm('Are you sure you want to restore this user?')">
+                                                    Restore
+                                                </button>
+                                            </form>
+                                        </li>
+                                    @endcan
                                 </ul>
                             </div>
-                            
+
                         </td>
                     </tr>
                 @endforeach

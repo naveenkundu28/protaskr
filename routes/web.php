@@ -26,12 +26,14 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::resource('roles', RoleController::class);
     Route::get('/users/resigned', [UserController::class, 'resignedUsers'])->name('resign.users.index');
+    Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
     Route::resource('users', UserController::class);
 
     Route::get('mail', [MailController::class, 'index'])->name('mail.inbox');
 
     Route::get('/master-hours', [HourController::class, 'create'])->name('master.hours.create');
     Route::post('/master-hours', [HourController::class, 'store'])->name('master.hours.store');
+    Route::get('master/hours/get/{year}', [HourController::class, 'getHoursByYear'])->name('master.hours.get');
 
     Route::resource('clients', ProjectController::class);
     Route::get('/service-listing', [ProjectController::class, 'serviceListing'])->name('services.listing');

@@ -29,7 +29,7 @@ class HourController extends Controller
             'December'
         ];
 
-        return view('hours.create', compact('years', 'months', 'currentYear','hours'));
+        return view('hours.create', compact('years', 'months', 'currentYear', 'hours'));
     }
 
     public function store(Request $request)
@@ -88,5 +88,12 @@ class HourController extends Controller
         }
 
         return redirect()->route('master.hours.create')->with('success', 'Master hours saved successfully');
+    }
+    
+    public function getHoursByYear($year)
+    {
+        $hours = Hour::where('year', $year)->get()->keyBy('month');
+
+        return response()->json($hours);
     }
 }
