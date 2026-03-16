@@ -15,7 +15,14 @@ class TagController extends Controller
     public function index(Request $request)
     {
         $this->authorize('user-show');
-        $tags = Tag::latest()->paginate(50);
+        $search = trim((string) $request->input('search'));
+
+        $tags = Tag::when($search !== '', function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->latest()
+            ->paginate(50)
+            ->withQueryString();
 
         return view('tags.index', compact('tags'))->with('i', ($request->input('page', 1) - 1) * 5);
     }

@@ -11,10 +11,14 @@ class SkillController extends Controller
     public function index(Request $request)
     {
         $this->authorize('user-show');
+        $search = trim((string) $request->input('search'));
+
         $skills = Skill::with([
             'primaryUsers:id,name',
             'secondaryUsers:id,name',
-        ])->latest()->paginate(50);
+        ])->when($search !== '', function ($query) use ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        })->latest()->paginate(50)->withQueryString();
 
         return view('skills.index', compact('skills'))->with('i', ($request->input('page', 1) - 1) * 5);
     }

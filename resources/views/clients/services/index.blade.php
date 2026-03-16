@@ -8,7 +8,13 @@
     <div class="container-fluid">
 
         <div class="d-flex justify-content-between align-items-center bg-white mb-4 shadow-sm p-3 rounded">
-            <h2>Services - {{ $client->name }}</h2>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <h2 class="mb-0">Services - {{ $client->name }}</h2>
+                <form method="GET" action="{{ route('clients.services.index', $client->id) }}" class="d-flex gap-2 auto-search-form" data-search-target="#tableSearchResults">
+                    <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search services">
+                    {{-- <button class="btn btn-outline-secondary">Search</button> --}}
+                </form>
+            </div>
         </div>
 
         @if (session('success'))
@@ -179,6 +185,7 @@
 
 
         {{-- ================= TABLE ================= --}}
+        <div id="tableSearchResults">
         <div class="table-responsive service-table-responsive">
             <table class="table table-bordered">
 
@@ -341,6 +348,7 @@
         </div>
 
         {{ $services->links('pagination::bootstrap-5') }}
+        </div>
 
     </div>
 @endsection
