@@ -208,4 +208,21 @@ class UserController extends Controller
         return view('users.resigned.index', compact('data'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
+
+    public function restore($id)
+    {
+        $this->authorize('user-edit');
+
+        $user = User::onlyTrashed()->findOrFail($id);
+
+        // make comment null
+        $user->comment = null;
+        $user->save();
+
+        $user->restore();
+
+        return redirect()
+            ->route('resign.users.index')
+            ->with('success', 'User restored successfully');
+    }
 }

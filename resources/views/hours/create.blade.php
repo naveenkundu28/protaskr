@@ -1,13 +1,23 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container-fluid">
+    <div class="container">
+
+        <div class="row">
+            <div class="col-lg-12 mb-4 margin-tb">
+                <div class="d-flex align-items-center justify-content-between shadow-sm p-3 rounded bg-white">
+                    <div class="pull-left">
+                        <h2>Master Hours</h2>
+                    </div>
+                    {{-- <div class="pull-right">
+                        <a class="btn btn-primary btn-sm" href="{{ route('master.hours.create') }}"><i class="fa fa-arrow-left"></i>
+                            Back</a>
+                    </div> --}}
+                </div>
+            </div>
+        </div>
 
         <div class="card">
-            <div class="card-header">
-                <h4>Master Hours</h4>
-            </div>
-
             <div class="card-body">
 
                 @if (session('success'))
@@ -22,10 +32,11 @@
                     <div class="mb-4">
                         <label class="form-label">Select Year</label>
 
-                        <select name="year" class="form-control">
+                        <select name="year" id="year_select" class="form-control">
 
                             @foreach ($years as $year)
-                                <option value="{{ $year }}" {{ old('year', $currentYear) == $year ? 'selected' : '' }}>
+                                <option value="{{ $year }}"
+                                    {{ old('year', $currentYear) == $year ? 'selected' : '' }}>
                                     {{ $year }}
                                 </option>
                             @endforeach
@@ -44,10 +55,12 @@
                     <div class="row">
 
                         @foreach ($months as $month)
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-2 mb-3">
                                 <label class="form-label">{{ $month }}</label>
 
-                                <input type="number" name="months[{{ $month }}]" class="form-control" value="{{ old('months.'.$month, $hours[$month]->hours ?? '') }}" placeholder="Enter hours">
+                                <input id="month_{{ $month }}" type="number" name="months[{{ $month }}]"
+                                    class="form-control" value="{{ old('months.' . $month, $hours[$month]->hours ?? '') }}"
+                                    placeholder="Enter hours">
 
                                 @error('months.' . $month)
                                     <span class="text-danger">
@@ -70,3 +83,24 @@
 
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $('#year_select').change(function() {
+
+            let year = $(this).val()
+
+            $.get("{{ route('master.hours.get', '') }}/" + year, function(data) {
+
+                // clear all inputs first
+                $('input[id^="month_"]').val('')
+
+                // fill returned data
+                $.each(data, function(month, item) {
+                    $('#month_' + month).val(item.hours)
+                })
+
+            })
+        })
+    </script>
+@endpush

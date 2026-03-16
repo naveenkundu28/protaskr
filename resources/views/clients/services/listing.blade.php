@@ -56,7 +56,31 @@
                         <td>{{ $service->workingResource->name ?? '' }}</td>
                         <td>{{ $service->service_id }}</td>
                         <td>{{ $service->created_at ? $service->created_at->format('F') : '' }}</td>
-                        <td>{{ $service->hours }}</td>
+
+                        @php
+                            $year = $service->created_at->format('Y');
+                            $month = $service->created_at->format('F');
+
+                            $key = $year . '-' . $month;
+
+                            $masterHour = $masterHours[$key]->hours ?? null;
+
+                            $color = '';
+
+                            if ($masterHour !== null) {
+                                if ($service->hours < $masterHour) {
+                                    $color = 'text-warning'; // yellow
+                                } elseif ($service->hours > $masterHour) {
+                                    $color = 'text-primary'; // dark blue
+                                }
+                            }
+                        @endphp
+
+                        <td class="{{ $color }}">
+                            {{ $service->hours }}
+                        </td>
+
+
                         <td>{{ ucfirst(str_replace('_', ' ', $service->service_status)) }}</td>
                         <td>
                             {{ $service->start_date

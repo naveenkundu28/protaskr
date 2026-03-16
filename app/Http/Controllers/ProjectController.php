@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Hour;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\Service;
@@ -206,16 +207,14 @@ class ProjectController extends Controller
             ->latest()
             ->paginate(10);
 
-        // $services = $client->services()
-        //     ->with(['frontResource', 'workingResource'])
-        //     ->latest()
-        //     ->paginate(10);
-
-        // return print_r($services);
-
         $employees = $client->users()->role('Employee')->withTrashed()->get();
 
-        return view('clients.services.index', compact('services', 'client', 'employees'));
+        // Fetch all master hours
+        $masterHours = Hour::all()->keyBy(function ($item) {
+            return $item->year . '-' . $item->month;
+        });
+
+        return view('clients.services.index', compact('services', 'client', 'employees', 'masterHours'));
     }
 
     public function serviceListing()
@@ -234,7 +233,12 @@ class ProjectController extends Controller
             ->latest()
             ->paginate(20);
 
-        return view('clients.services.listing', compact('services'));
+        // Fetch all master hours
+        $masterHours = Hour::all()->keyBy(function ($item) {
+            return $item->year . '-' . $item->month;
+        });
+
+        return view('clients.services.listing', compact('services', 'masterHours'));
     }
 
     public function importServices(Request $request)
@@ -488,28 +492,70 @@ class ProjectController extends Controller
         ]);
 
 
-        // START: check if same month(created_at), same service_id & same front & working resource then record cant be inserted or updated, it can be inserted if different month
+        // START: check if same month(created_at), same service_id & same front resource then record cant be inserted or updated, it can be inserted if different month
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        $exists = $client->services()
+        // $exists = $client->services()
+        //     ->where('service_id', $request->service_id)
+        //     ->where('front_resource', $request->front_resource)
+        //     // ->where('working_resource', $request->working_resource)
+        //     ->whereMonth('created_at', $currentMonth)
+        //     ->whereYear('created_at', $currentYear)
+        //     ->exists();
+
+        // if ($exists) {
+        //     return redirect()
+        //         ->back()
+        //         ->withInput()
+        //         ->withErrors([
+        //             'service_id' => 'This service already exists for the same resources in the current month.'
+        //         ]);
+        // }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Rule 1: Same service + same front resource in same month/year
+        |--------------------------------------------------------------------------
+        */
+        $sameServiceExists = $client->services()
             ->where('service_id', $request->service_id)
             ->where('front_resource', $request->front_resource)
-            ->where('working_resource', $request->working_resource)
             ->whereMonth('created_at', $currentMonth)
             ->whereYear('created_at', $currentYear)
             ->exists();
 
-        if ($exists) {
+        if ($sameServiceExists) {
             return redirect()
                 ->back()
                 ->withInput()
                 ->withErrors([
-                    'service_id' => 'This service already exists for the same resources in the current month.'
+                    'service_id' => 'This service already exists for this resource in the current month.'
                 ]);
         }
 
-        // END: check if same month(created_at), same service_id & same front & working resource then record cant be inserted or updated, it can be inserted if different month
+        /*
+        |--------------------------------------------------------------------------
+        | Rule 2: Same service cannot repeat in same month/year
+        |--------------------------------------------------------------------------
+        */
+        $resourceExists = $client->services()
+            ->where('service_id', $request->service_id)
+            // ->where('front_resource', $request->front_resource)
+            ->whereMonth('created_at', $currentMonth)
+            ->whereYear('created_at', $currentYear)
+            ->exists();
+
+        if ($resourceExists) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors([
+                    'front_resource' => 'This service is already assigned to somebody for this month.'
+                ]);
+        }
+
+        // END: check if same month(created_at), same service_id & same front resource then record cant be inserted or updated, it can be inserted if different month
 
         // clean fields depending on status
         if ($data['service_status'] !== 'new') {
@@ -600,7 +646,7 @@ class ProjectController extends Controller
         ]);
 
 
-        // START: check if same month(created_at), same service_id & same front & working resource then record cant be inserted or updated, it can be inserted if different month
+        // START: check if same month(created_at), same service_id & same front resource then record cant be inserted or updated, it can be inserted if different month
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
@@ -608,7 +654,7 @@ class ProjectController extends Controller
             ->where('service_id', $request->service_id)
             ->where('id', '!=', $service->id)
             ->where('front_resource', $request->front_resource)
-            ->where('working_resource', $request->working_resource)
+            // ->where('working_resource', $request->working_resource)
             ->whereMonth('created_at', $currentMonth)
             ->whereYear('created_at', $currentYear)
             ->exists();
@@ -622,7 +668,7 @@ class ProjectController extends Controller
                 ]);
         }
 
-        // END: check if same month(created_at), same service_id & same front & working resource then record cant be inserted or updated, it can be inserted if different month
+        // END: check if same month(created_at), same service_id & same front resource then record cant be inserted or updated, it can be inserted if different month
 
 
 
