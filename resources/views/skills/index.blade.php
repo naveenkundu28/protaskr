@@ -70,8 +70,7 @@
                                         class="fa-solid fa-list"></i> Show</a>
                             </li>
                         @endcan
-
-
+                        
                         @can('user-edit')
                             <li>
                                 <hr class="my-1" />
@@ -81,8 +80,6 @@
                                         class="fa-solid fa-pen-to-square"></i> Edit</a>
                             </li>
                         @endcan
-
-
 
                         @can('user-delete')
                             <li>

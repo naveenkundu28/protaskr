@@ -151,7 +151,6 @@
                             @endcan
                         </ul>
                         <div class="task-navbar-meta ms-xl-auto d-flex flex-column flex-xl-row align-items-xl-center gap-2 gap-xl-3">
-                            <span class="current-datetime" id="currentDateTime"></span>
                             <ul class="navbar-nav">
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
@@ -169,6 +168,7 @@
                                     </ul>
                                 </li>
                             </ul>
+                            <span class="current-datetime" id="currentDateTime"></span>
                         </div>
                     </div>
                 </div>
@@ -195,11 +195,33 @@
             $(document).ready(function() {
                 $('.select2').select2({
                     placeholder: "--Select--",
+                    width: '100%',
                     allowClear: true
                 });
                 $('#userFilter').select2({
                     placeholder: "All Users",
+                    width: '100%',
                     allowClear: true,
+                });
+
+                $('.service-action-dropdown').on('show.bs.dropdown', function() {
+                    const $dropdown = $(this);
+                    const $menu = $dropdown.find('.dropdown-menu');
+                    const offset = $dropdown.find('[data-bs-toggle="dropdown"]').offset();
+
+                    $menu.appendTo('body').css({
+                        position: 'absolute',
+                        top: offset.top + $dropdown.outerHeight(),
+                        left: offset.left,
+                        zIndex: 1080
+                    }).addClass('show');
+                });
+
+                $('.service-action-dropdown').on('hide.bs.dropdown', function() {
+                    const $dropdown = $(this);
+                    const $menu = $('body > .dropdown-menu.show');
+
+                    $menu.removeClass('show').removeAttr('style').appendTo($dropdown);
                 });
             });
         </script>

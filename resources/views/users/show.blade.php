@@ -1,7 +1,20 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12 margin-tb mb-4">
+            <div class="d-flex align-items-center justify-content-between shadow-sm p-3 rounded bg-white">
+                <div class="pull-left">
+                    <h2> {{ $user->deleted_at == null ? 'Show User' : 'Show Resign User' }}</h2>
+                </div>
+                <div class="pull-right">
+                    <a class="btn btn-primary" href="{{ route($user->deleted_at == null ? 'users.index' : 'resign.users.index') }}"> Back</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card border-0 p-4 mb-4 shadow-sm m-auto">
         <div class="row">
             <div class="col-lg-12 margin-tb mb-4">
                 <div class="d-flex align-items-center justify-content-between shadow-sm p-3 rounded bg-white">

@@ -26,7 +26,11 @@ class HomeController extends Controller
         $filesCount = $user->files()->count();
         $recentTasks = $user->tasks()->latest()->take(5)->get();
         
-        $tagSummary = Tag::withCount('users')
+        $tagSummary = Tag::withCount([
+                'users' => function ($query) {
+                    $query->where('user_type', 'internal');
+                }
+            ])
             ->orderBy('name')
             ->get();
         
@@ -65,6 +69,7 @@ class HomeController extends Controller
         $internalUsers = User::where('user_type', 'Internal')->get(['id']);
         $services = Service::whereYear('created_at', $now->year)
             ->whereMonth('created_at', $now->month)
+            ->where('service_type', '!=' ,'external')
             ->get(['hours', 'front_resource', 'working_resource']);
 
         $hoursByUser = [];
@@ -79,7 +84,7 @@ class HomeController extends Controller
             }
         }
 
-        foreach ($employees as $employee) {
+        foreach ($internalUsers as $employee) {
             $assignedHours = $hoursByUser[$employee->id] ?? 0;
 
             if ($assignedHours <= 0) {
@@ -129,6 +134,6 @@ class HomeController extends Controller
 
     public function home()
     {
-        return view('home');
+        return redirect()->route('dashboard');
     }
 }
