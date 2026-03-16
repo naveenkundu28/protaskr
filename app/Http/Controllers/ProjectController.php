@@ -21,11 +21,29 @@ class ProjectController extends Controller
     {
         $this->authorize('project-show');
         $user = Auth::user();
+        $search = trim((string) $request->input('search'));
 
         $projectQuery = $user->hasRole('Admin') ? $user->projects() : $user->projectMembers();
 
         $projects = $projectQuery->when($request->type == 'archived', function ($query) {
             return $query->onlyTrashed();
+        })->when($search !== '', function ($query) use ($search) {
+            return $query->where(function ($subQuery) use ($search) {
+                $subQuery->where('name', 'like', "%{$search}%")
+                    ->orWhere('client_email', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('start_date', 'like', "%{$search}%")
+                    ->orWhere('end_date', 'like', "%{$search}%")
+                    ->orWhere('budget', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhere('client_code', 'like', "%{$search}%")
+                    ->orWhere('project_name', 'like', "%{$search}%")
+                    ->orWhereHas('users', function ($memberQuery) use ($search) {
+                    $memberQuery->where('name', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('employee_id', 'like', "%{$search}%");
+                    });
+            });
         });
 
         $projects = $projects->withCount([
@@ -193,9 +211,26 @@ class ProjectController extends Controller
     public function services(Client $client)
     {
         $this->authorize('service-show');
+        $search = trim((string) request('search'));
 
         $services = $client->services()
             ->with(['frontResource', 'workingResource'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('service_id', 'like', "%{$search}%")
+                        ->orWhere('service_type', 'like', "%{$search}%")
+                        ->orWhere('service_status', 'like', "%{$search}%")
+                        ->orWhere('hours', 'like', "%{$search}%")
+                        ->orWhereHas('frontResource', function ($userQuery) use ($search) {
+                            $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('employee_id', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('workingResource', function ($userQuery) use ($search) {
+                            $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('employee_id', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->select('*')
             ->selectSub(function ($query) {
                 $query->from('services as s2')
@@ -205,7 +240,8 @@ class ProjectController extends Controller
                     ->limit(1);
             }, 'main_start_date')
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         $employees = $client->users()->role('Employee')->withTrashed()->get();
 
@@ -220,8 +256,29 @@ class ProjectController extends Controller
     public function serviceListing()
     {
         $this->authorize('service-show');
+        $search = trim((string) request('search'));
 
         $services = Service::with(['client', 'frontResource', 'workingResource'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('service_id', 'like', "%{$search}%")
+                        ->orWhere('service_type', 'like', "%{$search}%")
+                        ->orWhere('service_status', 'like', "%{$search}%")
+                        ->orWhere('hours', 'like', "%{$search}%")
+                        ->orWhereHas('client', function ($clientQuery) use ($search) {
+                            $clientQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('client_id', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('frontResource', function ($userQuery) use ($search) {
+                            $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('employee_id', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('workingResource', function ($userQuery) use ($search) {
+                            $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('employee_id', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->select('*')
             ->selectSub(function ($query) {
                 $query->from('services as s2')
@@ -231,7 +288,8 @@ class ProjectController extends Controller
                     ->limit(1);
             }, 'main_start_date')
             ->latest()
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         // Fetch all master hours
         $masterHours = Hour::all()->keyBy(function ($item) {

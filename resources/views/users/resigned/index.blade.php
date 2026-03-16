@@ -5,14 +5,21 @@
         <div style="padding: 0px 12px">
             <div class="row">
                 <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
-                    <h2>Resigned Users</h2>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <h2 class="mb-0">Resigned Users</h2>
+                        <form method="GET" action="{{ route('resign.users.index') }}" class="d-flex gap-2 auto-search-form" data-search-target="#tableSearchResults">
+                            <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search resigned users">
+                            {{-- <button class="btn btn-outline-secondary">Search</button> --}}
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
 
 
-        <div class="table-responsive pb-4">
-            <table class="table table-bordered table-sm text-nowrap">
+        <div id="tableSearchResults">
+            <div class="table-responsive pb-4 service-table-responsive">
+                <table class="table table-bordered table-sm text-nowrap">
                 <tr>
                     <th>No</th>
                     <th>User Type</th>
@@ -76,7 +83,7 @@
                             {{ $user->comment }}
                         </td>
                         <td>
-                            <div class="dropdown">
+                            <div class="dropdown service-action-dropdown">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-list-task"></i>
                                 </button>
@@ -108,9 +115,10 @@
                         </td>
                     </tr>
                 @endforeach
-            </table>
+                </table>
+            </div>
+            {!! $data->links('pagination::bootstrap-5') !!}
         </div>
-        {!! $data->links('pagination::bootstrap-5') !!}
 
     </div>
 @endsection

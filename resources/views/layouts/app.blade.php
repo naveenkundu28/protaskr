@@ -121,7 +121,7 @@
                                         <li>
                                             <a class="dropdown-item {{ request()->is('users/resigned*') ? 'active' : '' }}"
                                                 href="{{ route('resign.users.index') }}">
-                                                <i class="bi "></i> Resigned Users
+                                                <i class="bi bi-person-dash me-2"></i> Resigned Users
                                             </a>
                                         </li>
                                     </ul>
@@ -187,6 +187,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     @push('scripts')
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -222,6 +223,66 @@
                     const $menu = $('body > .dropdown-menu.show');
 
                     $menu.removeClass('show').removeAttr('style').appendTo($dropdown);
+                });
+
+                $('.auto-search-form').each(function() {
+                    let timeoutId;
+                    const form = this;
+                    const $form = $(form);
+                    const $input = $form.find('input[name="search"]');
+                    const targetSelector = $form.data('search-target');
+
+                    $form.on('submit', function(e) {
+                        e.preventDefault();
+                    });
+
+                    $input.on('input', function() {
+                        clearTimeout(timeoutId);
+                        timeoutId = setTimeout(function() {
+                            const queryString = new URLSearchParams(new FormData(form)).toString();
+                            const requestUrl = queryString ? `${$form.attr('action')}?${queryString}` : $form.attr('action');
+
+                            axios.get(requestUrl, {
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            }).then(function(response) {
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(response.data, 'text/html');
+                                const newContent = doc.querySelector(targetSelector);
+                                const currentContent = document.querySelector(targetSelector);
+
+                                if (newContent && currentContent) {
+                                    currentContent.innerHTML = newContent.innerHTML;
+                                    window.history.replaceState({}, '', requestUrl);
+                                }
+                            }).catch(function(error) {
+                                console.error('Search request failed', error);
+                            });
+                        }, 400);
+                    });
+
+                    $(document).on('click', `${targetSelector} .pagination a`, function(e) {
+                        e.preventDefault();
+
+                        axios.get($(this).attr('href'), {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        }).then(function(response) {
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(response.data, 'text/html');
+                            const newContent = doc.querySelector(targetSelector);
+                            const currentContent = document.querySelector(targetSelector);
+
+                            if (newContent && currentContent) {
+                                currentContent.innerHTML = newContent.innerHTML;
+                                window.history.replaceState({}, '', $(e.currentTarget).attr('href'));
+                            }
+                        }).catch(function(error) {
+                            console.error('Pagination request failed', error);
+                        });
+                    });
                 });
             });
         </script>

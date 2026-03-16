@@ -25,7 +25,36 @@ class UserController extends Controller
     {
         $this->authorize('user-show');
 
-        $data = User::with(['primarySkills', 'secondarySkills', 'tags'])->latest()->paginate(50);
+        $search = trim((string) $request->input('search'));
+
+        $data = User::with(['primarySkills', 'secondarySkills', 'tags'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('name', 'like', "%{$search}%")
+                        ->orWhere('user_type', 'like', "%{$search}%")
+                        ->orWhere('joining_date', 'like', "%{$search}%")
+                        ->orWhere('experience', 'like', "%{$search}%")
+                        ->orWhereHas('primarySkills', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('secondarySkills', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('tags', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('roles', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('employee_id', 'like', "%{$search}%")
+                        ->orWhere('phone_no', 'like', "%{$search}%")
+                        ->orWhere('alt_phone_no', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(50)
+            ->withQueryString();
 
         return view('users.index', compact('data'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
@@ -203,7 +232,37 @@ class UserController extends Controller
     {
         $this->authorize('user-show');
 
-        $data = User::with(['primarySkills', 'secondarySkills', 'tags'])->onlyTrashed()->latest()->paginate(50);
+        $search = trim((string) $request->input('search'));
+
+        $data = User::with(['primarySkills', 'secondarySkills', 'tags'])
+            ->onlyTrashed()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('name', 'like', "%{$search}%")
+                        ->orWhere('user_type', 'like', "%{$search}%")
+                        ->orWhere('joining_date', 'like', "%{$search}%")
+                        ->orWhere('experience', 'like', "%{$search}%")
+                        ->orWhereHas('primarySkills', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('secondarySkills', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('tags', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('roles', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('employee_id', 'like', "%{$search}%")
+                        ->orWhere('phone_no', 'like', "%{$search}%")
+                        ->orWhere('alt_phone_no', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(50)
+            ->withQueryString();
 
         return view('users.resigned.index', compact('data'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
