@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('title')
-    {{ $client->name }} - Project Details
+    {{ $client->name }} - Client Details
 @endsection
 @section('content')
     <div class="container-fluid">
@@ -18,9 +18,9 @@
                         <h5 class="card-title">{{ $client->name }}</h5>
                         <p class="card-text">{{ $client->description }}</p>
                         <p class="card-text"><strong>Start Date:</strong>
-                            {{ \Carbon\Carbon::parse($client->start_date)->format('j F Y') }}</p>
+                            {{ $client->start_date ? \Carbon\Carbon::parse($client->start_date)->format('j F Y') : '' }}</p>
                         <p class="card-text"><strong>End Date:</strong>
-                            {{ \Carbon\Carbon::parse($client->end_date)->format('j F Y') }}</p>
+                            {{ $client->end_date ? \Carbon\Carbon::parse($client->end_date)->format('j F Y') : '' }}</p>
                         <p class="card-text"><strong>Status:</strong>
                             {{ $client->status == 'pending' ? 'Pending' : ($client->status == 'on_going' ? 'In Progress' : 'Completed') }}
                         </p>
@@ -38,7 +38,7 @@
                                 {{ round($progress) }}%</div>
                         </div>
 
-                        <a href="{{ route('clients.index') }}" class="btn btn-secondary mt-3">Back to Projects</a>
+                        <a href="{{ route('clients.index') }}" class="btn btn-secondary mt-3">Back to Clients</a>
                     </div>
                 </div>
             </div>
@@ -48,9 +48,9 @@
                         <div class="d-flex justify-content-between">
                             <h5 class="card-title"> Team Members </h5>
                             @can('project-edit')
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                data-bs-target="#addMemberModal"> <i class="bi bi-plus-circle"></i> </button>
-                                @endcan
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#addMemberModal"> <i class="bi bi-plus-circle"></i> </button>
+                            @endcan
                         </div>
 
                         <div class="row">
@@ -61,20 +61,24 @@
                                             <div class="col-md-12">
                                                 <div class="card-body d-flex justify-content-between">
                                                     <div>
-                                                    <p class="card-title fw-bolder">{{ $user->name }}</p>
-                                                    <p class="card-text">{{ $user->email }}</p>
+                                                        <p class="card-title fw-bolder">{{ $user->name }}</p>
+                                                        <p class="card-text">{{ $user->email }}</p>
                                                     </div>
                                                     @can('project-edit')
-                                                    <div>
-                                                        <form action="{{ route('clients.removeMember') }}" method="POST" style="display:inline;">
-                                                            @csrf
-                                                            <input type="hidden" name="project_id" value="{{ $client->id }}">
-                                                            <input type="hidden" name="user_id" value="{{ $user->id }}">
-                                                            
-                                                            <button type="submit" class="btn btn-danger btn-sm" 
-                                                                    onclick="return confirm('Are you sure you want to remove this member?')"> <i class="bi bi-trash"></i> </button>
-                                                        </form>
-                                                    </div>
+                                                        <div>
+                                                            <form action="{{ route('clients.removeMember') }}" method="POST"
+                                                                style="display:inline;">
+                                                                @csrf
+                                                                <input type="hidden" name="project_id"
+                                                                    value="{{ $client->id }}">
+                                                                <input type="hidden" name="user_id"
+                                                                    value="{{ $user->id }}">
+
+                                                                <button type="submit" class="btn btn-danger btn-sm"
+                                                                    onclick="return confirm('Are you sure you want to remove this member?')">
+                                                                    <i class="bi bi-trash"></i> </button>
+                                                            </form>
+                                                        </div>
                                                     @endcan
 
                                                 </div>
@@ -90,34 +94,45 @@
         </div>
     </div>
     @can('project-edit')
-    <div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addMemberModalLabel">Add Team Member</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form action="{{ route('clients.addMember')}}" method="POST">
-                        @csrf
-                        <input type="hidden" name="project_id" value="{{ $client->id }}">
-                        <div class="mb-3">
-                            <label for="user_id" class="form-label">Select User</label>
-                            <select class="form-select" name="user_id" id="">
-                                @foreach ($users as $user)
-                                    <option value="{{ $user->id }}">{{ $user->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+        <div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addMemberModalLabel">Add Team Member</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form action="{{ route('clients.addMember') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="project_id" value="{{ $client->id }}">
+                            <div class="mb-3">
+                                <label for="user_id" class="form-label">Select User</label>
+                                <select class="form-select select2" name="user_id" id="addTeamMemberDropdown">
+                                    @foreach ($users as $user)
+                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
 
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary">Add Member</button>
-                        </div>
-                    </form>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Add Member</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     @endcan
 @endsection
+@push('scripts')
+    <script>
+        $(document).ready(function() {
+            $('#addMemberModal').on('shown.bs.modal', function() {
+                $('#addTeamMemberDropdown').select2({
+                    dropdownParent: $(this)
+                });
+            });
+        });
+    </script>
+@endpush
