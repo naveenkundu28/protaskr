@@ -39,9 +39,9 @@ class ProjectController extends Controller
                     ->orWhere('client_code', 'like', "%{$search}%")
                     ->orWhere('project_name', 'like', "%{$search}%")
                     ->orWhereHas('users', function ($memberQuery) use ($search) {
-                    $memberQuery->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('employee_id', 'like', "%{$search}%");
+                        $memberQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('employee_id', 'like', "%{$search}%");
                     });
             });
         });
@@ -308,7 +308,7 @@ class ProjectController extends Controller
         ]);
 
         $rows = Excel::toArray([], $request->file('services_file'));
-        
+
         $sheetRows = $rows[0] ?? [];
 
         if (count($sheetRows) < 2) {
@@ -319,7 +319,7 @@ class ProjectController extends Controller
         }
 
         $headers = collect(array_shift($sheetRows))
-            ->map(fn ($header) => $this->normalizeImportHeader($header))
+            ->map(fn($header) => $this->normalizeImportHeader($header))
             ->all();
 
         $errors = [];
@@ -327,7 +327,7 @@ class ProjectController extends Controller
         $clientsToCreate = [];
 
         foreach ($sheetRows as $index => $row) {
-            if (collect($row)->filter(fn ($value) => $value !== null && $value !== '')->isEmpty()) {
+            if (collect($row)->filter(fn($value) => $value !== null && $value !== '')->isEmpty()) {
                 continue;
             }
 
@@ -554,23 +554,6 @@ class ProjectController extends Controller
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        // $exists = $client->services()
-        //     ->where('service_id', $request->service_id)
-        //     ->where('front_resource', $request->front_resource)
-        //     // ->where('working_resource', $request->working_resource)
-        //     ->whereMonth('created_at', $currentMonth)
-        //     ->whereYear('created_at', $currentYear)
-        //     ->exists();
-
-        // if ($exists) {
-        //     return redirect()
-        //         ->back()
-        //         ->withInput()
-        //         ->withErrors([
-        //             'service_id' => 'This service already exists for the same resources in the current month.'
-        //         ]);
-        // }
-
         /*
         |--------------------------------------------------------------------------
         | Rule 1: Same service + same front resource in same month/year
@@ -588,7 +571,7 @@ class ProjectController extends Controller
                 ->back()
                 ->withInput()
                 ->withErrors([
-                    'service_id' => 'This service already exists for this resource in the current month.'
+                    'service_err' => 'This service already exists for this resource in the current month.'
                 ]);
         }
 
@@ -609,8 +592,33 @@ class ProjectController extends Controller
                 ->back()
                 ->withInput()
                 ->withErrors([
-                    'front_resource' => 'This service is already assigned to somebody for this month.'
+                    'service_err' => 'This service is already assigned to somebody for this month.'
                 ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Rule 3: Same direct front resource cannot repeat in same month/year
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->service_type === 'direct') {
+            $directResourceExists = $client->services()
+                ->where('service_type', 'direct')
+                ->where('front_resource', $request->front_resource)
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->exists();
+
+            if ($directResourceExists) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->withErrors([
+                        'service_err' => 'This direct resource is already assigned to some service for this month.'
+                    ]);
+            }
         }
 
         // END: check if same month(created_at), same service_id & same front resource then record cant be inserted or updated, it can be inserted if different month
