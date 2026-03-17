@@ -84,7 +84,7 @@
                             @enderror
                         </div>
                         <div class="text-center">
-                            <button type="submit" class="btn btn-primary mt-2">Create Project</button>
+                            <button type="submit" class="btn btn-primary mt-2">Create Client</button>
                         </div>
                     </div>
                 </form>
