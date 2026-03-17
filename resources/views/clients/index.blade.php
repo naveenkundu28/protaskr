@@ -11,7 +11,7 @@
                     @if(request('type'))
                         <input type="hidden" name="type" value="{{ request('type') }}">
                     @endif
-                    <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search clients">
+                    <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search Clients">
                     {{-- <button class="btn btn-outline-secondary">Search</button> --}}
                 </form>
             </div>
@@ -176,7 +176,9 @@
                                 @endforeach
                             @endisset
                         </td>
-                        <td> {{ \Carbon\Carbon::parse($project->start_date)->format('j F Y') }}</td>
+                        <td> 
+                            {{  $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('j F Y') : '' }}
+                        </td>
                         {{-- <td>{{$project->to_do_tasks + $project->in_progress_tasks + $project->in_review_tasks}}</td> --}}
 
                         <td>{{ $project->status == 'pending' ? 'Pending' : ($project->status == 'on_going' ? 'In Progress' : 'Completed') }}
