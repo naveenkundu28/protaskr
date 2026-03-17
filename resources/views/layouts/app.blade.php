@@ -55,12 +55,14 @@
                                                 <i class="bi bi-list-ul me-2"></i> List Clients
                                             </a>
                                         </li>
+                                        @can('user-show')
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('services.listing') ? 'active' : '' }}"
                                                 href="{{ route('services.listing') }}">
                                                 <i class="bi bi-table me-2"></i> Service Listing
                                             </a>
                                         </li>
+                                        @endcan
                                         @if (Auth::user()->hasRole('Admin'))
                                             <li>
                                                 <a class="dropdown-item {{ request('type') == 'archived' ? 'active' : '' }}"

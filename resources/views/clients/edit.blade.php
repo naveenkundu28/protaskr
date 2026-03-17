@@ -103,7 +103,7 @@
                             @enderror
                         </div>
                         <div class="mb-3 col-sm-12 col-md-6 col-lg-4" id="end_date_div">
-                            <label for="end_date" class="form-label">End Date <span class="text-danger">*</span></label>
+                            <label for="end_date" class="form-label">End Date</label>
                             <input type="date" name="end_date" id="end_date" class="form-control"
                                 value="{{ \Carbon\Carbon::parse($client->end_date)->format('Y-m-d') }}">
                             @error('end_date')
@@ -133,6 +133,7 @@
                 else{
                     $('#end_date_div').addClass('d-none');
                     $('#end_date').val('');
+                    $('#end_date').attr('required', false);
                 }
             }
 
