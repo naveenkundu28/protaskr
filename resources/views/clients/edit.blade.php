@@ -103,7 +103,7 @@
                             @enderror
                         </div>
                         <div class="text-center">
-                            <button type="submit" class="btn btn-primary">Update Project</button>
+                            <button type="submit" class="btn btn-primary">Update Client</button>
                         </div>
                     </div>
                 </form>

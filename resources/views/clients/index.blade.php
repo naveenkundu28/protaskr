@@ -5,7 +5,16 @@
 @section('content')
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center bg-white mb-4 shadow-sm p-3 rounded">
-            <h2>{{ request('type') == 'archived' ? 'Archived Clients' : 'Clients' }}</h2>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <h2 class="mb-0">{{ request('type') == 'archived' ? 'Archived Clients' : 'Clients' }}</h2>
+                <form method="GET" action="{{ route('clients.index') }}" class="d-flex gap-2 auto-search-form" data-search-target="#tableSearchResults">
+                    @if(request('type'))
+                        <input type="hidden" name="type" value="{{ request('type') }}">
+                    @endif
+                    <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search Clients">
+                    {{-- <button class="btn btn-outline-secondary">Search</button> --}}
+                </form>
+            </div>
             <div>
 
                 @if (!request('type'))
@@ -125,6 +134,7 @@
         </div>
 
         {{-- Table view --}}
+        <div id="tableSearchResults">
         <div id="table">
 
             <table class="table table-bordered">
@@ -166,7 +176,9 @@
                                 @endforeach
                             @endisset
                         </td>
-                        <td> {{ \Carbon\Carbon::parse($project->start_date)->format('j F Y') }}</td>
+                        <td> 
+                            {{  $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('j F Y') : '' }}
+                        </td>
                         {{-- <td>{{$project->to_do_tasks + $project->in_progress_tasks + $project->in_review_tasks}}</td> --}}
 
                         <td>{{ $project->status == 'pending' ? 'Pending' : ($project->status == 'on_going' ? 'In Progress' : 'Completed') }}
@@ -264,6 +276,7 @@
                 @endforeach
             </table>
             {!! $projects->links('pagination::bootstrap-5') !!}
+        </div>
         </div>
         {{--  --}}
     </div>

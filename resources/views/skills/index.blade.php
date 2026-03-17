@@ -5,7 +5,13 @@
     <div style="padding: 0px 12px;">
         <div class="row">
             <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
-                <h2>Skills Management</h2>
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="mb-0">Skills Management</h2>
+                    <form method="GET" action="{{ route('skills.index') }}" class="d-flex gap-2 auto-search-form" data-search-target="#tableSearchResults">
+                        <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search skills">
+                        
+                    </form>
+                </div>
                 <a href="{{ route('skills.create') }}" class="btn btn-primary">Create New Skills</a>
             </div>
         </div>
@@ -16,6 +22,7 @@
         {{ $value }}
     </div>
 @endsession
+<div id="tableSearchResults">
 <div class="table-responsive">
     <table class="table table-bordered table-sm text-nowrap">
         <tr>
@@ -112,5 +119,6 @@
     </table>
 </div>
 {!! $skills->links('pagination::bootstrap-5') !!}
+</div>
 </div>
 @endsection

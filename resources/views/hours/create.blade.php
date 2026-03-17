@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
+    <div class="container-fluid">
 
         <div class="row">
             <div class="col-lg-12 mb-4 margin-tb">
@@ -72,9 +72,11 @@
 
                     </div>
 
-                    <button class="btn btn-primary">
-                        Save Hours
-                    </button>
+                    <div class="text-center">
+                        <button class="btn btn-primary">
+                            Save Hours
+                        </button>
+                    </div>
 
                 </form>
 

@@ -27,7 +27,15 @@ class RoleController extends Controller
     public function index(Request $request): View
     {
         $this->authorize('role-show');
-        $roles = Role::orderBy('id','DESC')->paginate(50);
+        $search = trim((string) $request->input('search'));
+
+        $roles = Role::when($search !== '', function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%");
+            })
+            ->orderBy('id','DESC')
+            ->paginate(50)
+            ->withQueryString();
+
         return view('roles.index',compact('roles'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
