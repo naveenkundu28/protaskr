@@ -107,7 +107,7 @@ class ProjectController extends Controller
     {
         $this->authorize('project-show');
         $teamMembers = $client->allUsers()->get();
-        $users = User::withTrashed()->get();
+        $users = User::withTrashed()->role('Employee')->get();
         return view('clients.show', compact('client', 'teamMembers', 'users'));
     }
     public function edit(Client $client)
@@ -658,8 +658,6 @@ class ProjectController extends Controller
     {
         $this->authorize('service-edit');
 
-
-
         $rules = [
             'service_type'      => 'required|in:direct,proxy,external',
             'service_id'        => 'required',
@@ -716,7 +714,13 @@ class ProjectController extends Controller
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        $exists = $client->services()
+        /*
+        |--------------------------------------------------------------------------
+        | Rule 1: Same service + same front resource in same month/year
+        |--------------------------------------------------------------------------
+        */
+
+        $sameServiceExists = $client->services()
             ->where('service_id', $request->service_id)
             ->where('id', '!=', $service->id)
             ->where('front_resource', $request->front_resource)
@@ -725,13 +729,63 @@ class ProjectController extends Controller
             ->whereYear('created_at', $currentYear)
             ->exists();
 
-        if ($exists) {
+        if ($sameServiceExists) {
             return redirect()
                 ->back()
                 ->withInput()
                 ->withErrors([
-                    'service_id' => 'This service already exists for the same resources in the current month.'
+                    'service_err' => 'This service already exists for the same resources in the current month.'
                 ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Rule 2: Same service cannot repeat in same month/year
+        |--------------------------------------------------------------------------
+        */
+        $resourceExists = $client->services()
+            ->where('service_id', $request->service_id)
+            ->where('id', '!=', $service->id)
+            // ->where('front_resource', $request->front_resource)
+            ->whereMonth('created_at', $currentMonth)
+            ->whereYear('created_at', $currentYear)
+            ->exists();
+
+        if ($resourceExists) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors([
+                    'service_err' => 'This service is already assigned to somebody for this month.'
+                ]);
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Rule 3: Same direct front resource cannot repeat in same month/year
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->service_type === 'direct') {
+            $directResourceExists = $client->services()
+                ->where('service_type', 'direct')
+                ->where('id', '!=', $service->id)
+
+                ->where('front_resource', $request->front_resource)
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->exists();
+
+            if ($directResourceExists) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->withErrors([
+                        'service_err' => 'This direct resource is already assigned to some service for this month.'
+                    ]);
+            }
         }
 
         // END: check if same month(created_at), same service_id & same front resource then record cant be inserted or updated, it can be inserted if different month

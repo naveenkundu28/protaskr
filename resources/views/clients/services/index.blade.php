@@ -17,6 +17,13 @@
                     {{-- <button class="btn btn-outline-secondary">Search</button> --}}
                 </form>
             </div>
+
+            <div>
+                <a class="btn btn-primary"
+                    href="{{ route('clients.index') }}">
+                    Back
+                </a>
+            </div>
         </div>
 
         @if (session('success'))
@@ -25,10 +32,6 @@
             </div>
         @endif
 
-
-        {{-- <pre>
-            {{ print_r($services) }}
-        </pre> --}}
 
         {{-- ================= FORM ================= --}}
 
