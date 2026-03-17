@@ -53,7 +53,7 @@
                     <div class="row">
 
                         <div class="col-md-4 mb-3">
-                            <label>Service Type</label>
+                            <label>Service Type <span class="text-danger">*</span></label>
                             <select name="service_type" id="service_type" class="form-select" required>
                                 <option value="direct">Direct</option>
                                 <option value="proxy">Proxy</option>
@@ -67,7 +67,7 @@
 
 
                         <div class="col-md-4 mb-3">
-                            <label>Service ID</label>
+                            <label>Service ID <span class="text-danger">*</span></label>
                             <input type="text" name="service_id" id="service_id" class="form-control" required>
                             @error('service_id')
                                 <span class="text-danger">{{ $message }}</span>
@@ -76,7 +76,7 @@
 
 
                         <div class="col-md-4 mb-3">
-                            <label>Hours</label>
+                            <label>Hours <span class="text-danger">*</span></label>
                             <input type="number" step="0.01" name="hours" id="hours" class="form-control"
                                 required>
                             @error('hours')
@@ -86,7 +86,7 @@
 
 
                         <div class="col-md-4 mb-3">
-                            <label>Status</label>
+                            <label>Status <span class="text-danger">*</span></label>
                             <select name="service_status" id="service_status" class="form-select" required>
                                 <option value="new" {{ old('service_status') == 'new' ? 'selected' : '' }}>New</option>
                                 <option value="in_progress" {{ old('service_status') == 'in_progress' ? 'selected' : '' }}>
@@ -105,8 +105,8 @@
 
 
                         <div class="col-md-4 mb-3">
-                            <label>Front Resource</label>
-                            <select name="front_resource" id="front_resource" class="form-select">
+                            <label>Front Resource <span class="text-danger">*</span></label>
+                            <select name="front_resource" id="front_resource" class="form-select" required>
                                 <option value="">Select</option>
 
                                 @foreach ($employees as $employee)
@@ -123,8 +123,8 @@
 
 
                         <div class="col-md-4 mb-3">
-                            <label>Working Resource</label>
-                            <select name="working_resource" id="working_resource" class="form-select">
+                            <label>Working Resource <span class="text-danger">*</span></label>
+                            <select name="working_resource" id="working_resource" class="form-select" required>
                                 <option value="">Select</option>
 
                                 @foreach ($employees as $employee)
@@ -141,7 +141,7 @@
 
 
                         <div class="col-md-4 mb-3 d-none" id="start_date_div">
-                            <label>Start Date</label>
+                            <label>Start Date </label>
                             <input type="date" name="start_date" id="start_date" class="form-control">
                             @error('start_date')
                                 <span class="text-danger">{{ $message }}</span>
@@ -369,26 +369,7 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            $('.service-action-dropdown').on('show.bs.dropdown', function() {
-                const $dropdown = $(this);
-                const $menu = $dropdown.find('.dropdown-menu');
-                const offset = $dropdown.find('[data-bs-toggle="dropdown"]').offset();
-
-                $menu.appendTo('body').css({
-                    position: 'absolute',
-                    top: offset.top + $dropdown.outerHeight(),
-                    left: offset.left,
-                    zIndex: 1080
-                }).addClass('show');
-            });
-
-            $('.service-action-dropdown').on('hide.bs.dropdown', function() {
-                const $dropdown = $(this);
-                const $menu = $('body > .dropdown-menu.show');
-
-                $menu.removeClass('show').removeAttr('style').appendTo($dropdown);
-            });
-
+           
             // --------------to handle service type & resources--------------
             function handleResource() {
                 let serviceType = $('#service_type').val();

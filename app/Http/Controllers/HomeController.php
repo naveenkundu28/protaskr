@@ -20,6 +20,7 @@ class HomeController extends Controller
 
     public function index()
     {
+        
         $user = Auth::user();
         $now = Carbon::now();
         $tasksCount = $user->tasks()->where('status', '!=', 'completed')->count();
@@ -57,11 +58,17 @@ class HomeController extends Controller
         ];
 
         if (!$masterHours) {
-            return [
-                'masterHours' => null,
-                'workingHoursSummary' => $workingHoursSummary,
-                'profitLossSummary' => $profitLossSummary,
-            ];
+            $masterHours = null;
+            return view('dashboard', compact(
+                'tasksCount',
+                'filesCount',
+                'recentTasks',
+                'tagSummary',
+                'masterHours',
+                'workingHoursSummary',
+                'profitLossSummary',
+                'now',
+            ));
         }
 
         $halfHours = $masterHours / 2;

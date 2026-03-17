@@ -205,7 +205,10 @@
                     allowClear: true,
                 });
 
-                $('.service-action-dropdown').on('show.bs.dropdown', function() {
+                $('.select2-mandatory').select2({
+                    allowClear: false
+                });
+                $(document).on('show.bs.dropdown', '.service-action-dropdown', function() {
                     const $dropdown = $(this);
                     const $menu = $dropdown.find('.dropdown-menu');
                     const offset = $dropdown.find('[data-bs-toggle="dropdown"]').offset();
@@ -218,7 +221,7 @@
                     }).addClass('show');
                 });
 
-                $('.service-action-dropdown').on('hide.bs.dropdown', function() {
+                $(document).on('hide.bs.dropdown', '.service-action-dropdown', function() {
                     const $dropdown = $(this);
                     const $menu = $('body > .dropdown-menu.show');
 

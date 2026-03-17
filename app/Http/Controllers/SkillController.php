@@ -1,7 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Models\Service;
 use App\Models\Skill;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,15 +14,25 @@ class SkillController extends Controller
     {
         $this->authorize('user-show');
         $search = trim((string) $request->input('search'));
+        $now = Carbon::now();
+
+        $assignedUserIds = Service::query()
+            ->whereYear('created_at', $now->year)
+            ->whereMonth('created_at', $now->month)
+            ->where('service_type', '!=', 'external')
+            ->get(['front_resource', 'working_resource'])
+            ->flatMap(function ($service) {
+                return [$service->front_resource, $service->working_resource];
+            })->filter()->unique()->values();
 
         $skills = Skill::with([
-            'primaryUsers:id,name',
-            'secondaryUsers:id,name',
+            'primaryUsers:id,name,user_type',
+            'secondaryUsers:id,name,user_type',
         ])->when($search !== '', function ($query) use ($search) {
             $query->where('name', 'like', "%{$search}%");
         })->latest()->paginate(50)->withQueryString();
 
-        return view('skills.index', compact('skills'))->with('i', ($request->input('page', 1) - 1) * 5);
+        return view('skills.index', compact('skills', 'assignedUserIds'))->with('i', ($request->input('page', 1) - 1) * 5);
     }
 
 
