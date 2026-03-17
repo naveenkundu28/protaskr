@@ -172,7 +172,7 @@
                         {{-- <td>{{ $project->description }}</td> --}}
                         <td> @isset($project->users)
                                 @foreach ($project->users as $user)
-                                    <span class="">{{ $user->name }}</span><br>
+                                    <span class="{{ $user->trashed() ? 'text-danger' : '' }}">{{ $user->name }}</span><br>
                                 @endforeach
                             @endisset
                         </td>
