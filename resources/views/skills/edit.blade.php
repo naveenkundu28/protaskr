@@ -34,8 +34,8 @@
             <div class="row">
                 <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
                     <div class="form-group">
-                        <strong>Skill Name:</strong>
-                        <input type="text" name="name" placeholder="Skill Name" class="form-control mt-2" value="{{ $skills->name }}">
+                        <strong>Skill Name: <span class="text-danger">*</span></strong>
+                        <input type="text" name="name" placeholder="Skill Name" class="form-control mt-2" value="{{ $skills->name }}" required>
                     </div>
                 </div>
                 {{-- <div class="col-xs-12 col-sm-12 col-md-12 mb-4">

@@ -23,7 +23,7 @@
     </div>
 @endsession
 <div id="tableSearchResults">
-<div class="table-responsive">
+<div class="table-responsive service-table-responsive">
     <table class="table table-bordered table-sm text-nowrap">
         <tr>
             <th>No</th>
@@ -38,7 +38,12 @@
         @php
             $relatedUsers = $skill->primaryUsers->merge($skill->secondaryUsers)->unique('id')->values();
             $totalUsers = $relatedUsers->count();
-            $benchCount = $totalUsers > 0 ? min($totalUsers - 1, ($key % 2 === 0 ? 1 : 2)) : 0;
+            $benchUserIds = $relatedUsers
+                ->filter(function ($user) use ($assignedUserIds) {
+                    return $user->user_type === 'Internal' && !$assignedUserIds->contains($user->id);
+                })
+                ->pluck('id');
+            $benchCount = $benchUserIds->count();
         @endphp
         <tr>
             <td>{{ ++$i }}</td>
@@ -49,7 +54,7 @@
             <td>
                 @forelse($relatedUsers as $user)
                     <a href="{{ route('users.show', $user->id) }}" class="text-decoration-none">
-                        <span class="badge bg-success">{{ $user->name }}</span>
+                        <span class="badge {{ $benchUserIds->contains($user->id) ? 'bg-danger' : 'bg-success' }}">{{ $user->name }}</span>
                     </a>
                 @empty
                     <span class="badge bg-warning">No Resource</span>
@@ -65,7 +70,7 @@
             @endif --}}
             </td>
             <td>
-                <div class="dropdown">
+                <div class="dropdown service-action-dropdown">
                     <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-list-task"></i>
                     </button>

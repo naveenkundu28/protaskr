@@ -1,14 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container-fluid">
     <div class="row">
-        <div class="col-lg-12 margin-tb d-flex align-items-center justify-content-between mb-4">
-            <div class="pull-left">
-                <h2>Update Profile</h2>
-            </div>
-            <div class="pull-right">
-                <a class="btn btn-primary btn-sm mb-2" href="{{ route('dashboard') }}"><i class="fa fa-arrow-left"></i> Back</a>
+        <div class="col-lg-12 margin-tb mb-4">
+            <div class="d-flex align-items-center justify-content-between shadow-sm p-3 rounded bg-white">
+                <div class="pull-left">
+                    <h2>Update Profile</h2>
+                </div>
+                <div class="pull-right">
+                    <a class="btn btn-primary btn-sm" href="{{ route('dashboard') }}"><i class="fa fa-arrow-left"></i> Back</a>
+                </div>
             </div>
         </div>
     </div>
@@ -24,85 +26,87 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('profile.update') }}">
-        @csrf
-        @method('PUT')
+    <div class="card border-0 p-4 mb-4 shadow-sm m-auto">
+        <form method="POST" action="{{ route('profile.update') }}">
+            @csrf
+            @method('PUT')
 
-        <div class="row">
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Joining Date:</strong>
-                    <input type="date" name="joining_date" class="form-control" value="{{ $user->joining_date }}">
+            <div class="row">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Joining Date: <span class="text-danger">*</span></strong>
+                        <input type="date" name="joining_date" class="form-control" value="{{ $user->joining_date }}" required>
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Name:</strong>
-                    <input type="text" name="name" placeholder="Name" class="form-control" value="{{ $user->name }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Name: <span class="text-danger">*</span></strong>
+                        <input type="text" name="name" placeholder="Name" class="form-control" value="{{ $user->name }}" required>
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Email:</strong>
-                    <input type="email" name="email" placeholder="Email" class="form-control" value="{{ $user->email }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Email: <span class="text-danger">*</span></strong>
+                        <input type="email" name="email" placeholder="Email" class="form-control" value="{{ $user->email }}" required>
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Experience (Years):</strong>
-                    <input type="number" name="experience" placeholder="Experience (Years)" class="form-control" value="{{ $user->experience }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Experience (Years): <span class="text-danger">*</span></strong>
+                        <input type="number" name="experience" placeholder="Experience (Years)" class="form-control" value="{{ $user->experience }}" required>
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Phone No:</strong>
-                    <input type="text" name="phone_no" placeholder="Phone No" class="form-control" value="{{ $user->phone_no }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Phone No: <span class="text-danger">*</span></strong>
+                        <input type="text" name="phone_no" placeholder="Phone No" class="form-control" value="{{ $user->phone_no }}" required>
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Alternate Phone No:</strong>
-                    <input type="text" name="alt_phone_no" placeholder="Alternate Phone No" class="form-control" value="{{ $user->alt_phone_no }}">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Alternate Phone No:</strong>
+                        <input type="text" name="alt_phone_no" placeholder="Alternate Phone No" class="form-control" value="{{ $user->alt_phone_no }}">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Password:</strong>
-                    <input type="password" name="password" placeholder="Password" class="form-control">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Password:</strong>
+                        <input autocomplete="new-password" type="password" name="password" placeholder="Password" class="form-control">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Confirm Password:</strong>
-                    <input type="password" name="confirm-password" placeholder="Confirm Password" class="form-control">
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Confirm Password:</strong>
+                        <input type="password" name="confirm-password" placeholder="Confirm Password" class="form-control">
+                    </div>
                 </div>
-            </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Primary Skills:</strong>
-                    <select name="primary_skills[]" class="form-control select2" multiple>
-                        @foreach($skills as $skill)
-                            <option value="{{ $skill->id }}" {{ in_array($skill->id,$userPrimarySkills) ? 'selected' : '' }}>{{ $skill->name }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Primary Skills: <span class="text-danger">*</span></strong>
+                        <select name="primary_skills[]" class="form-control select2" required multiple>
+                            @foreach($skills as $skill)
+                                <option value="{{ $skill->id }}" {{ in_array($skill->id,$userPrimarySkills) ? 'selected' : '' }}>{{ $skill->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
-                <div class="form-group">
-                    <strong>Secondary Skills:</strong>
-                    <select name="secondary_skills[]" class="form-control select2" multiple>
-                        @foreach($skills as $skill)
-                            <option value="{{ $skill->id }}"  {{ in_array($skill->id,$userSecondarySkills) ? 'selected' : '' }}>{{ $skill->name }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
+                    <div class="form-group">
+                        <strong>Secondary Skills:</strong>
+                        <select name="secondary_skills[]" class="form-control select2" multiple>
+                            @foreach($skills as $skill)
+                                <option value="{{ $skill->id }}"  {{ in_array($skill->id,$userSecondarySkills) ? 'selected' : '' }}>{{ $skill->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary btn-sm mt-2 mb-3"><i class="fa-solid fa-floppy-disk"></i> Submit</button>
                 </div>
             </div>
-            <div class="col-xs-12 col-sm-12 col-md-12 text-center">
-                <button type="submit" class="btn btn-primary btn-sm mt-2 mb-3"><i class="fa-solid fa-floppy-disk"></i> Submit</button>
-            </div>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 @endsection
 

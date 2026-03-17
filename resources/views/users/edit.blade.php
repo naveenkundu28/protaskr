@@ -34,8 +34,8 @@
             <div class="row">
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
-                        <strong>User Type:</strong>
-                        <select name="user_type" class="form-control mt-2">
+                        <strong>User Type: <span class="text-danger">*</span></strong>
+                        <select name="user_type" class="form-control mt-2" required>
                             <option value="Internal" {{ $user->user_type == 'Internal' ? 'selected' : '' }}>Internal</option>
                             <option value="External" {{ $user->user_type == 'External' ? 'selected' : '' }}>External</option>
                         </select>
@@ -43,38 +43,38 @@
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
-                        <strong>Employee ID:</strong>
-                        <input type="text" name="employee_id" placeholder="Employee ID" class="form-control mt-2" value="{{ $user->employee_id }}">
+                        <strong>Employee ID: <span class="text-danger">*</span></strong>
+                        <input autocomplete="new-password" type="text" name="employee_id" placeholder="Employee ID" class="form-control mt-2" autocomplete="off" value="{{ $user->employee_id }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
-                        <strong>Joining Date:</strong>
-                        <input type="date" name="joining_date" class="form-control mt-2" value="{{ $user->joining_date }}">
+                        <strong>Joining Date: <span class="text-danger">*</span></strong>
+                        <input type="date" name="joining_date" class="form-control mt-2" value="{{ $user->joining_date }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
-                        <strong>Name:</strong>
-                        <input type="text" name="name" placeholder="Name" class="form-control mt-2" value="{{ $user->name }}">
+                        <strong>Name: <span class="text-danger">*</span></strong>
+                        <input type="text" name="name" placeholder="Name" class="form-control mt-2" value="{{ $user->name }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
-                        <strong>Email:</strong>
-                        <input type="email" name="email" placeholder="Email" class="form-control mt-2" value="{{ $user->email }}">
+                        <strong>Email: <span class="text-danger">*</span></strong>
+                        <input type="email" name="email" placeholder="Email" class="form-control mt-2" value="{{ $user->email }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
-                        <strong>Experience (Years):</strong>
-                        <input type="number" name="experience" placeholder="Experience (Years)" class="form-control mt-2" value="{{ $user->experience }}">
+                        <strong>Experience (Years): <span class="text-danger">*</span></strong>
+                        <input type="number" name="experience" placeholder="Experience (Years)" class="form-control mt-2" value="{{ $user->experience }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
-                        <strong>Phone No:</strong>
-                        <input type="text" name="phone_no" placeholder="Phone No" class="form-control mt-2" value="{{ $user->phone_no }}">
+                        <strong>Phone No: <span class="text-danger">*</span></strong>
+                        <input type="text" name="phone_no" placeholder="Phone No" class="form-control mt-2" value="{{ $user->phone_no }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
@@ -86,7 +86,7 @@
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
                         <strong>Password:</strong>
-                        <input type="password" name="password" placeholder="Password" class="form-control mt-2">
+                        <input autocomplete="new-password" type="password" name="password" placeholder="Password" class="form-control mt-2">
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
@@ -97,8 +97,8 @@
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
-                        <strong>Primary Skills:</strong>
-                        <select name="primary_skills[]" class="form-control mt-2 select2" multiple>
+                        <strong>Primary Skills: <span class="text-danger">*</span></strong>
+                        <select name="primary_skills[]" class="form-control mt-2 select2" required multiple>
                             @foreach($skills as $skill)
                                 <option value="{{ $skill->id }}" {{ in_array($skill->id,$userPrimarySkills) ? 'selected' : '' }}>{{ $skill->name }}</option>
                             @endforeach
@@ -120,7 +120,7 @@
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
                         <strong>Tags:</strong>
-                        <select name="tags[]" class="form-control mt-2 select2">
+                        <select name="tags[]" class="form-control mt-2 select2 select2-mandatory">
                             @foreach($tags as $tag)
                                 <option value="{{ $tag->id }}" {{ in_array($tag->id,$userTags) ? 'selected' : '' }}>{{ $tag->name }}</option>
                             @endforeach
@@ -131,7 +131,7 @@
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
                         <strong>Allow Manual Tracking:</strong>
-                        <select name="manual" class="form-control mt-2 select2">
+                        <select name="manual" class="form-control mt-2 select2 select2-mandatory">
                             <option value="1" {{ $user->manual ? 'selected':'' }}>
                                 Yes
                             </option>
@@ -145,7 +145,7 @@
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-4">
                     <div class="form-group">
                         <strong>Role:</strong>
-                        <select name="roles[]" class="form-control mt-2 select2">
+                        <select name="roles[]" class="form-control mt-2 select2 select2-mandatory">
                             @foreach ($roles as $value => $label)
                                 <option value="{{ $value }}" {{ isset($userRole[$value]) ? 'selected' : '' }}>
                                     {{ $label }}

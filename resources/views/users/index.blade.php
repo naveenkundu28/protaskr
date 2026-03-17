@@ -26,7 +26,7 @@
             </div>
         @endsession
         <div id="tableSearchResults">
-            <div class="table-responsive">
+            <div class="table-responsive service-table-responsive">
                 <table class="table table-bordered table-sm text-nowrap userListingTable">
                 <tr>
                     <th>No</th>
@@ -87,7 +87,7 @@
                             @endif
                         </td>
                         <td>
-                            <div class="dropdown">
+                            <div class="dropdown service-action-dropdown">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-list-task"></i>
                                 </button>
