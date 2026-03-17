@@ -225,7 +225,7 @@
                             <td>
 
                                 @if ($service->frontResource)
-                                    <span>
+                                    <span class="{{ $service->frontResource->trashed() ? 'text-danger' : '' }}">
                                         {{ $service->frontResource->name }}
                                     </span>
                                 @endif
@@ -234,7 +234,7 @@
                             <td>
 
                                 @if ($service->workingResource)
-                                    <span>
+                                    <span class="{{ $service->workingResource->trashed() ? 'text-danger' : '' }}">
                                         {{ $service->workingResource->name }}
                                     </span>
                                 @endif

@@ -243,7 +243,7 @@ class ProjectController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        $employees = $client->users()->role('Employee')->withTrashed()->get();
+        $employees = $client->users()->role('Employee')->get();
 
         // Fetch all master hours
         $masterHours = Hour::all()->keyBy(function ($item) {
