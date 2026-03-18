@@ -147,7 +147,7 @@
                             <strong>Role:</strong>
                             <select name="roles[]" class="form-control select2 select2-mandatory mt-2">
                                 @foreach ($roles as $value => $label)
-                                    <option value="{{ $value }}">
+                                    <option value="{{ $value }}" {{ in_array($value, isset($user) ? $user->roles->pluck('name')->toArray() : ['Employee']) ? 'selected' : '' }}>
                                         {{ $label }}
                                     </option>
                                 @endforeach

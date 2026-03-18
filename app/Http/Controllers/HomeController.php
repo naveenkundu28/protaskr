@@ -82,7 +82,7 @@ class HomeController extends Controller
         $hoursByUser = [];
 
         foreach ($services as $service) {
-            $assignedUsers = collect([$service->front_resource, $service->working_resource])
+            $assignedUsers = collect([$service->working_resource])
                 ->filter()
                 ->unique();
 

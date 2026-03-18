@@ -6,19 +6,49 @@
 
 @section('content')
     <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center bg-white mb-4 shadow-sm p-3 rounded">
-            <div class="d-flex align-items-center gap-3 flex-wrap">
-                <h2 class="mb-0">Service Listing</h2>
-                <form method="GET" action="{{ route('services.listing') }}" class="d-flex gap-2 auto-search-form" data-search-target="#tableSearchResults">
-                    <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search services">
+        <div class="bg-white mb-4 shadow-sm p-3 rounded">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-3 flex-wrap w-100">
+                    <h2 class="mb-0">Service Listing</h2>
+                </div>
+                @can('service-create')
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importServicesModal">
+                        <i class="bi bi-upload me-1"></i> Import
+                    </button>
+                @endcan
+            </div>
+            <div>
+                <form id="serviceListingFilters" method="GET" action="{{ route('services.listing') }}"
+                    class="d-flex align-items-start flex-row gap-2 auto-search-form" data-search-target="#tableSearchResults">
+                    <input type="text" name="search" value="{{ request('search') }}" class="form-control"
+                        placeholder="Search services">
+                    <select name="client_id" class="form-select">
+                        <option value="">All Clients</option>
+                        @foreach ($clients as $client)
+                            <option value="{{ $client->id }}" {{ (string) request('client_id') === (string) $client->id ? 'selected' : '' }}>
+                                {{ $client->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <select name="month" class="form-select">
+                        <option value="">All Months</option>
+                        @foreach ($monthOptions as $monthOption)
+                            <option value="{{ $monthOption['value'] }}" {{ (string) request('month') === (string) $monthOption['value'] ? 'selected' : '' }}>
+                                {{ $monthOption['label'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <select name="front_resource" class="form-select">
+                        <option value="">All Front Resources</option>
+                        @foreach ($frontResources as $resource)
+                            <option value="{{ $resource->id }}" {{ (string) request('front_resource') === (string) $resource->id ? 'selected' : '' }}>
+                                {{ $resource->name }}{{ $resource->employee_id ? ' - ' . $resource->employee_id : '' }}
+                            </option>
+                        @endforeach
+                    </select>
                     {{-- <button class="btn btn-outline-secondary">Search</button> --}}
                 </form>
             </div>
-            @can('service-create')
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importServicesModal">
-                    <i class="bi bi-upload me-1"></i> Import
-                </button>
-            @endcan
         </div>
 
         @if (session('success'))
@@ -173,6 +203,11 @@
             @if ($errors->has('services_file'))
                 new bootstrap.Modal(document.getElementById('importServicesModal')).show();
             @endif
+
+            const $filtersForm = $('#serviceListingFilters');
+            $filtersForm.find('select').on('change', function() {
+                $filtersForm.find('input[name="search"]').trigger('input');
+            });
         });
     </script>
 @endpush

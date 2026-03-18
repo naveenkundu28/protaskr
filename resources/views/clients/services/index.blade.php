@@ -12,6 +12,7 @@
                 <h2 class="mb-0">Services - {{ $client->name }}</h2>
                 <form method="GET" action="{{ route('clients.services.index', $client->id) }}"
                     class="d-flex gap-2 auto-search-form" data-search-target="#tableSearchResults">
+                    <input type="hidden" name="tab" value="{{ $activeTab ?? 'active' }}">
                     <input type="text" name="search" value="{{ request('search') }}" class="form-control"
                         placeholder="Search services">
                     {{-- <button class="btn btn-outline-secondary">Search</button> --}}
@@ -55,9 +56,9 @@
                         <div class="col-md-4 mb-3">
                             <label>Service Type <span class="text-danger">*</span></label>
                             <select name="service_type" id="service_type" class="form-select" required>
-                                <option value="direct">Direct</option>
-                                <option value="proxy">Proxy</option>
-                                <option value="external">External</option>
+                                <option value="direct" {{ old('service_type', 'direct') == 'direct' ? 'selected' : '' }}>Direct</option>
+                                <option value="proxy" {{ old('service_type') == 'proxy' ? 'selected' : '' }}>Proxy</option>
+                                <option value="external" {{ old('service_type') == 'external' ? 'selected' : '' }}>External</option>
                             </select>
 
                             @error('service_type')
@@ -68,7 +69,7 @@
 
                         <div class="col-md-4 mb-3">
                             <label>Service ID <span class="text-danger">*</span></label>
-                            <input type="text" name="service_id" id="service_id" class="form-control" required>
+                            <input type="text" name="service_id" id="service_id" value="{{ old('service_id') }}" class="form-control" required>
                             @error('service_id')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -77,7 +78,7 @@
 
                         <div class="col-md-4 mb-3">
                             <label>Hours <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" name="hours" id="hours" class="form-control"
+                            <input type="number" step="0.01" name="hours" id="hours" value="{{ old('hours') }}" class="form-control"
                                 required>
                             @error('hours')
                                 <span class="text-danger">{{ $message }}</span>
@@ -110,7 +111,7 @@
                                 <option value="">Select</option>
 
                                 @foreach ($employees as $employee)
-                                    <option value="{{ $employee->id }}">
+                                    <option value="{{ $employee->id }}" {{ old('front_resource') == $employee->id ? 'selected' : '' }}>
                                         {{ $employee->name }}{{ $employee->employee_id ? ' - ' . $employee->employee_id : '' }}
                                     </option>
                                 @endforeach
@@ -128,7 +129,7 @@
                                 <option value="">Select</option>
 
                                 @foreach ($employees as $employee)
-                                    <option value="{{ $employee->id }}">
+                                    <option value="{{ $employee->id }}" {{ old('working_resource') == $employee->id ? 'selected' : '' }}>
                                         {{ $employee->name }}{{ $employee->employee_id ? ' - ' . $employee->employee_id : '' }}
                                     </option>
                                 @endforeach
@@ -141,8 +142,8 @@
 
 
                         <div class="col-md-4 mb-3 d-none" id="start_date_div">
-                            <label>Start Date </label>
-                            <input type="date" name="start_date" id="start_date" class="form-control">
+                            <label>Start Date <span class="text-danger">*</span></label>
+                            <input type="date" name="start_date" value="{{ old('start_date') }}" id="start_date" class="form-control">
                             @error('start_date')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -150,8 +151,8 @@
 
 
                         <div class="col-md-4 mb-3 d-none" id="end_date_div">
-                            <label>End Date</label>
-                            <input type="date" name="end_date" id="end_date" class="form-control">
+                            <label>End Date <span class="text-danger">*</span></label>
+                            <input type="date" name="end_date" value="{{ old('end_date') }}" id="end_date" class="form-control">
                             @error('end_date')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -159,16 +160,16 @@
 
 
                         <div class="col-md-4 mb-3 d-none" id="reason_div">
-                            <label>Cancel Reason</label>
-                            <textarea name="cancel_reason" id="reason" class="form-control"></textarea>
+                            <label>Cancel Reason <span class="text-danger">*</span></label>
+                            <textarea name="cancel_reason" id="reason" class="form-control">{{ old('cancel_reason') }}</textarea>
                             @error('cancel_reason')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
 
                         <div class="col-md-4 mb-3 d-none" id="replacement_reason_div">
-                            <label>Replacement Reason</label>
-                            <textarea name="replacement_reason" id="replacement_reason" class="form-control"></textarea>
+                            <label>Replacement Reason <span class="text-danger">*</span></label>
+                            <textarea name="replacement_reason" id="replacement_reason" class="form-control">{{ old('replacement_reason') }}</textarea>
                             @error('replacement_reason')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -195,6 +196,21 @@
 
 
         {{-- ================= TABLE ================= --}}
+        <ul class="nav nav-pills service-tabs mb-3">
+            <li class="nav-item">
+                <a class="nav-link {{ ($activeTab ?? 'active') === 'active' ? 'active' : '' }}"
+                    href="{{ route('clients.services.index', ['client' => $client->id, 'tab' => 'active', 'search' => request('search')]) }}">
+                    Active Services
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ ($activeTab ?? 'active') === 'closed' ? 'active' : '' }}"
+                    href="{{ route('clients.services.index', ['client' => $client->id, 'tab' => 'closed', 'search' => request('search')]) }}">
+                    Closed Services
+                </a>
+            </li>
+        </ul>
+
         <div id="tableSearchResults">
             <div class="table-responsive service-table-responsive">
                 <table class="table table-bordered">
@@ -209,8 +225,10 @@
                         <th>Hours</th>
                         <th>Status</th>
                         <th>Start Date</th>
-                        <th>End Date</th>
-                        <th style="width:250px">Reason</th>
+                        @if (($activeTab ?? 'active') === 'closed')
+                            <th>End Date</th>
+                            <th style="width:250px">Reason</th>
+                        @endif
                         <th>Action</th>
                     </tr>
 
@@ -277,12 +295,14 @@
                                         : '') }}
                             </td>
 
-                            <td>{{ $service->end_date ? \Carbon\Carbon::parse($service->end_date)->format('j F Y') : '' }}
-                            </td>
+                            @if (($activeTab ?? 'active') === 'closed')
+                                <td>{{ $service->end_date ? \Carbon\Carbon::parse($service->end_date)->format('j F Y') : '' }}
+                                </td>
 
-                            <td style="width:250px">
-                                {{ $service->cancel_reason ?? ($service->replacement_reason ?? '') }}
-                            </td>
+                                <td style="width:250px">
+                                    {{ $service->cancel_reason ?? ($service->replacement_reason ?? '') }}
+                                </td>
+                            @endif
 
                             <td>
                                 <div class="dropdown service-action-dropdown">
@@ -365,6 +385,37 @@
 
     </div>
 @endsection
+
+@push('styles')
+    <style>
+        .service-tabs {
+            gap: 0.5rem;
+        }
+
+        .service-tabs .nav-link {
+            border: 1px solid #dfe3ea;
+            border-radius: 999px;
+            color: #495057;
+            background: #f8f9fa;
+            font-weight: 600;
+            padding: 0.45rem 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .service-tabs .nav-link:hover {
+            color: #0d6efd;
+            border-color: #9ec5fe;
+            background: #eef5ff;
+        }
+
+        .service-tabs .nav-link.active {
+            color: #fff;
+            background: #0d6efd;
+            border-color: #0d6efd;
+            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.22);
+        }
+    </style>
+@endpush
 
 @push('scripts')
     <script>

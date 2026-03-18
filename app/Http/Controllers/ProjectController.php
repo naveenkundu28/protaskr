@@ -212,9 +212,15 @@ class ProjectController extends Controller
     {
         $this->authorize('service-show');
         $search = trim((string) request('search'));
+        $tab = request('tab', 'active');
+        $activeStatuses = ['new', 'in_progress'];
+        $closedStatuses = ['completed', 'replacement', 'canceled'];
+        $activeTab = in_array($tab, ['active', 'closed']) ? $tab : 'active';
+        $statusFilter = $activeTab === 'closed' ? $closedStatuses : $activeStatuses;
 
         $services = $client->services()
             ->with(['frontResource', 'workingResource'])
+            ->whereIn('service_status', $statusFilter)
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($subQuery) use ($search) {
                     $subQuery->where('service_id', 'like', "%{$search}%")
@@ -250,15 +256,27 @@ class ProjectController extends Controller
             return $item->year . '-' . $item->month;
         });
 
-        return view('clients.services.index', compact('services', 'client', 'employees', 'masterHours'));
+        return view('clients.services.index', compact('services', 'client', 'employees', 'masterHours', 'activeTab'));
     }
 
     public function serviceListing()
     {
         $this->authorize('service-show');
         $search = trim((string) request('search'));
+        $clientId = request('client_id');
+        $month = request('month');
+        $frontResource = request('front_resource');
 
         $services = Service::with(['client', 'frontResource', 'workingResource'])
+            ->when(!empty($clientId), function ($query) use ($clientId) {
+                $query->where('client_id', $clientId);
+            })
+            ->when(!empty($month), function ($query) use ($month) {
+                $query->whereMonth('created_at', $month);
+            })
+            ->when(!empty($frontResource), function ($query) use ($frontResource) {
+                $query->where('front_resource', $frontResource);
+            })
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($subQuery) use ($search) {
                     $subQuery->where('service_id', 'like', "%{$search}%")
@@ -296,7 +314,28 @@ class ProjectController extends Controller
             return $item->year . '-' . $item->month;
         });
 
-        return view('clients.services.listing', compact('services', 'masterHours'));
+        $clients = Client::whereHas('services')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $frontResources = User::whereIn('id', Service::whereNotNull('front_resource')->distinct()->pluck('front_resource'))
+            ->orderBy('name')
+            ->get(['id', 'name', 'employee_id']);
+
+        $monthOptions = collect(range(1, 12))->map(function ($monthNumber) {
+            return [
+                'value' => $monthNumber,
+                'label' => Carbon::create()->month($monthNumber)->format('F'),
+            ];
+        });
+
+        return view('clients.services.listing', compact(
+            'services',
+            'masterHours',
+            'clients',
+            'frontResources',
+            'monthOptions'
+        ));
     }
 
     public function importServices(Request $request)
@@ -548,54 +587,13 @@ class ProjectController extends Controller
             'cancel_reason',
             'replacement_reason',
         ]);
+        if ($serviceValidationError = $this->validateMonthlyServiceHours($client, $request)) {
+            return $serviceValidationError;
+        }
 
-
-        // START: check if same month(created_at), same service_id & same front resource then record cant be inserted or updated, it can be inserted if different month
         $currentMonth = Carbon::now()->month;
-        $currentMonthName = Carbon::now()->format('F');
         $currentYear = Carbon::now()->year;
 
-        $maxHours = Hour::where('year', $currentYear)
-        ->where('month', $currentMonthName)
-        ->value('hours');
-
-        $usedHours =  $client->services()
-        ->whereMonth('created_at', $currentMonth)
-        ->whereYear('created_at', $currentYear)
-        ->sum('hours');
-
-        $remainingHour = $maxHours - $usedHours;
-
-        if ($remainingHour <= 0) {
-            return back()->withInput()->withErrors([
-                'service_err' => 'No remaining hours available for this month.'
-            ]);
-        }
-
-         if ($request->hours > $remainingHour) {
-            return back()->withInput()->withErrors([
-                'hours' => "Only {$remainingHour} hours are available for this month.",
-            ]);
-        }
-
-        if ($request->service_type === 'direct') {
-            $exists = $client->services()
-                ->where('service_id', $request->service_id)
-                ->whereMonth('created_at', $currentMonth)
-                ->whereYear('created_at', $currentYear)
-                ->exists();
-
-            if ($exists) {
-                return back()->withInput()->withErrors([
-                    'service_err' => 'Direct service already exists for this month.'
-                ]);
-            }
-        }
-        /*
-        |--------------------------------------------------------------------------
-        | Rule 1: Same service + same front resource in same month/year
-        |--------------------------------------------------------------------------
-        */
         $sameServiceExists = $client->services()
             ->where('service_id', $request->service_id)
             ->where('working_resource', $request->working_resource)
@@ -642,6 +640,7 @@ class ProjectController extends Controller
 
         if ($request->service_type === 'direct') {
             $directResourceExists = $client->services()
+                ->where('service_id', $request->service_id)
                 ->where('service_type', 'direct')
                 ->where('front_resource', $request->front_resource)
                 ->whereMonth('created_at', $currentMonth)
@@ -665,7 +664,7 @@ class ProjectController extends Controller
             $data['start_date'] = null;
         }
 
-        if ($data['service_status'] !== 'completed' || $data['service_status'] !== 'canceled' || $data['service_status'] !== 'replacement') {
+        if ($data['service_status'] !== 'completed' && $data['service_status'] !== 'canceled' && $data['service_status'] !== 'replacement') {
             $data['end_date'] = null;
         }
 
@@ -745,62 +744,17 @@ class ProjectController extends Controller
             'cancel_reason',
             'replacement_reason'
         ]);
+        if ($serviceValidationError = $this->validateMonthlyServiceHours($client, $request, $service)) {
+            return $serviceValidationError;
+        }
 
-
-        // START: check if same month(created_at), same service_id & same front resource then record cant be inserted or updated, it can be inserted if different month
         $currentMonth = Carbon::now()->month;
-        $currentMonthName = Carbon::now()->format('F');
         $currentYear = Carbon::now()->year;
-
-        $maxHours = Hour::where('year', $currentYear)
-        ->where('month', $currentMonthName)
-        ->value('hours');
-
-        $usedHours =  $client->services()
-        ->whereMonth('created_at', $currentMonth)
-        ->whereYear('created_at', $currentYear)
-        ->where('id', '!=', $service->id)
-        ->sum('hours');
-
-        $remainingHour = $maxHours - $usedHours;
-
-        if ($remainingHour <= 0) {
-            return back()->withInput()->withErrors([
-                'service_err' => 'No remaining hours available for this month.'
-            ]);
-        }
-
-         if ($request->hours > $remainingHour) {
-            return back()->withInput()->withErrors([
-                'hours' => "Only {$remainingHour} hours are available for this month.",
-            ]);
-        }
-
-        if ($request->service_type === 'direct') {
-            $exists = $client->services()
-                ->where('service_id', $request->service_id)
-                ->where('id', '!=', $service->id)
-                ->whereMonth('created_at', $currentMonth)
-                ->whereYear('created_at', $currentYear)
-                ->exists();
-
-            if ($exists) {
-                return back()->withInput()->withErrors([
-                    'service_err' => 'Direct service already exists for this month.'
-                ]);
-            }
-        }
-        /*
-        |--------------------------------------------------------------------------
-        | Rule 1: Same service + same front resource in same month/year
-        |--------------------------------------------------------------------------
-        */
 
         $sameServiceExists = $client->services()
             ->where('service_id', $request->service_id)
             ->where('id', '!=', $service->id)
             ->where('working_resource', $request->working_resource)
-            // ->where('working_resource', $request->working_resource)
             ->whereMonth('created_at', $currentMonth)
             ->whereYear('created_at', $currentYear)
             ->exists();
@@ -898,5 +852,57 @@ class ProjectController extends Controller
         $service->delete();
 
         return back()->with('success', 'Service deleted successfully');
+    }
+
+    private function validateMonthlyServiceHours(Client $client, Request $request, ?Service $service = null)
+    {
+        $currentDate = Carbon::now();
+        $currentMonth = $currentDate->month;
+        $currentMonthName = $currentDate->format('F');
+        $currentYear = $currentDate->year;
+
+        $maxHours = Hour::where('year', $currentYear)
+            ->where('month', $currentMonthName)
+            ->value('hours');
+
+        if (!$maxHours) {
+            return back()->withInput()->withErrors([
+                'service_err' => "Master hours are not set for {$currentMonthName} {$currentYear}.",
+            ]);
+        }
+
+        $serviceHoursQuery = $client->services()
+            ->where('service_id', $request->service_id)
+            ->whereMonth('created_at', $currentMonth)
+            ->whereYear('created_at', $currentYear);
+
+        if ($service) {
+            $serviceHoursQuery->where('id', '!=', $service->id);
+        }
+
+        $usedHoursForServiceId = (float) $serviceHoursQuery->sum('hours');
+        $remainingHour = (float) $maxHours - $usedHoursForServiceId;
+
+        if ($usedHoursForServiceId >= (float) $maxHours) {
+            return back()->withInput()->withErrors([
+                'hours' => "Hours for service ID {$request->service_id} have already reached the monthly limit of {$maxHours}.",
+            ]);
+        }
+
+        if ((float) $request->hours > $remainingHour) {
+            return back()->withInput()->withErrors([
+                'hours' => "Only {$remainingHour} hours are available for service ID {$request->service_id} this month.",
+            ]);
+        }
+
+        $sameServiceIdExists = (clone $serviceHoursQuery)->exists();
+
+        if ($sameServiceIdExists && $request->service_type === 'direct') {
+            return back()->withInput()->withErrors([
+                'service_type' => 'For an existing service ID in the current month, service type cannot be direct.',
+            ]);
+        }
+
+        return null;
     }
 }
