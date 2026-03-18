@@ -552,8 +552,45 @@ class ProjectController extends Controller
 
         // START: check if same month(created_at), same service_id & same front resource then record cant be inserted or updated, it can be inserted if different month
         $currentMonth = Carbon::now()->month;
+        $currentMonthName = Carbon::now()->format('F');
         $currentYear = Carbon::now()->year;
 
+        $maxHours = Hour::where('year', $currentYear)
+        ->where('month', $currentMonthName)
+        ->value('hours');
+
+        $usedHours =  $client->services()
+        ->whereMonth('created_at', $currentMonth)
+        ->whereYear('created_at', $currentYear)
+        ->sum('hours');
+
+        $remainingHour = $maxHours - $usedHours;
+
+        if ($remainingHour <= 0) {
+            return back()->withInput()->withErrors([
+                'service_err' => 'No remaining hours available for this month.'
+            ]);
+        }
+
+         if ($request->hours > $remainingHour) {
+            return back()->withInput()->withErrors([
+                'hours' => "Only {$remainingHour} hours are available for this month.",
+            ]);
+        }
+
+        if ($request->service_type === 'direct') {
+            $exists = $client->services()
+                ->where('service_id', $request->service_id)
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->exists();
+
+            if ($exists) {
+                return back()->withInput()->withErrors([
+                    'service_err' => 'Direct service already exists for this month.'
+                ]);
+            }
+        }
         /*
         |--------------------------------------------------------------------------
         | Rule 1: Same service + same front resource in same month/year
@@ -561,7 +598,7 @@ class ProjectController extends Controller
         */
         $sameServiceExists = $client->services()
             ->where('service_id', $request->service_id)
-            ->where('front_resource', $request->front_resource)
+            ->where('working_resource', $request->working_resource)
             ->whereMonth('created_at', $currentMonth)
             ->whereYear('created_at', $currentYear)
             ->exists();
@@ -575,26 +612,26 @@ class ProjectController extends Controller
                 ]);
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Rule 2: Same service cannot repeat in same month/year
-        |--------------------------------------------------------------------------
-        */
-        $resourceExists = $client->services()
-            ->where('service_id', $request->service_id)
-            // ->where('front_resource', $request->front_resource)
-            ->whereMonth('created_at', $currentMonth)
-            ->whereYear('created_at', $currentYear)
-            ->exists();
+        // /*
+        // |--------------------------------------------------------------------------
+        // | Rule 2: Same service cannot repeat in same month/year
+        // |--------------------------------------------------------------------------
+        // */
+        // $resourceExists = $client->services()
+        //     ->where('service_id', $request->service_id)
+        //     // ->where('front_resource', $request->front_resource)
+        //     ->whereMonth('created_at', $currentMonth)
+        //     ->whereYear('created_at', $currentYear)
+        //     ->exists();
 
-        if ($resourceExists) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->withErrors([
-                    'service_err' => 'This service is already assigned to somebody for this month.'
-                ]);
-        }
+        // if ($resourceExists) {
+        //     return redirect()
+        //         ->back()
+        //         ->withInput()
+        //         ->withErrors([
+        //             'service_err' => 'This service is already assigned to somebody for this month.'
+        //         ]);
+        // }
 
 
         /*
@@ -712,8 +749,47 @@ class ProjectController extends Controller
 
         // START: check if same month(created_at), same service_id & same front resource then record cant be inserted or updated, it can be inserted if different month
         $currentMonth = Carbon::now()->month;
+        $currentMonthName = Carbon::now()->format('F');
         $currentYear = Carbon::now()->year;
 
+        $maxHours = Hour::where('year', $currentYear)
+        ->where('month', $currentMonthName)
+        ->value('hours');
+
+        $usedHours =  $client->services()
+        ->whereMonth('created_at', $currentMonth)
+        ->whereYear('created_at', $currentYear)
+        ->where('id', '!=', $service->id)
+        ->sum('hours');
+
+        $remainingHour = $maxHours - $usedHours;
+
+        if ($remainingHour <= 0) {
+            return back()->withInput()->withErrors([
+                'service_err' => 'No remaining hours available for this month.'
+            ]);
+        }
+
+         if ($request->hours > $remainingHour) {
+            return back()->withInput()->withErrors([
+                'hours' => "Only {$remainingHour} hours are available for this month.",
+            ]);
+        }
+
+        if ($request->service_type === 'direct') {
+            $exists = $client->services()
+                ->where('service_id', $request->service_id)
+                ->where('id', '!=', $service->id)
+                ->whereMonth('created_at', $currentMonth)
+                ->whereYear('created_at', $currentYear)
+                ->exists();
+
+            if ($exists) {
+                return back()->withInput()->withErrors([
+                    'service_err' => 'Direct service already exists for this month.'
+                ]);
+            }
+        }
         /*
         |--------------------------------------------------------------------------
         | Rule 1: Same service + same front resource in same month/year
@@ -723,7 +799,7 @@ class ProjectController extends Controller
         $sameServiceExists = $client->services()
             ->where('service_id', $request->service_id)
             ->where('id', '!=', $service->id)
-            ->where('front_resource', $request->front_resource)
+            ->where('working_resource', $request->working_resource)
             // ->where('working_resource', $request->working_resource)
             ->whereMonth('created_at', $currentMonth)
             ->whereYear('created_at', $currentYear)
@@ -744,22 +820,22 @@ class ProjectController extends Controller
         | Rule 2: Same service cannot repeat in same month/year
         |--------------------------------------------------------------------------
         */
-        $resourceExists = $client->services()
-            ->where('service_id', $request->service_id)
-            ->where('id', '!=', $service->id)
-            // ->where('front_resource', $request->front_resource)
-            ->whereMonth('created_at', $currentMonth)
-            ->whereYear('created_at', $currentYear)
-            ->exists();
+        // $resourceExists = $client->services()
+        //     ->where('service_id', $request->service_id)
+        //     ->where('id', '!=', $service->id)
+        //     // ->where('front_resource', $request->front_resource)
+        //     ->whereMonth('created_at', $currentMonth)
+        //     ->whereYear('created_at', $currentYear)
+        //     ->exists();
 
-        if ($resourceExists) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->withErrors([
-                    'service_err' => 'This service is already assigned to somebody for this month.'
-                ]);
-        }
+        // if ($resourceExists) {
+        //     return redirect()
+        //         ->back()
+        //         ->withInput()
+        //         ->withErrors([
+        //             'service_err' => 'This service is already assigned to somebody for this month.'
+        //         ]);
+        // }
 
 
         /*
