@@ -66,7 +66,7 @@
                 <div class="form-group">
                     <strong>Primary Skills:</strong><br>
                     @foreach ($user->primarySkills as $skill)
-                        <span class="badge bg-primary">{{ $skill->name }}</span>
+                        <span class="skill-item">{{ $skill->name }}</span>
                     @endforeach
                 </div>
             </div>
@@ -75,7 +75,7 @@
                 <div class="form-group">
                     <strong>Secondary Skills:</strong><br>
                     @foreach ($user->secondarySkills as $skill)
-                        <span class="badge bg-secondary">{{ $skill->name }}</span>
+                        <span class="skill-item skill-bg-secondary">{{ $skill->name }}</span>
                     @endforeach
                 </div>
             </div>
@@ -84,7 +84,7 @@
                 <div class="form-group">
                     <strong>Tags list:</strong><br>
                     @foreach ($user->tags as $tag)
-                        <span class="badge bg-info text-dark">{{ $tag->name }}</span>
+                        <span>{{ $tag->name }}</span>
                     @endforeach
                 </div>
             </div>
@@ -94,7 +94,11 @@
                     <strong>Roles:</strong>
                     @if (!empty($user->getRoleNames()))
                         @foreach ($user->getRoleNames() as $v)
-                            <span class="badge bg-danger">{{ $v }}</span>
+                            @if ($v == 'Admin')
+                                <label class="skill-item admin-bg">{{ $v }}</label>
+                            @else
+                                <label class="">{{ $v }}</label>
+                            @endif
                         @endforeach
                     @endif
                 </div>

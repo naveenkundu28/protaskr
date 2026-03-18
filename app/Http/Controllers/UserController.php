@@ -179,7 +179,7 @@ class UserController extends Controller
         $this->validate($request, [
             'name' => 'required',
             'email' => 'required|email|unique:users,email,' . $id,
-            'employee_id' => 'required|unique:users,employee_id',
+            'employee_id' => 'required|unique:users,employee_id,'. $id,
             'password' => 'same:confirm-password',
             'roles' => 'required'
         ]);

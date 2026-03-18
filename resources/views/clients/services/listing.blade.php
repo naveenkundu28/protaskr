@@ -101,7 +101,7 @@
                             {{ $service->cancel_reason ?? ($service->replacement_reason ?? '') }}
                         </td>
                         <td>
-                            <div class="dropdown">
+                            <div class="dropdown service-action-dropdown">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-list-task"></i>
                                 </button>

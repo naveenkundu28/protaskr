@@ -55,12 +55,14 @@
                                                 <i class="bi bi-list-ul me-2"></i> List Clients
                                             </a>
                                         </li>
+                                        @can('user-show')
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('services.listing') ? 'active' : '' }}"
                                                 href="{{ route('services.listing') }}">
                                                 <i class="bi bi-table me-2"></i> Service Listing
                                             </a>
                                         </li>
+                                        @endcan
                                         @if (Auth::user()->hasRole('Admin'))
                                             <li>
                                                 <a class="dropdown-item {{ request('type') == 'archived' ? 'active' : '' }}"
@@ -205,7 +207,10 @@
                     allowClear: true,
                 });
 
-                $('.service-action-dropdown').on('show.bs.dropdown', function() {
+                $('.select2-mandatory').select2({
+                    allowClear: false
+                });
+                $(document).on('show.bs.dropdown', '.service-action-dropdown', function() {
                     const $dropdown = $(this);
                     const $menu = $dropdown.find('.dropdown-menu');
                     const offset = $dropdown.find('[data-bs-toggle="dropdown"]').offset();
@@ -218,7 +223,7 @@
                     }).addClass('show');
                 });
 
-                $('.service-action-dropdown').on('hide.bs.dropdown', function() {
+                $(document).on('hide.bs.dropdown', '.service-action-dropdown', function() {
                     const $dropdown = $(this);
                     const $menu = $('body > .dropdown-menu.show');
 

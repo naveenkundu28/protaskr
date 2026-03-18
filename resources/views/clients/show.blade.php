@@ -16,13 +16,13 @@
                 <div class="card mb-4 shadow-sm">
                     <div class="card-body">
                         <h5 class="card-title">{{ $client->name }}</h5>
-                        <p class="card-text">{{ $client->description }}</p>
+                        <p class="card-text">{!! $client->description !!}</p>
                         <p class="card-text"><strong>Start Date:</strong>
                             {{ $client->start_date ? \Carbon\Carbon::parse($client->start_date)->format('j F Y') : '' }}</p>
                         <p class="card-text"><strong>End Date:</strong>
                             {{ $client->end_date ? \Carbon\Carbon::parse($client->end_date)->format('j F Y') : '' }}</p>
                         <p class="card-text"><strong>Status:</strong>
-                            {{ $client->status == 'pending' ? 'Pending' : ($client->status == 'on_going' ? 'In Progress' : 'Completed') }}
+                            {{ $client->status == 'not_started' ? 'Not Started' : ($client->status == 'in_progress' ? 'In Progress' : 'Completed') }}
                         </p>
                         <p class="card-text"><strong>Budget:</strong> ${{ $client->budget }}</p>
 
