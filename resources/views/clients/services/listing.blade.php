@@ -181,7 +181,7 @@
                                     <label for="services_file" class="form-label">Upload Excel File</label>
                                     <input type="file" class="form-control" id="services_file" name="services_file" accept=".xls,.xlsx" required>
                                     <div class="form-text">
-                                        Accepted columns: client name, client_id, type, front_resource_id, back_end_resource_id, service_id, hours, status, start/end dates, reason fields.
+                                        Accepted Format: .xlsx, .csv files.
                                     </div>
                                 </div>
                             </div>

@@ -343,7 +343,7 @@ class ProjectController extends Controller
         $this->authorize('service-create');
 
         $request->validate([
-            'services_file' => 'required|file|mimes:xls,xlsx',
+            'services_file' => 'required|file|mimes:xls,xlsx,csv,txt',
         ]);
 
         $rows = Excel::toArray([], $request->file('services_file'));
