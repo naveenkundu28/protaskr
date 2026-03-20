@@ -106,6 +106,8 @@ class ProjectController extends Controller
     public function show(Client $client)
     {
         $this->authorize('project-show');
+        $this->authorizeClientAccess($client);
+
         $teamMembers = $client->allUsers()->get();
         $users = User::withTrashed()->role('Employee')->get();
         return view('clients.show', compact('client', 'teamMembers', 'users'));
@@ -211,6 +213,8 @@ class ProjectController extends Controller
     public function services(Client $client)
     {
         $this->authorize('service-show');
+        $this->authorizeClientAccess($client);
+
         $search = trim((string) request('search'));
         $tab = request('tab', 'active');
         $activeStatuses = ['new', 'in_progress'];
@@ -263,11 +267,20 @@ class ProjectController extends Controller
     {
         $this->authorize('service-show');
         $search = trim((string) request('search'));
+        
+        $tab = request('tab', 'active');
+        $activeStatuses = ['new', 'in_progress'];
+        $closedStatuses = ['completed', 'replacement', 'canceled'];
+        $activeTab = in_array($tab, ['active', 'closed']) ? $tab : 'active';
+        $statusFilter = $activeTab === 'closed' ? $closedStatuses : $activeStatuses;
+        
         $clientId = request('client_id');
         $month = request('month');
         $frontResource = request('front_resource');
+        $workResource = request('work_resource');
 
         $services = Service::with(['client', 'frontResource', 'workingResource'])
+            ->whereIn('service_status', $statusFilter)
             ->when(!empty($clientId), function ($query) use ($clientId) {
                 $query->where('client_id', $clientId);
             })
@@ -277,6 +290,9 @@ class ProjectController extends Controller
             ->when(!empty($frontResource), function ($query) use ($frontResource) {
                 $query->where('front_resource', $frontResource);
             })
+            // ->when(!empty($workResource), function ($query) use ($workResource) {
+            //     $query->where('front_resource', $workResource);
+            // })
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($subQuery) use ($search) {
                     $subQuery->where('service_id', 'like', "%{$search}%")
@@ -322,6 +338,10 @@ class ProjectController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'employee_id']);
 
+        // $workResources = User::whereIn('id', Service::whereNotNull('working_resource')->distinct()->pluck('working_resource'))
+        //     ->orderBy('name')
+        //     ->get(['id', 'name', 'employee_id']);
+
         $monthOptions = collect(range(1, 12))->map(function ($monthNumber) {
             return [
                 'value' => $monthNumber,
@@ -334,7 +354,9 @@ class ProjectController extends Controller
             'masterHours',
             'clients',
             'frontResources',
-            'monthOptions'
+            // 'workResources',
+            'monthOptions',
+            'activeTab'
         ));
     }
 
@@ -520,6 +542,7 @@ class ProjectController extends Controller
     public function storeService(Request $request, Client $client)
     {
         $this->authorize('service-create');
+        $this->authorizeClientAccess($client);
 
         $request->validate([
             'service_type' => 'required|in:direct,proxy,external',
@@ -669,6 +692,8 @@ class ProjectController extends Controller
     public function servicesShow(Client $client, Service $service)
     {
         $this->authorize('service-show');
+        $this->authorizeClientAccess($client);
+
         $service->load(['frontResource', 'workingResource']);
         return view('clients.services.show', compact('client', 'service'));
     }
@@ -676,6 +701,7 @@ class ProjectController extends Controller
     public function updateService(Request $request, Client $client, Service $service)
     {
         $this->authorize('service-edit');
+        $this->authorizeClientAccess($client);
 
         $rules = [
             'service_type'      => 'required|in:direct,proxy,external',
@@ -831,6 +857,7 @@ class ProjectController extends Controller
     public function destroyService(Client $client, Service $service)
     {
         $this->authorize('service-delete');
+        $this->authorizeClientAccess($client);
 
         $service->delete();
 
@@ -887,5 +914,20 @@ class ProjectController extends Controller
         }
 
         return null;
+    }
+
+    private function authorizeClientAccess(Client $client): void
+    {
+        $user = Auth::user();
+
+        if ($user->hasRole('Admin')) {
+            return;
+        }
+
+        $isAssignedToClient = $client->allUsers()
+            ->where('users.id', $user->id)
+            ->exists();
+
+        abort_unless($isAssignedToClient, 403);
     }
 }

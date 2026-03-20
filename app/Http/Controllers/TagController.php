@@ -44,11 +44,13 @@ class TagController extends Controller
          $this->authorize('user-create');
 
         $request->validate([
-            'name' => 'required|unique:skills,name'
+            'name' => 'required|unique:tags,name',
+            'color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/']
         ]);
 
         Tag::create([
-            'name' => $request->name
+            'name' => $request->name,
+            'color' => $request->color,
         ]);
 
         return redirect()->route('tags.index')
@@ -86,13 +88,15 @@ class TagController extends Controller
         $this->authorize('user-edit');
 
         $request->validate([
-            'name' => 'required|unique:skills,name,'.$id
+            'name' => 'required|unique:tags,name,'.$id,
+            'color' => ['required', 'regex:/^#[0-9A-Fa-f]{6}$/']
         ]);
 
         $tags = Tag::findOrFail($id);
 
         $tags->update([
-            'name' => $request->name
+            'name' => $request->name,
+            'color' => $request->color,
         ]);
 
         return redirect()->route('tags.index')

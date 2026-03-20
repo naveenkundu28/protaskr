@@ -26,6 +26,7 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::resource('roles', RoleController::class);
     Route::get('/users/resigned', [UserController::class, 'resignedUsers'])->name('resign.users.index');
+    Route::get('/users/listing', [UserController::class, 'listing'])->name('users.listing');
     Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
     Route::resource('users', UserController::class);
 
@@ -82,6 +83,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::get('/daily-report',[DailyReportController::class,'index'])->name('daily.report');
+    Route::post('/daily-report/update',[DailyReportController::class,'update'])->name('daily.report.update');
 
     Route::resource('checklist-items', ChecklistItemController::class);
     Route::get('checklist-items/{checklistItem}/update-status', [ChecklistItemController::class, 'updateStatus'])->name('checklist-items.update-status');

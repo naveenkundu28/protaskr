@@ -4,6 +4,12 @@
 
     <div class="container-fluid">
         <h2>Daily Report</h2>
+
+        @if(session('success'))
+            <div class="alert alert-success" role="alert">
+                {{ session('success') }}
+            </div>
+        @endif
         
         <div class="row mb-3">
             <div class="col-md-4">
@@ -72,13 +78,32 @@
                         @foreach($users as $user)
                             @php
                                 $report = $reports[$date][$user->id][0] ?? null;
+                                $minutes = $report->time ?? 0;
                             @endphp
-                            <td data-user="{{ $user->id }}" title="{{ $report && $report->performance ? $user->name . ' - ' . $report->performance->title : $user->name . ' - Absent' }}" style="background-color: {{ $report->performance->background_color ?? '#8b1c1c' }}; color: {{ $report->performance->font_color ?? '#fff' }};">
-                                @if($report)
-                                   {{ sprintf('%02d:%02d', floor($report->time / 60), $report->time % 60) }}
-                                @else
-                                    00:00
-                                @endif
+                            <td
+                                data-user="{{ $user->id }}"
+                                class="daily-report-cell p-0"
+                                title="{{ $report && $report->performance ? $user->name . ' - ' . $report->performance->title : $user->name . ' - Absent' }}"
+                                style="background-color: {{ $report->performance->background_color ?? '#8b1c1c' }}; color: {{ $report->performance->font_color ?? '#fff' }};"
+                            >
+                                <button
+                                    type="button"
+                                    class="btn btn-link daily-report-trigger text-decoration-none p-0 border-0 w-100 h-100"
+                                    @if(auth()->user()?->hasRole('Admin'))
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#dailyReportConfirmModal"
+                                        data-user-id="{{ $user->id }}"
+                                        data-user-name="{{ $user->name }}"
+                                        data-date="{{ $date }}"
+                                        data-hours="{{ floor($minutes / 60) }}"
+                                        data-minutes="{{ $minutes % 60 }}"
+                                    @else
+                                        disabled
+                                    @endif
+                                    style="color: inherit;"
+                                >
+                                    {{ sprintf('%02d:%02d', floor($minutes / 60), $minutes % 60) }}
+                                </button>
                             </td>
                         @endforeach
                     </tr>
@@ -109,6 +134,71 @@
 
     </div>
 
+    @if(auth()->user()?->hasRole('Admin'))
+        <div class="modal fade" id="dailyReportConfirmModal" tabindex="-1" aria-labelledby="dailyReportConfirmModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="dailyReportConfirmModalLabel">Edit Daily Hours</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        Do you want to edit this record for <strong id="dailyReportConfirmUserName"></strong> on <strong id="dailyReportConfirmDate"></strong>?
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <button type="button" class="btn btn-primary" id="dailyReportConfirmYes">Yes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="dailyReportEditModal" tabindex="-1" aria-labelledby="dailyReportEditModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <form method="POST" action="{{ route('daily.report.update') }}" class="modal-content">
+                    @csrf
+                    <input type="hidden" name="user_id" id="dailyReportUserId">
+                    <input type="hidden" name="date" id="dailyReportDate">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="dailyReportEditModalLabel">Edit Daily Hours</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">User</label>
+                            <input type="text" class="form-control" id="dailyReportUserName" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="text" class="form-control" id="dailyReportDateText" readonly>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Hours</label>
+                                <input type="number" min="0" max="23" name="hours" id="dailyReportHours" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Minutes</label>
+                                <input type="number" min="0" max="59" name="minutes" id="dailyReportMinutes" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
 @endsection
 
 @push('scripts')
@@ -134,6 +224,45 @@
             $('.report-table th[data-user='+user+'], .report-table td[data-user='+user+']').css('width','50%');
         }
     });
+
+    const dailyReportEditModal = document.getElementById('dailyReportEditModal');
+    const dailyReportConfirmModal = document.getElementById('dailyReportConfirmModal');
+    let dailyReportPendingPayload = null;
+
+    if (dailyReportConfirmModal) {
+        dailyReportConfirmModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+
+            dailyReportPendingPayload = {
+                userId: button.getAttribute('data-user-id'),
+                userName: button.getAttribute('data-user-name'),
+                date: button.getAttribute('data-date'),
+                hours: button.getAttribute('data-hours'),
+                minutes: button.getAttribute('data-minutes'),
+            };
+
+            document.getElementById('dailyReportConfirmUserName').textContent = dailyReportPendingPayload.userName;
+            document.getElementById('dailyReportConfirmDate').textContent = dailyReportPendingPayload.date;
+        });
+    }
+
+    if (dailyReportEditModal) {
+        document.getElementById('dailyReportConfirmYes').addEventListener('click', function () {
+            if (!dailyReportPendingPayload) {
+                return;
+            }
+
+            document.getElementById('dailyReportUserId').value = dailyReportPendingPayload.userId;
+            document.getElementById('dailyReportDate').value = dailyReportPendingPayload.date;
+            document.getElementById('dailyReportUserName').value = dailyReportPendingPayload.userName;
+            document.getElementById('dailyReportDateText').value = dailyReportPendingPayload.date;
+            document.getElementById('dailyReportHours').value = dailyReportPendingPayload.hours;
+            document.getElementById('dailyReportMinutes').value = dailyReportPendingPayload.minutes;
+
+            bootstrap.Modal.getInstance(dailyReportConfirmModal)?.hide();
+            bootstrap.Modal.getOrCreateInstance(dailyReportEditModal).show();
+        });
+    }
 
 </script>
 

@@ -29,14 +29,12 @@ class GenerateDailyReports extends Command
     public function handle()
     {
         $this->info('Generating historical daily reports...');
-        $date = now()->subDay()->toDateString();
         $records = DB::table('tracker_histories')
             ->select(
                 'user_id',
                 DB::raw('DATE(start_time) as work_date'),
                 DB::raw('SUM(elapsed_time) as total_seconds')
             )
-            ->whereDate('start_time',$date)
             ->whereNotNull('end_time')
             ->groupBy('user_id','work_date')
             ->orderBy('work_date')

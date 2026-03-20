@@ -212,28 +212,25 @@
                                         <li>
                                             <hr class="my-1" />
                                         </li>
-
-                                        <li class="px-2 py-2">
-                                            <a href="{{ route('clients.show', $project->id) }}"
-                                                class="w-100 text-decoration-none text-success d-block">
-                                                View
-                                            </a>
-                                        </li>
-
-
                                         @can('service-show')
-                                            <li>
-                                                <hr class="my-1" />
-                                            </li>
-
+                                            
                                             <li class="px-2 py-2">
                                                 <a href="{{ route('clients.services.index', $project->id) }}"
                                                     class="w-100 text-decoration-none text-warning d-block">
                                                     Services
                                                 </a>
                                             </li>
+                                            <li>
+                                                <hr class="my-1" />
+                                            </li>
                                         @endcan
-
+                                        
+                                        <li class="px-2 py-2">
+                                            <a href="{{ route('clients.show', $project->id) }}"
+                                                class="w-100 text-decoration-none text-success d-block">
+                                                View
+                                            </a>
+                                        </li>
 
                                         @can('project-edit')
                                             <li>

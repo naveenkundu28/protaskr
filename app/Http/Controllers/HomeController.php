@@ -40,12 +40,12 @@ class HomeController extends Controller
             ->value('hours');
 
         $workingHoursSummary = [
-            'Bench' => 0,
-            'FULL' => 0,
-            'HALF' => 0,
             'FULL +' => 0,
+            'FULL' => 0,
             'HALF +' => 0,
+            'HALF' => 0,
             'ADHOC' => 0,
+            'Bench' => 0,
         ];
         $profitLossSummary = [
             'total_hours' => 0,

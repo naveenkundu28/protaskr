@@ -7,12 +7,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Skill;
 use App\Models\Tag;
 use App\Models\User;
+use App\Models\Hour;
+use App\Models\Service;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Arr;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 
 class UserController extends Controller
 {
@@ -57,6 +60,107 @@ class UserController extends Controller
             ->withQueryString();
 
         return view('users.index', compact('data'))
+            ->with('i', ($request->input('page', 1) - 1) * 5);
+    }
+
+    public function listing(Request $request): View
+    {
+        $this->authorize('user-show');
+
+        $search = trim((string) $request->input('search'));
+        $tagId = $request->input('tag_id');
+        $tagScope = $request->input('tag_scope');
+        $workType = $request->input('work_type');
+
+        $workTypeUserIds = [];
+        $hoursByUser = [];
+        if (!empty($workType)) {
+            $now = Carbon::now();
+            $masterHours = Hour::where('year', $now->year)
+                ->where('month', $now->format('F'))
+                ->value('hours');
+
+            if ($masterHours) {
+                $halfHours = $masterHours / 2;
+                $internalUsers = User::where('user_type', 'Internal')->get(['id']);
+                $services = Service::whereYear('created_at', $now->year)
+                    ->whereMonth('created_at', $now->month)
+                    ->where('service_type', '!=', 'external')
+                    ->get(['hours', 'working_resource']);
+
+                foreach ($services as $service) {
+                    if (!empty($service->working_resource)) {
+                        $hoursByUser[$service->working_resource] = ($hoursByUser[$service->working_resource] ?? 0) + (float) $service->hours;
+                    }
+                }
+
+                foreach ($internalUsers as $employee) {
+                    $assignedHours = $hoursByUser[$employee->id] ?? 0;
+                    if ($assignedHours <= 0) {
+                        $bucket = 'Bench';
+                    } elseif ($assignedHours > $masterHours) {
+                        $bucket = 'FULL +';
+                    } elseif ($assignedHours == $masterHours) {
+                        $bucket = 'FULL';
+                    } elseif ($assignedHours == $halfHours) {
+                        $bucket = 'HALF';
+                    } elseif ($assignedHours > $halfHours && $assignedHours < $masterHours) {
+                        $bucket = 'HALF +';
+                    } else {
+                        $bucket = 'ADHOC';
+                    }
+
+                    $workTypeUserIds[$bucket][] = $employee->id;
+                }
+            }
+        }
+
+        $data = User::with(['primarySkills', 'secondarySkills', 'tags'])
+            ->when(!empty($tagId), function ($query) use ($tagId) {
+                $query->whereHas('tags', function ($tagQuery) use ($tagId) {
+                    $tagQuery->where('tags.id', $tagId);
+                });
+            })
+            ->when($tagScope === 'internal', function ($query) {
+                $query->where('user_type', 'Internal');
+            })
+            ->when(!empty($workType), function ($query) use ($workType, $workTypeUserIds) {
+                $ids = $workTypeUserIds[$workType] ?? [];
+                if (!empty($ids)) {
+                    $query->whereIn('id', $ids);
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            })
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('name', 'like', "%{$search}%")
+                        ->orWhere('user_type', 'like', "%{$search}%")
+                        ->orWhere('joining_date', 'like', "%{$search}%")
+                        ->orWhere('experience', 'like', "%{$search}%")
+                        ->orWhereHas('primarySkills', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('secondarySkills', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('tags', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('roles', function ($skillQuery) use ($search) {
+                            $skillQuery->where('name', 'like', "%{$search}%");
+                        })
+                        ->orWhere('email', 'like', "%{$search}%")
+                        ->orWhere('employee_id', 'like', "%{$search}%")
+                        ->orWhere('phone_no', 'like', "%{$search}%")
+                        ->orWhere('alt_phone_no', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(50)
+            ->withQueryString();
+
+        return view('users.listing', compact('data', 'hoursByUser'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 
