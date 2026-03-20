@@ -68,7 +68,7 @@
                             {{-- <p class="card-text">{{ $project->description }}</p> --}}
                             <p class="card-text">
                                 <strong>Status:</strong>
-                                {{ $project->status == 'pending' ? 'Pending' : ($project->status == 'on_going' ? 'In Progress' : 'Completed') }}
+                                {{ $project->status == 'not_started' ? 'Not Started' : ($project->status == 'in_progress' ? 'In Progress' : 'Completed') }}
                             </p>
                             <p class="card-text"> <strong>Assigned to:</strong>
                                 @isset($project->users)
@@ -172,7 +172,7 @@
                         {{-- <td>{{ $project->description }}</td> --}}
                         <td> @isset($project->users)
                                 @foreach ($project->users as $user)
-                                    <span class="">{{ $user->name }}</span><br>
+                                    <span class="{{ $user->trashed() ? 'text-danger' : '' }}">{{ $user->name }}</span><br>
                                 @endforeach
                             @endisset
                         </td>
@@ -180,12 +180,11 @@
                             {{  $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('j F Y') : '' }}
                         </td>
                         {{-- <td>{{$project->to_do_tasks + $project->in_progress_tasks + $project->in_review_tasks}}</td> --}}
-
-                        <td>{{ $project->status == 'pending' ? 'Pending' : ($project->status == 'on_going' ? 'In Progress' : 'Completed') }}
+                        <td>{{ $project->status == 'not_started' ? 'Not Started' : ($project->status == 'in_progress' ? 'In Progress' : 'Completed') }}
                         </td>
 
                         <td>
-                            <div class="dropdown">
+                            <div class="dropdown service-action-dropdown">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-list-task"></i> 
                                 </button>
@@ -205,7 +204,7 @@
                                     @else
                                         <li class="px-2 py-2">
                                             <a href="{{ route('tasks.index', ['project_id' => $project->id]) }}"
-                                                class="w-100 text-decoration-none">
+                                                class="w-100 text-decoration-none d-block">
                                                 Tasks
                                             </a>
                                         </li>
@@ -216,7 +215,7 @@
 
                                         <li class="px-2 py-2">
                                             <a href="{{ route('clients.show', $project->id) }}"
-                                                class="w-100 text-decoration-none text-success">
+                                                class="w-100 text-decoration-none text-success d-block">
                                                 View
                                             </a>
                                         </li>
@@ -229,7 +228,7 @@
 
                                             <li class="px-2 py-2">
                                                 <a href="{{ route('clients.services.index', $project->id) }}"
-                                                    class="w-100 text-decoration-none text-warning">
+                                                    class="w-100 text-decoration-none text-warning d-block">
                                                     Services
                                                 </a>
                                             </li>
@@ -243,7 +242,7 @@
 
                                             <li class="px-2 py-2">
                                                 <a href="{{ route('clients.edit', $project->id) }}"
-                                                    class="w-100 text-decoration-none text-info">
+                                                    class="w-100 text-decoration-none text-info d-block">
                                                     Edit
                                                 </a>
                                             </li>

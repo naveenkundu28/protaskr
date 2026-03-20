@@ -50,21 +50,21 @@ class Client extends Model
         return $this->hasMany(File::class);
     }
 
-    public function getStatusAttribute()
-    {
-        $today = Carbon::now();
+    // public function getStatusAttribute()
+    // {
+    //     $today = Carbon::now();
 
-        if ($this->start_date && $today->lt($this->start_date)) {
-            return 'pending';
-        }
+    //     if ($this->start_date && $today->lt($this->start_date)) {
+    //         return 'pending';
+    //     }
 
-        if ($this->end_date && $this->end_date->lt($today)) {
-            $unfinishedTasks = $this->tasks()->where('status', '!=', 'completed')->count();
-            return $unfinishedTasks > 0 ? 'unfinished' : 'finished';
-        }
+    //     if ($this->end_date && $this->end_date->lt($today)) {
+    //         $unfinishedTasks = $this->tasks()->where('status', '!=', 'completed')->count();
+    //         return $unfinishedTasks > 0 ? 'unfinished' : 'finished';
+    //     }
 
-        return 'on_going';
-    }
+    //     return 'on_going';
+    // }
 
     public function teamProjects()
     {
