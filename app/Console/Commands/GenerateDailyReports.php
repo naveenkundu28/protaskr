@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\DailyPerformance;
 use App\Models\DailyReport;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +15,8 @@ class GenerateDailyReports extends Command
      *
      * @var string
      */
-    protected $signature = 'app:generate-reports';
+    protected $signature = 'app:generate-reports
+                            {--dateFrom= : Start date in d-m-Y or Y-m-d format, or keyword: week, month, year}';
 
     /**
      * The console command description.
@@ -28,7 +30,10 @@ class GenerateDailyReports extends Command
      */
     public function handle()
     {
-        $this->info('Generating historical daily reports...');
+        [$dateFrom, $dateTo] = $this->resolveDateRange();
+
+        $this->info("Generating daily reports from {$dateFrom->toDateString()} to {$dateTo->toDateString()}...");
+
         $records = DB::table('tracker_histories')
             ->select(
                 'user_id',
@@ -36,6 +41,7 @@ class GenerateDailyReports extends Command
                 DB::raw('SUM(elapsed_time) as total_seconds')
             )
             ->whereNotNull('end_time')
+            ->whereBetween(DB::raw('DATE(start_time)'), [$dateFrom->toDateString(), $dateTo->toDateString()])
             ->groupBy('user_id','work_date')
             ->orderBy('work_date')
             ->get();
@@ -63,5 +69,53 @@ class GenerateDailyReports extends Command
         }
 
         $this->info('Daily reports generated successfully');
+        return self::SUCCESS;
+    }
+
+    private function resolveDateRange(): array
+    {
+        $dateFromInput = $this->option('dateFrom');
+
+        if (!$dateFromInput) {
+            $yesterday = Carbon::yesterday();
+            return [$yesterday->copy()->startOfDay(), $yesterday->copy()->endOfDay()];
+        }
+
+        $dateFrom = $this->parseDateFromOption($dateFromInput)->startOfDay();
+        $dateTo = Carbon::today()->endOfDay();
+
+        if ($dateFrom->gt($dateTo)) {
+            $this->error('The dateFrom option must be earlier than or equal to today.');
+            exit(self::FAILURE);
+        }
+
+        return [$dateFrom, $dateTo];
+    }
+
+    private function parseDateFromOption(string $value): Carbon
+    {
+        $normalizedValue = strtolower(trim($value));
+
+        if ($normalizedValue === 'week') {
+            return Carbon::today()->subDays(6);
+        }
+
+        if ($normalizedValue === 'month') {
+            return Carbon::today()->startOfMonth();
+        }
+
+        if ($normalizedValue === 'year') {
+            return Carbon::today()->startOfYear();
+        }
+
+        foreach (['d-m-Y', 'Y-m-d'] as $format) {
+            try {
+                return Carbon::createFromFormat($format, $value);
+            } catch (\Throwable $e) {
+            }
+        }
+
+        $this->error("Invalid dateFrom value [{$value}]. Use d-m-Y, Y-m-d, or one of: week, month, year.");
+        exit(self::FAILURE);
     }
 }

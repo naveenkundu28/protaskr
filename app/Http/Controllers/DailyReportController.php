@@ -6,6 +6,7 @@ use App\Models\DailyPerformance;
 use App\Models\DailyReport;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 
 class DailyReportController extends Controller
@@ -83,5 +84,19 @@ class DailyReportController extends Controller
         return redirect()
             ->route('daily.report', ['month' => date('Y-m', strtotime($data['date']))])
             ->with('success', 'Daily report updated successfully.');
+    }
+
+    public function generateWeekly()
+    {
+        $this->authorize('role-show');
+        abort_unless(Auth::user()?->hasRole('Admin'), 403);
+
+        Artisan::call('app:generate-reports', [
+            '--dateFrom' => 'week',
+        ]);
+
+        return redirect()
+            ->route('daily.report', ['month' => now()->format('Y-m')])
+            ->with('success', 'Daily report fetched for the last 7 days.');
     }
 }

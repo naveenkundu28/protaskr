@@ -11,17 +11,16 @@
             </div>
         @endif
         
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <form method="GET" action="{{ route('daily.report') }}">
-                    <div class="input-group">
-                        <input type="month" name="month" class="form-control" value="{{ request('month') ?? date('Y-m') }}">
-                        <button class="btn btn-primary">Search</button>
-                    </div>
-                </form>
-            </div>
+       <div class="row mb-3">
+            
+            <form method="GET" class="col-md-3" action="{{ route('daily.report') }}">
+                <div class="input-group">
+                    <input type="month" name="month" class="form-control" value="{{ request('month') ?? date('Y-m') }}">
+                    <button class="btn btn-primary">Search</button>
+                </div>
+            </form>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <select class="form-control" id="userFilter">
                     <option value="">All Users</option>
                     @foreach($users as $user)
@@ -33,6 +32,16 @@
                     @endforeach
                 </select>
             </div>
+            
+
+            @if(auth()->user()?->hasRole('Admin'))
+                <form method="POST" class="col-md-1" action="{{ route('daily.report.generate-weekly') }}">
+                    @csrf
+                    <button type="submit" class="btn btn-info text-white">
+                        <i class="bi bi-arrow-repeat me-1"></i> Fetch
+                    </button>
+                </form>
+            @endif
         </div>
 
         <div class="table-responsive">

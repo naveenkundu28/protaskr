@@ -84,6 +84,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/daily-report',[DailyReportController::class,'index'])->name('daily.report');
     Route::post('/daily-report/update',[DailyReportController::class,'update'])->name('daily.report.update');
+    Route::post('/daily-report/generate-weekly',[DailyReportController::class,'generateWeekly'])->name('daily.report.generate-weekly');
 
     Route::resource('checklist-items', ChecklistItemController::class);
     Route::get('checklist-items/{checklistItem}/update-status', [ChecklistItemController::class, 'updateStatus'])->name('checklist-items.update-status');

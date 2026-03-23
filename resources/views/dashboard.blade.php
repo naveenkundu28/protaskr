@@ -6,7 +6,7 @@
     <div class="container">
         <h2>VE Emp Tracker</h2>
 
-        <div class="row mb-4 align-items-start">
+        <div class="row mb-4">
             @if (!Auth::user()->hasRole('Admin'))
             <div class="col-md-3 mb-4">
                 <div class="card shadow-sm h-100">
