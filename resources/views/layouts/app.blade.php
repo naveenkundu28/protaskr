@@ -115,6 +115,11 @@
                                         <i class="bi bi-bar-chart"></i> Daily Report
                                     </a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('reports*') ? 'active' : '' }}" href="{{ route('reports.index') }}">
+                                        <i class="bi bi-file-earmark-bar-graph"></i> Reports
+                                    </a>
+                                </li>
                             @endcan
                         </ul>
                         <div class="task-navbar-meta ms-lg-auto d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3">
