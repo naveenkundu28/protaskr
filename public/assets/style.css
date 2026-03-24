@@ -147,6 +147,10 @@ main {
     color: white;
 }
 
+.color-bench{
+    color: #8b1c1c !important;
+}
+
 .list-group-item:hover {
     background-color: #343a40;
 }
