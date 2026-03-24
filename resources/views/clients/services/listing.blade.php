@@ -20,6 +20,7 @@
             <div>
                 <form id="serviceListingFilters" method="GET" action="{{ route('services.listing') }}"
                     class="d-flex align-items-start flex-row gap-2 auto-search-form" data-search-target="#tableSearchResults">
+                    <input type="hidden" name="tab" value="{{ $activeTab ?? 'active' }}">
                     <input type="text" name="search" value="{{ request('search') }}" class="form-control"
                         placeholder="Search services">
                     <select name="client_id" class="form-select">
@@ -63,6 +64,34 @@
             </div>
         @endif
 
+        {{-- ================= TABLE ================= --}}
+        <ul class="nav nav-pills service-tabs mb-3">
+            <li class="nav-item">
+                <a class="nav-link {{ ($activeTab ?? 'active') === 'active' ? 'active' : '' }}"
+                    href="{{ route('services.listing', [
+                        'tab' => 'active',
+                        'search' => request('search'),
+                        'client_id' => request('client_id'),
+                        'month' => request('month'),
+                        'front_resource' => request('front_resource'),
+                    ]) }}">
+                    Active Services
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ ($activeTab ?? 'active') === 'closed' ? 'active' : '' }}"
+                    href="{{ route('services.listing', [
+                        'tab' => 'closed',
+                        'search' => request('search'),
+                        'client_id' => request('client_id'),
+                        'month' => request('month'),
+                        'front_resource' => request('front_resource'),
+                    ]) }}">
+                    Closed Services
+                </a>
+            </li>
+        </ul>
+
         <div id="tableSearchResults">
         <div class="table-responsive">
             <table class="table table-bordered">
@@ -78,8 +107,10 @@
                     <th>Hours</th>
                     <th>Status</th>
                     <th>Start Date</th>
-                    <th>End Date</th>
-                    <th style="width:250px">Reason</th>
+                    @if (($activeTab ?? 'active') === 'closed')
+                        <th>End Date</th>
+                        <th style="width:250px">Reason</th>
+                    @endif
                     <th>Action</th>
                 </tr>
 
@@ -89,8 +120,20 @@
                         <td>{{ $service->client->name ?? '' }}</td>
                         <td>{{ $service->client->client_code ?? $service->client_id }}</td>
                         <td>{{ ucfirst($service->service_type) }}</td>
-                        <td>{{ $service->frontResource->name ?? '' }}</td>
-                        <td>{{ $service->workingResource->name ?? '' }}</td>
+                        <td>
+                            @if ($service->frontResource)
+                                <span class="{{ $service->frontResource->trashed() ? 'text-danger' : '' }}">
+                                    {{ $service->frontResource->name }}
+                                </span>
+                            @endif
+                        </td>
+                        <td>
+                            @if ($service->workingResource)
+                                <span class="{{ $service->workingResource->trashed() ? 'text-danger' : '' }}">
+                                    {{ $service->workingResource->name }}
+                                </span>
+                            @endif
+                        </td>
                         <td>{{ $service->service_id }}</td>
                         <td>{{ $service->created_at ? $service->created_at->format('F') : '' }}</td>
 
@@ -126,10 +169,15 @@
                                     ? \Carbon\Carbon::parse($service->main_start_date)->format('j F Y')
                                     : '') }}
                         </td>
-                        <td>{{ $service->end_date ? \Carbon\Carbon::parse($service->end_date)->format('j F Y') : '' }}</td>
-                        <td style="width:250px">
-                            {{ $service->cancel_reason ?? ($service->replacement_reason ?? '') }}
-                        </td>
+                        @if (($activeTab ?? 'active') === 'closed')
+                            <td>{{ $service->end_date ? \Carbon\Carbon::parse($service->end_date)->format('j F Y') : '' }}
+                            </td>
+
+                            <td style="width:250px">
+                                {{ $service->cancel_reason ?? ($service->replacement_reason ?? '') }}
+                            </td>
+                        @endif
+
                         <td>
                             <div class="dropdown service-action-dropdown">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -181,7 +229,7 @@
                                     <label for="services_file" class="form-label">Upload Excel File</label>
                                     <input type="file" class="form-control" id="services_file" name="services_file" accept=".xls,.xlsx" required>
                                     <div class="form-text">
-                                        Accepted columns: client name, client_id, type, front_resource_id, back_end_resource_id, service_id, hours, status, start/end dates, reason fields.
+                                        Accepted Format: .xlsx, .csv files.
                                     </div>
                                 </div>
                             </div>

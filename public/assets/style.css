@@ -81,13 +81,17 @@ body {
     box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
 }
 
+.task-navbar .dropdown-menu-profile{
+    right: 0px;
+}
+
 .task-navbar .dropdown-item.active,
 .task-navbar .dropdown-item:active {
     background-color: #e2e8f0;
     color: #0f172a;
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 990px) {
     .task-navbar .nav-item.dropdown:hover > .dropdown-menu {
         display: block;
         margin-top: 0;
@@ -179,8 +183,15 @@ main {
     padding: 0;
 }
 
+.f-10{
+    font-size: 10px;
+}
+
 .f-12{
     font-size: 12px;
+}
+.f-13{
+    font-size: 13px;
 }
 .f-14{
     font-size: 14px;
@@ -269,7 +280,7 @@ main {
 
 .skill-item {
     display: inline-block;
-    background: #000; /* light black */
+    background: #0035ab; /* Dark blue */
     color: #fff;
     padding: 3px 10px;
     border-radius: 4px;
@@ -277,7 +288,7 @@ main {
 }
 
 .skill-bg-secondary{
-    background:#2f2f2f;
+    background:#cda400;
 }
 
 .admin-bg{
@@ -285,8 +296,15 @@ main {
     font-weight: bold;
 }
 
+.tag-item {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin: 2px;
+}
 
-@media (max-width: 1480px) {
+
+/* @media (max-width: 1480px) {
     .task-navbar .navbar-nav .nav-link{
         padding: 6px 8px;
         font-size: 12px;
@@ -297,9 +315,9 @@ main {
     }
 
     
-}
+} */
 
-@media (max-width: 1199.98px) {
+@media (max-width: 990px) {
     .task-navbar .navbar-collapse {
         padding-top: 1rem;
     }

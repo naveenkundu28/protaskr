@@ -6,12 +6,14 @@ use App\Models\DailyPerformance;
 use App\Models\DailyReport;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Auth;
 
 class DailyReportController extends Controller
 {
     public function index(Request $request)
     {
-
+        $this->authorize('role-show');
         if($request->month){
             [$year, $month] = explode('-', $request->month);
             // $month = $request->month ?? date('m');
@@ -47,5 +49,54 @@ class DailyReportController extends Controller
         }
 
         return view('reports.daily',compact('users', 'reports', 'dates', 'month', 'year', 'performances', 'totals'));
+    }
+
+    public function update(Request $request)
+    {
+        $this->authorize('role-show');
+        abort_unless(Auth::user()?->hasRole('Admin'), 403);
+
+        $data = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'date' => 'required|date',
+            'hours' => 'required|integer|min:0|max:23',
+            'minutes' => 'required|integer|min:0|max:59',
+        ]);
+
+        $totalMinutes = ((int) $data['hours'] * 60) + (int) $data['minutes'];
+        $totalHours = $totalMinutes / 60;
+
+        $performance = DailyPerformance::where('min', '<=', $totalHours)
+            ->where('max', '>=', $totalHours)
+            ->first();
+
+        DailyReport::updateOrCreate(
+            [
+                'user_id' => $data['user_id'],
+                'date' => $data['date'],
+            ],
+            [
+                'time' => $totalMinutes,
+                'daily_performance_id' => $performance?->id,
+            ]
+        );
+
+        return redirect()
+            ->route('daily.report', ['month' => date('Y-m', strtotime($data['date']))])
+            ->with('success', 'Daily report updated successfully.');
+    }
+
+    public function generateWeekly()
+    {
+        $this->authorize('role-show');
+        abort_unless(Auth::user()?->hasRole('Admin'), 403);
+
+        Artisan::call('app:generate-reports', [
+            '--dateFrom' => 'week',
+        ]);
+
+        return redirect()
+            ->route('daily.report', ['month' => now()->format('Y-m')])
+            ->with('success', 'Daily report fetched for the last 7 days.');
     }
 }

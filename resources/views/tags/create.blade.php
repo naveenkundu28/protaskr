@@ -31,10 +31,17 @@
             <form method="POST" action="{{ route('tags.store') }}">
                 @csrf
                 <div class="row">
-                    <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
+                    <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                         <div class="form-group">
                             <strong>Tag Name: <span class="text-danger">*</span></strong>
                             <input type="text" name="name" placeholder="Tag Name" class="form-control mt-2" required>
+                        </div>
+                    </div>
+
+                    <div class="col-xs-12 col-sm-12 col-md-2 mb-3">
+                        <div class="form-group">
+                            <strong>Choose colors for tags: <span class="text-danger">*</span></strong>
+                            <input type="color" name="color" value="{{ old('color', '#6c757d') }}" class="form-control mt-2" style="height: 37px" required>
                         </div>
                     </div>
 
@@ -61,4 +68,3 @@
         });
     </script>
 @endpush
-

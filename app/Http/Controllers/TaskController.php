@@ -103,6 +103,8 @@ class TaskController extends Controller
     public function show(Task $task)
     {
         $this->authorize('task-show');
+        $this->authorizeTaskAccess($task);
+
         $user_id = $task->user_id;
         $files = File::where('task_id', $task->id)->latest()->get();
         $chats = Chat::with('user')->where('task_id', $task->id)->get();
@@ -117,6 +119,7 @@ class TaskController extends Controller
     public function update(Request $request, Task $task)
     {
         $this->authorize('task-edit');
+        $this->authorizeTaskAccess($task);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -161,6 +164,8 @@ class TaskController extends Controller
     public function sendChat(Request $request, $taskid)
     {
         $this->authorize('task-show');
+        $task = Task::findOrFail($taskid);
+        $this->authorizeTaskAccess($task);
 
         $userId = auth()->id();
         $request->validate([
@@ -176,7 +181,9 @@ class TaskController extends Controller
     }
     public function startTimer($taskid)
     {
-        $task = Task::find($taskid);
+        $task = Task::findOrFail($taskid);
+        $this->authorizeTaskAccess($task);
+
         $user_id = $task->user_id;
         $taskcheck = Task::where('user_id', $user_id)->where('is_running', true)->first();
         if ($taskcheck) {
@@ -206,7 +213,9 @@ class TaskController extends Controller
 
     public function stopTimer($taskid)
     {
-        $task = Task::find($taskid);
+        $task = Task::findOrFail($taskid);
+        $this->authorizeTaskAccess($task);
+
         $user_id = $task->user_id;
         $taskHistory = TrackerHistory::where('user_id', $user_id)->where('task_id', $taskid)
             ->where('is_running', true);
@@ -231,6 +240,9 @@ class TaskController extends Controller
     }
     public function saveTime(Request $request, $taskid)
     {
+        $task = Task::findOrFail($taskid);
+        $this->authorizeTaskAccess($task);
+
         $taskHistory = TrackerHistory::query()
             ->where('task_id', $taskid)
             ->where('is_running', true)
@@ -242,7 +254,6 @@ class TaskController extends Controller
         $taskHistory->update([
             'elapsed_time' => $timeDifferenceInSeconds,
         ]);
-        $task = Task::find($taskid);
         $task->update([
             'elapsed_time' => $timeDifferenceInSeconds,
         ]);
@@ -254,6 +265,7 @@ class TaskController extends Controller
 
     public function mnanualTrack(Request $request, Task $task)
     {
+        $this->authorizeTaskAccess($task);
         $task = $task->load('user');
         if ($task->user->manual == true) {
 
@@ -323,7 +335,24 @@ class TaskController extends Controller
     }
     public function destroy(Task $task)
     {
+        $this->authorizeTaskAccess($task);
         $task->delete();
         return redirect()->route('tasks.index')->with('success', 'Task deleted successfully.');
+    }
+
+    private function authorizeTaskAccess(Task $task): void
+    {
+        $user = Auth::user();
+
+        if ($user->hasRole('Admin')) {
+            return;
+        }
+
+        $task->loadMissing('project');
+
+        $isAssignedToClient = $task->project
+            && $task->project->allUsers()->where('users.id', $user->id)->exists();
+
+        abort_unless($isAssignedToClient, 403);
     }
 }

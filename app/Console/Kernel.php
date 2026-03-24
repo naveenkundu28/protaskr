@@ -12,10 +12,21 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule): void
     {
-        // $schedule->command('inspire')->hourly();
-        $schedule->command('email:tracker-alert')->daily();
-        $schedule->command('app:generate-reports')->daily();
-        $schedule->command('app:generate-backfill-reports')->weekly();
+        $timezone = 'Asia/Kolkata';
+
+        $schedule->command('email:tracker-alert')
+            ->timezone($timezone)
+            ->daily();
+
+        $schedule->command('email:daily-tracker-exception-alert')
+            ->timezone($timezone)
+            ->dailyAt('23:59');
+
+        $schedule->command('app:generate-reports')
+            ->timezone($timezone)
+            ->dailyAt('23:59');
+
+        $schedule->command('app:generate-backfill-reports')->timezone($timezone)->weekly();
     }
 
     /**
