@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
@@ -33,35 +34,48 @@ class DatabaseSeeder extends Seeder
             'task-create',
             'task-edit',
             'task-delete',
+            'mark-task-complete',
+            'service-show',
+            'service-create',
+            'service-edit',
+            'service-delete',
          ];
          
          foreach ($permissions as $permission) {
-              Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
          }
  
-         $user = User::create([
-             'name' => 'Admin', 
-             'email' => 'admin@gmail.com',
-             'password' => bcrypt('123456')
-         ]);
+        $adminRole = Role::firstOrCreate(['name' => 'Admin']); 
+
+        $roles = [
+            'Reviewer',
+            'Employee',
+            'Assignee',
+        ];
          
-         $role = Role::create(['name' => 'Admin']);
+        foreach ($roles as $role) {
+            Role::firstOrCreate(['name' => $role]);
+        } 
           
-         $permissions = Permission::pluck('id','id')->all();
+        $permissions = Permission::all();
+    
+        $adminRole->syncPermissions($permissions);
         
-         $role->syncPermissions($permissions);
-          
-         $user->assignRole([$role->id]);
+        $user = User::updateOrCreate(
+            ['email' => 'admin@ve.com'],
+            [
+                'name' => 'Admin',
+                'password' => Hash::make('123456'),
+            ]
+        );
+
+        if (!$user->hasRole('Admin')) {
+            $user->assignRole('Admin');
+        }
  
          //roles
-         $roles = [
-             'Reviewer',
-             'Employee',
-             'Assignee',
-         ];
+         
  
-         foreach ($roles as $role) {
-             Role::firstOrCreate(['name' => $role]);
-         }
+         
     }
 }
