@@ -147,12 +147,60 @@ main {
     color: white;
 }
 
+.color-bench{
+    color: #8b1c1c !important;
+}
+
 .list-group-item:hover {
     background-color: #343a40;
 }
 
 .accordion-header {
     background-color: #343a40;
+}
+
+#reportsAccordion .accordion-item {
+    border: 1px solid #dbe4f0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    background: #ffffff;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+}
+
+#reportsAccordion .accordion-header {
+    background: transparent;
+}
+
+#reportsAccordion .accordion-button {
+    background: linear-gradient(90deg, #0f4c81 0%, #1d6fa5 100%);
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+#reportsAccordion .accordion-button:not(.collapsed) {
+    background: linear-gradient(90deg, #0a3b63 0%, #145985 100%);
+    color: #ffffff;
+}
+
+#reportsAccordion .accordion-button:focus {
+    box-shadow: none;
+}
+
+#reportsAccordion .accordion-body {
+    background-color: #f8fbff;
+    padding: 14px;
+}
+
+#reportsAccordion .table thead th {
+    background-color: #e6f0fa;
+    color: #12344d;
+    border-color: #cfe0f2;
+}
+
+#reportsAccordion .table tbody td {
+    background-color: #ffffff;
 }
 .custom-h
 {
