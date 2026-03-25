@@ -20,7 +20,8 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ $file->name }}</h5>
                         <p class="card-text"><strong>Type:</strong> {{ $file->type }}</p>
-                        <a href="{{ Storage::url($file->path) }}" target="_blank" class="btn btn-primary"> <i class="bi bi-download"></i> </a>
+                        <a href="{{ route('task.files.show', [$task->id, $file->id]) }}" target="_blank" class="btn btn-primary"> <i class="bi bi-eye"></i> </a>
+                        <a href="{{ route('task.files.download', [$task->id, $file->id]) }}" class="btn btn-info text-white"> <i class="bi bi-download"></i> </a>
                         <a href="{{ route('task.files.edit', [$task->id, $file->id]) }}" class="btn btn-warning"> <i class="bi bi-pencil-square"></i> </a>
                         <form action="{{ route('task.files.destroy', [$task->id, $file->id]) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this file?');">
                             @csrf

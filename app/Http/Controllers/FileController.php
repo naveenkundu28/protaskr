@@ -20,6 +20,15 @@ class FileController extends Controller
         return view('files.create', compact('task'));
     }
 
+    public function show(Task $task, File $file)
+    {
+        $this->ensureTaskFileRelation($task, $file);
+
+        abort_unless(Storage::disk('public')->exists($file->path), 404);
+
+        return Storage::disk('public')->response($file->path, $this->buildDownloadName($file));
+    }
+
     public function store(Request $request, Task $task)
     {
 		
@@ -60,10 +69,37 @@ class FileController extends Controller
         return redirect()->route('task.files.index', $task->id)->with('success', 'File updated successfully.');
     }
 
+    public function download(Task $task, File $file)
+    {
+        $this->ensureTaskFileRelation($task, $file);
+
+        abort_unless(Storage::disk('public')->exists($file->path), 404);
+
+        return Storage::disk('public')->download($file->path, $this->buildDownloadName($file));
+    }
+
     public function destroy(Task $task,File $file)
     {
+        $this->ensureTaskFileRelation($task, $file);
         Storage::disk('public')->delete($file->path);
         $file->delete();
         return redirect()->route('task.files.index', $task->id)->with('success', 'File deleted successfully.');
+    }
+
+    private function ensureTaskFileRelation(Task $task, File $file): void
+    {
+        abort_unless($file->task_id === $task->id, 404);
+    }
+
+    private function buildDownloadName(File $file): string
+    {
+        $storedExtension = pathinfo($file->path, PATHINFO_EXTENSION);
+        $displayExtension = pathinfo($file->name, PATHINFO_EXTENSION);
+
+        if ($storedExtension && !$displayExtension) {
+            return $file->name.'.'.$storedExtension;
+        }
+
+        return $file->name;
     }
 }

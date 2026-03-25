@@ -75,6 +75,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/task/export', [TaskController::class, 'export'])->name('tasks.export');
 
 
+    Route::get('task/{task}/files/{file}/download', [FileController::class, 'download'])->name('task.files.download');
     Route::resource('task.files', FileController::class);
 
     Route::resource('skills', SkillController::class);
