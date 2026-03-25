@@ -111,10 +111,11 @@ class ReportController extends Controller
                 continue;
             }
 
-            $groupKey = $service->service_id.'|'.$referenceDate->format('Y-m');
-            $groupedTotals[$groupKey] = ($groupedTotals[$groupKey] ?? 0) + (float) $service->hours;
+            // $groupKey = $service->service_id.'|'.$referenceDate->format('Y-m');
+            // $groupedTotals[$groupKey] = ($groupedTotals[$groupKey] ?? 0) + (float) $service->hours;
+            
         }
-
+        
         return $services->map(function ($service) use ($groupedTotals, $dateField) {
             $referenceDate = $this->resolveServiceReferenceDate($service, $dateField);
             $service->service_total_hours = (float) $service->hours;
@@ -124,15 +125,14 @@ class ReportController extends Controller
                 return $service;
             }
 
-            $groupKey = $service->service_id.'|'.$referenceDate->format('Y-m');
-            $totalHours = (float) ($groupedTotals[$groupKey] ?? 0);
+            // $groupKey = $service->service_id.'|'.$referenceDate->format('Y-m');
+            // $totalHours = (float) ($groupedTotals[$groupKey] ?? 0);
             $masterHours = Hour::where('year', $referenceDate->year)
                 ->where('month', $referenceDate->format('F'))
                 ->value('hours');
 
-            $service->service_total_hours = $totalHours;
-            $service->service_work_type = $this->resolveWorkType($totalHours, $masterHours);
-
+            // $service->service_total_hours = $totalHours;
+            $service->service_work_type = $this->resolveWorkType($service->service_total_hours, $masterHours);
             return $service;
         });
     }
