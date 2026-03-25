@@ -267,13 +267,13 @@ class ProjectController extends Controller
     {
         $this->authorize('service-show');
         $search = trim((string) request('search'));
-        
+
         $tab = request('tab', 'active');
         $activeStatuses = ['new', 'in_progress'];
         $closedStatuses = ['completed', 'replacement', 'canceled'];
         $activeTab = in_array($tab, ['active', 'closed']) ? $tab : 'active';
         $statusFilter = $activeTab === 'closed' ? $closedStatuses : $activeStatuses;
-        
+
         $clientId = request('client_id');
         $month = request('month');
         $frontResource = request('front_resource');
@@ -369,9 +369,9 @@ class ProjectController extends Controller
         ]);
 
         $rows = Excel::toArray([], $request->file('services_file'));
-        
+
         $sheetRows = $rows[0] ?? [];
-        
+
         if (count($sheetRows) < 1) {
             return redirect()
                 ->route('services.listing')
@@ -382,7 +382,7 @@ class ProjectController extends Controller
         $headers = collect(array_shift($sheetRows))
             ->map(fn($header) => $this->normalizeImportHeader($header))
             ->all();
-        
+
         $errors = [];
         $servicesToCreate = [];
         $seenDirectServices = [];
@@ -404,7 +404,7 @@ class ProjectController extends Controller
 
                 $data[$header] = $row[$columnIndex] ?? null;
             }
-            
+
             $clientCode = trim((string) ($data['client_code'] ?? ''));
             $serviceId = trim((string) ($data['service_id'] ?? ''));
             $serviceType = strtolower($data['service_type'] ?? 'direct');
@@ -426,7 +426,7 @@ class ProjectController extends Controller
 
             $frontUser = $frontEmployeeId ? User::withTrashed()->where('id', $frontEmployeeId)->first() : null;
             $workingUser = $workingEmployeeId ? User::withTrashed()->where('id', $workingEmployeeId)->first() : null;
-            
+
             if ($frontEmployeeId && !$frontUser) {
                 $rowErrors[] = "Row {$rowNumber}: employee id {$frontEmployeeId} is not present in the system.";
             }
@@ -451,7 +451,7 @@ class ProjectController extends Controller
                     $seenDirectServices[$serviceId] = true;
                 }
             }
-            
+
             $dbHours = Service::where('service_id', $serviceId)->whereIn('service_type', ['direct', 'proxy'])->sum('hours');
             $excelHours = $serviceHoursTracker[$serviceId] ?? 0;
             $totalHours = $dbHours + $excelHours + $hours;
@@ -481,7 +481,7 @@ class ProjectController extends Controller
             ];
         }
 
-        
+
         if (!empty($errors)) {
             return redirect()
                 ->route('services.listing')
@@ -489,10 +489,10 @@ class ProjectController extends Controller
         }
 
         DB::transaction(function () use ($servicesToCreate) {
-            
+
             foreach ($servicesToCreate as $serviceData) {
                 Service::create($serviceData);
-                
+
                 $memberIds = collect([$serviceData['front_resource'], $serviceData['working_resource']])
                     ->filter()
                     ->unique()
@@ -592,7 +592,7 @@ class ProjectController extends Controller
             'cancel_reason',
             'replacement_reason',
         ]);
-        
+
         if ($serviceValidationError = $this->validateMonthlyServiceHours($client, $request)) {
             return $serviceValidationError;
         }
@@ -737,7 +737,6 @@ class ProjectController extends Controller
         ];
 
 
-
         $request->validate($rules);
 
         $data = $request->only([
@@ -760,13 +759,24 @@ class ProjectController extends Controller
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
+        if (!empty($service->created_at)) {
+            $serviceMonth = $service->created_at->month;
+            $serviceYear  = $service->created_at->year;
+        } else {
+            $serviceMonth = null;
+            $serviceYear  = null;
+        }
+
         $sameServiceExists = $client->services()
             ->where('service_id', $request->service_id)
             ->where('id', '!=', $service->id)
             ->where('working_resource', $request->working_resource)
-            ->whereMonth('created_at', $currentMonth)
-            ->whereYear('created_at', $currentYear)
+            ->whereMonth('created_at', $serviceMonth)
+            ->whereYear('created_at', $serviceYear)
             ->exists();
+
+        // dd($currentMonth);
+
 
         if ($sameServiceExists) {
             return redirect()
@@ -813,8 +823,8 @@ class ProjectController extends Controller
                 ->where('service_type', 'direct')
                 ->where('id', '!=', $service->id)
                 ->where('front_resource', $request->front_resource)
-                ->whereMonth('created_at', $currentMonth)
-                ->whereYear('created_at', $currentYear)
+                ->whereMonth('created_at', $serviceMonth)
+                ->whereYear('created_at', $serviceYear)
                 ->exists();
 
             if ($directResourceExists) {
@@ -888,17 +898,17 @@ class ProjectController extends Controller
             ->whereYear('created_at', $currentYear);
 
         if ($service) {
-            $serviceHoursQuery->where('id', '!=', $service->id);
+            $serviceHoursQuery->where('id', '!=', $service->id)->where('working_resource', $request->working_resource);
         }
 
         $usedHoursForServiceId = (float) $serviceHoursQuery->sum('hours');
         $remainingHour = (float) $maxHours - $usedHoursForServiceId;
 
-        
+
         $isSameServiceAndHours = $service
             && $service->service_id === $request->service_id
             && (float) $service->hours === (float) $request->hours;
-        
+
         if (!$isSameServiceAndHours && (float) $request->hours > $remainingHour) {
             return back()->withInput()->withErrors([
                 'hours' => "Only {$remainingHour} hours are available for service ID {$request->service_id} this month.",
@@ -906,6 +916,7 @@ class ProjectController extends Controller
         }
 
         $sameServiceIdExists = (clone $serviceHoursQuery)->exists();
+
 
         if ($sameServiceIdExists && $request->service_type === 'direct') {
             return back()->withInput()->withErrors([
