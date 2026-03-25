@@ -185,9 +185,9 @@
                                 </button>
                                 <ul class="dropdown-menu py-0">
                                     @can('service-show')
-                                        <li class="px-2 py-2">
+                                        <li class="">
                                             <a href="{{ route('clients.services.show', [$service->client_id, $service->id]) }}"
-                                                class="px-1 text-primary text-decoration-none d-block">
+                                                class="px-2 py-2 text-primary text-decoration-none d-block">
                                                 Show
                                             </a>
                                         </li>
@@ -196,9 +196,9 @@
                                         <li>
                                             <hr class="my-1" />
                                         </li>
-                                        <li class="px-2 py-2">
+                                        <li class="">
                                             <a href="{{ route('clients.services.index', $service->client_id) }}"
-                                                class="px-1 text-info text-decoration-none d-block">
+                                                class="px-2 py-2 text-info text-decoration-none d-block">
                                                 Manage
                                             </a>
                                         </li>

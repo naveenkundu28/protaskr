@@ -48,6 +48,7 @@
                 <form id="serviceForm" action="{{ route('clients.services.store', $client->id) }}" method="POST">
 
                     @csrf
+                    <input type="hidden" name="editing_service_id" id="editing_service_id" value="{{ old('editing_service_id') }}">
 
                     <div id="method_field"></div>
 
@@ -313,9 +314,9 @@
                                     <ul class="dropdown-menu py-0">
 
                                         @can('service-show')
-                                            <li class="px-2 py-2">
+                                            <li class="">
                                                 <a href="{{ route('clients.services.show', [$client->id, $service->id]) }}"
-                                                    class="px-1 text-primary text-decoration-none d-block">
+                                                    class="px-2 py-2 px-1 text-primary text-decoration-none d-block">
                                                     Show
                                                 </a>
                                             </li>
@@ -325,8 +326,8 @@
                                             <li>
                                                 <hr class="my-1" />
                                             </li>
-                                            <li class="px-2 py-2">
-                                                <button class="border-0 text-info text-start w-100 bg-white editService"
+                                            <li class="">
+                                                <button class="border-0 text-info text-start w-100 bg-white editService px-2 py-2"
                                                     data-service='@json($service)'>
                                                     Edit
                                                 </button>
@@ -338,8 +339,8 @@
                                             <li>
                                                 <hr class="my-1" />
                                             </li>
-                                            <li class="px-2 py-2">
-                                                <button class="border-0 text-success text-start w-100 bg-white copyService"
+                                            <li class="">
+                                                <button class="px-2 py-2 border-0 text-success text-start w-100 bg-white copyService"
                                                     data-service='@json($service)'>
                                                     Copy
                                                 </button>
@@ -353,7 +354,7 @@
                                                 <hr class="my-1" />
                                             </li>
 
-                                            <li class="px-2 py-2">
+                                            <li class="">
                                                 <form
                                                     action="{{ route('clients.services.destroy', [$client->id, $service->id]) }}"
                                                     method="POST" style="display:inline">
@@ -361,7 +362,7 @@
                                                     @csrf
                                                     @method('DELETE')
 
-                                                    <button class="border-0 text-danger text-start w-100 bg-white"
+                                                    <button class="px-2 py-2 border-0 text-danger text-start w-100 bg-white"
                                                         onclick="return confirm('Are you sure you want to delete this service?')">
                                                         Delete
                                                     </button>
@@ -506,7 +507,7 @@
                 $('#replacement_reason').val(service.replacement_reason)
 
                 toggleFields()
-
+                handleResource()
                 let client = "{{ $client->id }}"
 
                 if (!isCopy) {
@@ -521,6 +522,7 @@
                     $('#method_field').html(
                         '<input type="hidden" name="_method" value="PUT">'
                     )
+                    $('#editing_service_id').val(service?.id)
 
                     $('#submitBtn').text('Update Service')
                     $('#form_title').text('Edit Service')
@@ -537,6 +539,7 @@
                     // )
 
                     $('#method_field').html('')
+                    $('#editing_service_id').val('')
 
                     $('#submitBtn').text('Create Service')
                     $('#form_title').text('Copy Service')
@@ -576,6 +579,19 @@
                 location.reload()
 
             })
+
+            const oldEditingServiceId = @json(old('editing_service_id'));
+
+            if (oldEditingServiceId) {
+                const matchingEditButton = $('.editService').filter(function() {
+                    const service = $(this).data('service');
+                    return String(service?.id) === String(oldEditingServiceId);
+                }).first();
+
+                if (matchingEditButton.length) {
+                    fillForm(matchingEditButton.data('service'), false);
+                }
+            }
 
 
         })
