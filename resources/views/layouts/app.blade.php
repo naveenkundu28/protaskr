@@ -15,7 +15,7 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" />
-    <link rel="stylesheet" href="{{asset('assets/style.css')}}" />
+    <link rel="stylesheet" href="{{ asset('assets/style.css') }}" />
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
@@ -38,7 +38,8 @@
                     <div class="collapse navbar-collapse" id="navbarNavDropdown">
                         <ul class="navbar-nav align-items-lg-center gap-lg-1">
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('/') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                                <a class="nav-link {{ request()->is('/') ? 'active' : '' }}"
+                                    href="{{ route('dashboard') }}">
                                     <i class="bi bi-house-door"></i> Dashboard
                                 </a>
                             </li>
@@ -51,17 +52,18 @@
                                     </a>
                                     <ul class="dropdown-menu">
                                         <li>
-                                            <a class="dropdown-item {{ request()->is('clients?type=archived*') ? 'active' : '' }}" href="{{ route('clients.index') }}">
+                                            <a class="dropdown-item {{ request()->is('clients?type=archived*') ? 'active' : '' }}"
+                                                href="{{ route('clients.index') }}">
                                                 <i class="bi bi-list-ul me-2"></i> List Clients
                                             </a>
                                         </li>
                                         @can('user-show')
-                                        <li>
-                                            <a class="dropdown-item {{ request()->routeIs('services.listing') ? 'active' : '' }}"
-                                                href="{{ route('services.listing') }}">
-                                                <i class="bi bi-table me-2"></i> Service Listing
-                                            </a>
-                                        </li>
+                                            <li>
+                                                <a class="dropdown-item {{ request()->routeIs('services.listing') ? 'active' : '' }}"
+                                                    href="{{ route('services.listing') }}">
+                                                    <i class="bi bi-table me-2"></i> Service Listing
+                                                </a>
+                                            </li>
                                         @endcan
                                         @if (Auth::user()->hasRole('Admin'))
                                             <li>
@@ -81,7 +83,8 @@
                             @endcan
                             @can('task-show')
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('tasks*') ? 'active' : '' }}" href="{{ route('tasks.index') }}">
+                                    <a class="nav-link {{ request()->is('tasks*') ? 'active' : '' }}"
+                                        href="{{ route('tasks.index') }}">
                                         <i class="bi bi-check2-square"></i> My Tasks
                                     </a>
                                 </li>
@@ -108,34 +111,58 @@
                                     </ul>
                                 </li>
                             @endcan
-                            
+
                             @can('user-show')
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('daily-report*') ? 'active' : '' }}" href="{{ route('daily.report') }}">
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle {{ request()->is('daily-report*') || request()->is('daily-task-report*') ? 'active' : '' }}"
+                                        href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="bi bi-bar-chart"></i> Daily Report
                                     </a>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a class="dropdown-item {{ request()->is('daily-report*') ? 'active' : '' }}"
+                                                href="{{ route('daily.report') }}">
+                                                <i class="bi bi-clock"></i> Hourly Report
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item {{ request()->is('daily-task-report*') ? 'active' : '' }}"
+                                                href="{{ route('daily.task.report') }}">
+                                                <i class="bi bi-hourglass-split"></i> Daily Task Report
+                                            </a>
+                                        </li>
+                                    </ul>
                                 </li>
+
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('reports*') ? 'active' : '' }}" href="{{ route('reports.index') }}">
+                                    <a class="nav-link {{ request()->is('reports*') ? 'active' : '' }}"
+                                        href="{{ route('reports.index') }}">
                                         <i class="bi bi-file-earmark-bar-graph"></i> Reports
                                     </a>
                                 </li>
                             @endcan
                         </ul>
-                        <div class="task-navbar-meta ms-lg-auto d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3">
+                        <div
+                            class="task-navbar-meta ms-lg-auto d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3">
                             <ul class="navbar-nav">
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown"
+                                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         {{ Auth::user()->name }}
                                     </a>
-                                    <ul class="dropdown-menu dropdown-menu-profile dropdown-menu-end" aria-labelledby="userDropdown">
-                                        <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Update Profile</a></li>
-                                        @if(auth()->user()->can('user-show') || auth()->user()->can('role-show'))
-                                            <li><hr class="dropdown-divider"></li>
+                                    <ul class="dropdown-menu dropdown-menu-profile dropdown-menu-end"
+                                        aria-labelledby="userDropdown">
+                                        <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Update
+                                                Profile</a></li>
+                                        @if (auth()->user()->can('user-show') || auth()->user()->can('role-show'))
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li>
                                             <li>
                                                 <a class="dropdown-item d-flex justify-content-between align-items-center {{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') }}"
-                                                    href="#mastersMenu" data-bs-toggle="collapse" aria-expanded="{{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') }}" aria-controls="mastersMenu">
+                                                    href="#mastersMenu" data-bs-toggle="collapse"
+                                                    aria-expanded="{{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') }}"
+                                                    aria-controls="mastersMenu">
                                                     <span>
                                                         <i class="bi bi-folder me-2"></i> Masters
                                                     </span>
@@ -143,7 +170,8 @@
                                                 </a>
                                             </li>
                                             <li>
-                                                <ul class="collapse list-unstyled mb-0 {{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') }}" id="mastersMenu">
+                                                <ul class="collapse list-unstyled mb-0 {{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') }}"
+                                                    id="mastersMenu">
                                                     @can('user-show')
                                                         <li>
                                                             <a class="dropdown-item ps-4 {{ request()->is('skills*') ? 'active' : '' }}"
@@ -158,7 +186,8 @@
                                                             </a>
                                                         </li>
                                                         <li>
-                                                            <a class="dropdown-item ps-4 {{ request()->is('year*') ? 'active' : '' }}" href="{{ route('master.hours.create') }}">
+                                                            <a class="dropdown-item ps-4 {{ request()->is('year*') ? 'active' : '' }}"
+                                                                href="{{ route('master.hours.create') }}">
                                                                 <i class="bi bi-clock me-2"></i> Hours
                                                             </a>
                                                         </li>
@@ -166,16 +195,21 @@
                                                 </ul>
                                             </li>
                                         @endif
-                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
                                         @can('role-show')
                                             <li>
-                                                <a class="dropdown-item ps-4 {{ request()->is('roles*') ? 'active' : '' }}" href="{{ route('roles.index') }}">
+                                                <a class="dropdown-item ps-4 {{ request()->is('roles*') ? 'active' : '' }}"
+                                                    href="{{ route('roles.index') }}">
                                                     <i class="bi bi-sticky me-2"></i> Roles
                                                 </a>
                                             </li>
-                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <hr class="dropdown-divider">
+                                            </li>
                                         @endcan
-                                        
+
                                         <li>
                                             <form method="POST" action="{{ route('logout') }}" id="logout-form">
                                                 @csrf
@@ -259,8 +293,10 @@
                     $input.on('input', function() {
                         clearTimeout(timeoutId);
                         timeoutId = setTimeout(function() {
-                            const queryString = new URLSearchParams(new FormData(form)).toString();
-                            const requestUrl = queryString ? `${$form.attr('action')}?${queryString}` : $form.attr('action');
+                            const queryString = new URLSearchParams(new FormData(form))
+                                .toString();
+                            const requestUrl = queryString ?
+                                `${$form.attr('action')}?${queryString}` : $form.attr('action');
 
                             axios.get(requestUrl, {
                                 headers: {
@@ -268,9 +304,11 @@
                                 }
                             }).then(function(response) {
                                 const parser = new DOMParser();
-                                const doc = parser.parseFromString(response.data, 'text/html');
+                                const doc = parser.parseFromString(response.data,
+                                    'text/html');
                                 const newContent = doc.querySelector(targetSelector);
-                                const currentContent = document.querySelector(targetSelector);
+                                const currentContent = document.querySelector(
+                                    targetSelector);
 
                                 if (newContent && currentContent) {
                                     currentContent.innerHTML = newContent.innerHTML;
@@ -297,7 +335,8 @@
 
                             if (newContent && currentContent) {
                                 currentContent.innerHTML = newContent.innerHTML;
-                                window.history.replaceState({}, '', $(e.currentTarget).attr('href'));
+                                window.history.replaceState({}, '', $(e.currentTarget).attr(
+                                    'href'));
                             }
                         }).catch(function(error) {
                             console.error('Pagination request failed', error);
@@ -310,41 +349,41 @@
     @stack('scripts')
 
     <link href="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote-lite.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote-lite.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.9.0/dist/summernote-lite.min.js"></script>
 
 
     <script>
-       $('#summernote').summernote({
-        placeholder: 'Description',
-        tabsize: 2,
-        height: 120,
-        toolbar: [
-          ['style', ['style']],
-          ['font', ['bold', 'underline', 'clear']],
-          ['color', ['color']],
-          ['para', ['ul', 'ol', 'paragraph']],
-          ['table', ['table']],
-          ['insert', ['link']],
-          ['view', []]
-        ]
-      });
-/*        function updateDateTime() {
-            const now = new Date();
-            const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            const day = dayNames[now.getDay()];
-            const date = now.toLocaleDateString(['en-US'], {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-            });
-            const time = now.toLocaleTimeString();
+        $('#summernote').summernote({
+            placeholder: 'Description',
+            tabsize: 2,
+            height: 120,
+            toolbar: [
+                ['style', ['style']],
+                ['font', ['bold', 'underline', 'clear']],
+                ['color', ['color']],
+                ['para', ['ul', 'ol', 'paragraph']],
+                ['table', ['table']],
+                ['insert', ['link']],
+                ['view', []]
+            ]
+        });
+        /*        function updateDateTime() {
+                    const now = new Date();
+                    const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                    const day = dayNames[now.getDay()];
+                    const date = now.toLocaleDateString(['en-US'], {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                    const time = now.toLocaleTimeString();
 
-            document.getElementById('currentDateTime').innerText = `${day}, ${date}  ${time}`;
-        }
+                    document.getElementById('currentDateTime').innerText = `${day}, ${date}  ${time}`;
+                }
 
-        updateDateTime();
-        setInterval(updateDateTime, 1000);
-        */
+                updateDateTime();
+                setInterval(updateDateTime, 1000);
+                */
     </script>
 </body>
 

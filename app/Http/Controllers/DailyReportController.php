@@ -4,51 +4,56 @@ namespace App\Http\Controllers;
 
 use App\Models\DailyPerformance;
 use App\Models\DailyReport;
+use App\Models\Tag;
+use App\Models\TrackerHistory;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
+use \App\Traits\TrackerTrait;
 
 class DailyReportController extends Controller
 {
+    use TrackerTrait;
     public function index(Request $request)
     {
         $this->authorize('role-show');
-        if($request->month){
+        if ($request->month) {
             [$year, $month] = explode('-', $request->month);
             // $month = $request->month ?? date('m');
             // $year = $request->year ?? date('Y');
-        }else{
+        } else {
             $month = date('m');
             $year = date('Y');
         }
 
-        $users = User::whereDoesntHave('roles', function ($q) {$q->where('name', 'Admin');})->orderBy('created_at')->get();
+        $users = User::whereDoesntHave('roles', function ($q) {
+            $q->where('name', 'Admin');
+        })->orderBy('created_at')->get();
         $performances = DailyPerformance::all();
 
         $reports = DailyReport::with('performance')
-            ->whereMonth('date',$month)
-            ->whereYear('date',$year)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
             ->get()
-            ->groupBy(['date','user_id']);
+            ->groupBy(['date', 'user_id']);
 
         $dates = [];
 
         $totals = DailyReport::selectRaw('user_id, SUM(time) as total_minutes')
-            ->whereMonth('date',$month)
-            ->whereYear('date',$year)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
             ->groupBy('user_id')
-            ->pluck('total_minutes','user_id');
+            ->pluck('total_minutes', 'user_id');
 
-        $days = cal_days_in_month(CAL_GREGORIAN,(int)$month,(int)$year);
+        $days = cal_days_in_month(CAL_GREGORIAN, (int)$month, (int)$year);
 
-        for( $i = 1 ; $i <= $days ; $i++ ){
+        for ($i = 1; $i <= $days; $i++) {
 
-            $dates[] = date('Y-m-d',strtotime("$year-$month-$i"));
-
+            $dates[] = date('Y-m-d', strtotime("$year-$month-$i"));
         }
 
-        return view('reports.daily',compact('users', 'reports', 'dates', 'month', 'year', 'performances', 'totals'));
+        return view('reports.daily', compact('users', 'reports', 'dates', 'month', 'year', 'performances', 'totals'));
     }
 
     public function update(Request $request)
@@ -98,5 +103,61 @@ class DailyReportController extends Controller
         return redirect()
             ->route('daily.report', ['month' => now()->format('Y-m')])
             ->with('success', 'Daily report fetched for the last 7 days.');
+    }
+
+
+    public function getDailyTaskReports()
+    {
+        $this->authorize('role-show');
+        $tags = Tag::all();
+        return view('reports.daily-task', compact('tags'));
+    }
+
+    public function getUserTasks(Request $request)
+    {
+            $date = $request->tasksDate ?? now()->subDay()->format('Y-m-d');
+            $tagId = $request->tag_id;
+            $users = User::where('user_type', 'Internal')
+                ->when($tagId, function ($q) use ($tagId) {
+                    $q->whereHas('tags', function ($q2) use ($tagId) {
+                        $q2->where('tags.id', $tagId);
+                    });
+                })
+                ->with(['tasks' => function ($q) use ($date) {
+                    $q->whereDate('created_at', $date)
+                        ->with('project'); // client
+                }])
+                ->get();
+
+
+            $users->map(function ($user) {
+
+                $totalSeconds = 0;
+
+                if ($user->tasks->isNotEmpty()) {
+
+                    foreach ($user->tasks as $task) {
+
+                        $taskSeconds = TrackerHistory::query()
+                            ->where('user_id', $user->id)
+                            ->where('task_id', $task->id)
+                            ->sum('elapsed_time');
+
+                        $task->total_task_time = $this->_getTotalTime($taskSeconds);
+
+                        $totalSeconds += $taskSeconds;
+                    }
+                }
+
+                $user->total_time = $this->_getTotalTime($totalSeconds);
+
+                return $user;
+            });
+
+            return response()->json([
+                'status' => true,
+                'data' => $users
+            ]);
+        
     }
 }

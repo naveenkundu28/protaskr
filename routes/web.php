@@ -86,6 +86,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/daily-report',[DailyReportController::class,'index'])->name('daily.report');
     Route::post('/daily-report/update',[DailyReportController::class,'update'])->name('daily.report.update');
     Route::post('/daily-report/generate-weekly',[DailyReportController::class,'generateWeekly'])->name('daily.report.generate-weekly');
+    Route::get('/daily-task-report',[DailyReportController::class,'getDailyTaskReports'])->name('daily.task.report');
+    Route::get('/daily-task-report/users',[DailyReportController::class,'getUserTasks'])->name('daily.task.report.users');
+
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
     Route::resource('checklist-items', ChecklistItemController::class);

@@ -378,3 +378,25 @@ main {
         white-space: normal;
     }
 }
+
+
+
+.dailyTasksAccordion .accordion-button::after {
+    display: none !important;
+}
+
+.dailyTasksAccordion .accordion-button::before {
+    content: "+";
+    font-size: 18px;
+    font-weight: bold;
+    margin-right: 12px;
+}
+
+.dailyTasksAccordion .accordion-button:not(.collapsed)::before {
+    content: "−";
+}
+
+.dailyTasksAccordion .accordion-button {
+    display: flex;
+    align-items: center;
+}

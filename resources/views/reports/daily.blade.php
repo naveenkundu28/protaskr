@@ -1,9 +1,9 @@
 @extends('layouts.app')
-@section('title','Daily Report')
+@section('title','Hourly Report')
 @section('content')
 
     <div class="container-fluid">
-        <h2>Daily Report</h2>
+        <h2>Hourly Report</h2>
 
         @if(session('success'))
             <div class="alert alert-success" role="alert">
