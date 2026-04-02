@@ -14,6 +14,7 @@ use App\Http\Controllers\ChecklistItemController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\HourController;
 
@@ -26,6 +27,7 @@ Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::resource('roles', RoleController::class);
     Route::get('/users/resigned', [UserController::class, 'resignedUsers'])->name('resign.users.index');
+    Route::get('/users/listing', [UserController::class, 'listing'])->name('users.listing');
     Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
     Route::resource('users', UserController::class);
 
@@ -73,6 +75,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/task/export', [TaskController::class, 'export'])->name('tasks.export');
 
 
+    Route::get('task/{task}/files/{file}/download', [FileController::class, 'download'])->name('task.files.download');
     Route::resource('task.files', FileController::class);
 
     Route::resource('skills', SkillController::class);
@@ -82,6 +85,9 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::get('/daily-report',[DailyReportController::class,'index'])->name('daily.report');
+    Route::post('/daily-report/update',[DailyReportController::class,'update'])->name('daily.report.update');
+    Route::post('/daily-report/generate-weekly',[DailyReportController::class,'generateWeekly'])->name('daily.report.generate-weekly');
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
     Route::resource('checklist-items', ChecklistItemController::class);
     Route::get('checklist-items/{checklistItem}/update-status', [ChecklistItemController::class, 'updateStatus'])->name('checklist-items.update-status');

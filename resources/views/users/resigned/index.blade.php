@@ -64,7 +64,19 @@
                         <td>
                             @if (!empty($user->tags))
                                 @foreach ($user->tags as $tag)
-                                    <span>{{ $tag->name }}</span>
+                                    @php
+                                        $tagColor = $tag->color ?: '#6c757d';
+                                        $hex = ltrim($tagColor, '#');
+                                        if (strlen($hex) === 3) {
+                                            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+                                        }
+                                        $r = hexdec(substr($hex, 0, 2));
+                                        $g = hexdec(substr($hex, 2, 2));
+                                        $b = hexdec(substr($hex, 4, 2));
+                                        $brightness = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+                                        $textColor = $brightness > 140 ? '#111111' : '#ffffff';
+                                    @endphp
+                                    <span class="tag-item" style="background-color: {{ $tagColor }}; color: {{ $textColor }};">{{ $tag->name }}</span>
                                 @endforeach
                             @endif
                         </td>

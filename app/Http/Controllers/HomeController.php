@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Hour;
 use App\Models\Service;
+use App\Models\Skill;
 use App\Models\Tag;
 use App\Models\User;
 use Carbon\Carbon;
@@ -38,14 +39,32 @@ class HomeController extends Controller
         $masterHours = Hour::where('year', $now->year)
             ->where('month', $now->format('F'))
             ->value('hours');
+        
+        $skillSetSummary = Skill::with(['primaryUsers' => function ($query) {
+            $query->orderBy('name');
+        }])
+        ->orderBy('name')
+        ->get()
+        ->map(function ($skill) {
+            return [
+                'id' => $skill->id,
+                'name' => $skill->name,
+                'users' => $skill->primaryUsers->values(),
+                'employee_id' => $skill->employee_id,
+            ];
+        })
+        ->filter(fn ($skill) => $skill['users']->isNotEmpty())
+        ->values();
+
+        $benchUsersSummary = collect();
 
         $workingHoursSummary = [
-            'Bench' => 0,
-            'FULL' => 0,
-            'HALF' => 0,
             'FULL +' => 0,
+            'FULL' => 0,
             'HALF +' => 0,
+            'HALF' => 0,
             'ADHOC' => 0,
+            'Bench' => 0,
         ];
         $profitLossSummary = [
             'total_hours' => 0,
@@ -65,6 +84,8 @@ class HomeController extends Controller
                 'recentTasks',
                 'tagSummary',
                 'masterHours',
+                'skillSetSummary',
+                'benchUsersSummary',
                 'workingHoursSummary',
                 'profitLossSummary',
                 'now',
@@ -82,7 +103,7 @@ class HomeController extends Controller
         $hoursByUser = [];
 
         foreach ($services as $service) {
-            $assignedUsers = collect([$service->front_resource, $service->working_resource])
+            $assignedUsers = collect([$service->working_resource])
                 ->filter()
                 ->unique();
 
@@ -93,6 +114,7 @@ class HomeController extends Controller
 
         foreach ($internalUsers as $employee) {
             $assignedHours = $hoursByUser[$employee->id] ?? 0;
+            $freeHours = max($masterHours - $assignedHours, 0);
 
             if ($assignedHours <= 0) {
                 $workingHoursSummary['Bench']++;
@@ -108,6 +130,48 @@ class HomeController extends Controller
                 $workingHoursSummary['ADHOC']++;
             }
         }
+
+        $benchUserMap = User::role('Employee')
+            ->with('primarySkills')
+            ->where('user_type', 'Internal')
+            ->whereNull('deleted_at')
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(function ($user) use ($hoursByUser, $masterHours) {
+                $assignedHours = (float) ($hoursByUser[$user->id] ?? 0);
+                $freeHours = max($masterHours - $assignedHours, 0);
+
+                return [
+                    $user->id => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'employee_id' => $user->employee_id,
+                        'free_hours' => round($freeHours, 2),
+                    ]
+                ];
+            });
+
+        $benchUsersSummary = Skill::with(['primaryUsers' => function ($query) {
+                $query->where('user_type', 'Internal')->orderBy('name');
+            }])
+            ->orderBy('name')
+            ->get()
+            ->map(function ($skill) use ($benchUserMap) {
+                $users = $skill->primaryUsers
+                    ->map(function ($user) use ($benchUserMap) {
+                        return $benchUserMap->get($user->id);
+                    })
+                    ->filter(fn ($user) => $user && $user['free_hours'] >= 20)
+                    ->values();
+
+                return [
+                    'id' => $skill->id,
+                    'name' => $skill->name,
+                    'users' => $users,
+                ];
+            })
+            ->filter(fn ($skill) => $skill['users']->isNotEmpty())
+            ->values();
 
         $internalUserIds = $internalUsers->pluck('id')->all();
         $assignedInternalHours = collect($hoursByUser)
@@ -133,6 +197,8 @@ class HomeController extends Controller
             'recentTasks',
             'tagSummary',
             'masterHours',
+            'skillSetSummary',
+            'benchUsersSummary',
             'workingHoursSummary',
             'profitLossSummary',
             'now',

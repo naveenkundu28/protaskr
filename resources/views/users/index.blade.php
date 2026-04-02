@@ -8,6 +8,15 @@
                     <div class="d-flex align-items-center gap-3 flex-wrap">
                         <h2 class="mb-0">Users Management</h2>
                         <form method="GET" action="{{ route('users.index') }}" class="d-flex gap-2 auto-search-form" data-search-target="#tableSearchResults">
+                            @if(request('tag_id'))
+                                <input type="hidden" name="tag_id" value="{{ request('tag_id') }}">
+                            @endif
+                            @if(request('tag_scope'))
+                                <input type="hidden" name="tag_scope" value="{{ request('tag_scope') }}">
+                            @endif
+                            @if(request('work_type'))
+                                <input type="hidden" name="work_type" value="{{ request('work_type') }}">
+                            @endif
                             <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search users">
                             {{-- <button class="btn btn-outline-secondary">Search</button> --}}
                         </form>
@@ -41,6 +50,9 @@
                     <th>Secondary Skills</th>
                     <th>Tags</th>
                     <th>Roles</th>
+                    @if(request('work_type'))
+                        <th>Total Hours</th>
+                    @endif
                     <th>Action</th>
                 </tr>
                 @foreach ($data as $key => $user)
@@ -71,7 +83,19 @@
                         <td>
                             @if (!empty($user->tags))
                                 @foreach ($user->tags as $tag)
-                                    <span>{{ $tag->name }}</span>
+                                    @php
+                                        $tagColor = $tag->color ?: '#6c757d';
+                                        $hex = ltrim($tagColor, '#');
+                                        if (strlen($hex) === 3) {
+                                            $hex = $hex[0].$hex[0].$hex[1].$hex[1].$hex[2].$hex[2];
+                                        }
+                                        $r = hexdec(substr($hex, 0, 2));
+                                        $g = hexdec(substr($hex, 2, 2));
+                                        $b = hexdec(substr($hex, 4, 2));
+                                        $brightness = (($r * 299) + ($g * 587) + ($b * 114)) / 1000;
+                                        $textColor = $brightness > 140 ? '#111111' : '#ffffff';
+                                    @endphp
+                                    <span class="tag-item" style="background-color: {{ $tagColor }}; color: {{ $textColor }};">{{ $tag->name }}</span>
                                 @endforeach
                             @endif
                         </td>
@@ -86,6 +110,9 @@
                                 @endforeach
                             @endif
                         </td>
+                        @if(request('work_type'))
+                            <td>{{ isset($hoursByUser[$user->id]) ? number_format($hoursByUser[$user->id], 2) : '0.00' }}</td>
+                        @endif
                         <td>
                             <div class="dropdown service-action-dropdown">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">

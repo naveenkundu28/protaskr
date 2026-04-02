@@ -11,7 +11,6 @@
                     <h2 class="mb-0">Role Management</h2>
                     <form method="GET" action="{{ route('roles.index') }}" class="d-flex gap-2 auto-search-form" data-search-target="#tableSearchResults">
                         <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search roles">
-                        <button class="btn btn-outline-secondary">Search</button>
                     </form>
                 </div>
                 <a href="{{ route('roles.create') }}" class="btn btn-primary">Create New Role</a>
