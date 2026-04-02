@@ -168,14 +168,18 @@
                         `;
                     }
 
-                    let isZero = user.total_time === '00:00:00';
+                    let bgColor = user.performance?.background_color ?? '#8b1c1c';
+                    let fontColor = user.performance?.font_color ?? '#ffffff';
+                    let performanceTitle = user.performance?.title ?? 'Absent';
 
                     html += `
                     <div class="accordion-item mb-3">
                         <h2 class="accordion-header" id="heading-${uIndex}">
-                            <button class="accordion-button ${isZero ? 'bg-danger' : ''} collapsed bg-primary" type="button"
+                            <button class="accordion-button collapsed" type="button"
                                 data-bs-toggle="collapse"
-                                data-bs-target="#collapse-${accordionId}-${uIndex}">
+                                data-bs-target="#collapse-${accordionId}-${uIndex}"
+                                title="${performanceTitle}"
+                                style="background-color: ${bgColor}; color: ${fontColor};">
                                 ${user.name} ${user.employee_id ? '- ' + user.employee_id : ''} , ${user.total_time}
                             </button>
                         </h2>
