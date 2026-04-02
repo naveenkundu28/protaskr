@@ -15,6 +15,7 @@ class Service extends Model
         'client_id',
         'service_id',
         'month',
+        'year',
         'hours',
         'service_status',
         'start_date',

@@ -46,11 +46,11 @@
                                     <strong>Email:</strong> {{ $project->client_email }}
                                 </p>
                             @endif
-                            @if ($project->client_code)
+                            {{-- @if ($project->client_code)
                                 <p class="card-text">
                                     <strong>Code:</strong> {{ $project->client_code }}
                                 </p>
-                            @endif
+                            @endif --}}
 
                             @if ($project->project_name)
                                 <p class="card-text">
@@ -142,7 +142,7 @@
                     <th>No</th>
                     <th>Client Name</th>
                     <th>Client Email</th>
-                    <th>Client Code</th>
+                    {{-- <th>Client Code</th> --}}
                     <th>Project Name</th>
                     {{-- <th>Description</th> --}}
                     <th>Assigned To</th>
@@ -164,10 +164,10 @@
                                 <span class="">{{ $project->client_email }}</span>
                             @endisset
                         </td>
-                        <td> @isset($project)
+                        {{-- <td> @isset($project)
                                 <span class="">{{ $project->client_code }}</span>
                             @endisset
-                        </td>
+                        </td> --}}
                         <td> {{ $project->project_name }}</td>
                         {{-- <td>{{ $project->description }}</td> --}}
                         <td> @isset($project->users)

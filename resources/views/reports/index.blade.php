@@ -63,7 +63,7 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Client Name</th>
-                                        <th>Client Code</th>
+                                        {{-- <th>Client Code</th> --}}
                                         <th>Client Email</th>
                                         <th>Project Name</th>
                                         <th>Assigned To</th>
@@ -76,7 +76,7 @@
                                         <tr>
                                             <td>{{ $index + 1 }}</td>
                                             <td>{{ $client->name }}</td>
-                                            <td>{{ $client->client_code }}</td>
+                                            {{-- <td>{{ $client->client_code }}</td> --}}
                                             <td>{{ $client->client_email }}</td>
                                             <td>{{ $client->project_name }}</td>
                                             <td> 
@@ -117,7 +117,7 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Client Name</th>
-                                        <th>Client Code</th>
+                                        {{-- <th>Client Code</th> --}}
                                         <th>Client Email</th>
                                         <th>Project Name</th>
                                         <th>Assigned To</th>
@@ -130,7 +130,7 @@
                                         <tr>
                                             <td>{{ $index + 1 }}</td>
                                             <td>{{ $client->name }}</td>
-                                            <td>{{ $client->client_code }}</td>
+                                            {{-- <td>{{ $client->client_code }}</td> --}}
                                             <td>{{ $client->client_email }}</td>
                                             <td>{{ $client->project_name }}</td>
                                             <td> 
