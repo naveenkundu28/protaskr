@@ -53,7 +53,7 @@ class DailyReportController extends Controller
             $dates[] = date('Y-m-d', strtotime("$year-$month-$i"));
         }
 
-        return view('reports.daily', compact('users', 'reports', 'dates', 'month', 'year', 'performances', 'totals'));
+        return view('reports.hourly-task', compact('users', 'reports', 'dates', 'month', 'year', 'performances', 'totals'));
     }
 
     public function update(Request $request)

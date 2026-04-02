@@ -84,9 +84,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    Route::get('/daily-report',[DailyReportController::class,'index'])->name('daily.report');
-    Route::post('/daily-report/update',[DailyReportController::class,'update'])->name('daily.report.update');
-    Route::post('/daily-report/generate-weekly',[DailyReportController::class,'generateWeekly'])->name('daily.report.generate-weekly');
+    Route::get('/hourly-report',[DailyReportController::class,'index'])->name('daily.report');
+    Route::post('/hourly-report/update',[DailyReportController::class,'update'])->name('daily.report.update');
+    Route::post('/hourly-report/generate-weekly',[DailyReportController::class,'generateWeekly'])->name('daily.report.generate-weekly');
     Route::get('/daily-task-report',[DailyReportController::class,'getDailyTaskReports'])->name('daily.task.report');
     Route::get('/daily-task-report/users',[DailyReportController::class,'getUserTasks'])->name('daily.task.report.users');
 
