@@ -929,8 +929,10 @@ class ProjectController extends Controller
 
         $serviceHoursQuery = $client->services()
             ->where('service_id', $request->service_id)
-            ->whereMonth('created_at', $currentMonth)
-            ->whereYear('created_at', $currentYear);
+            // ->whereMonth('created_at', $currentMonth)
+            // ->whereYear('created_at', $currentYear);
+            ->where('month', $currentMonth)
+            ->where('year', $currentYear);
 
         if ($service) {
             $serviceHoursQuery->where('id', '!=', $service->id)->where('working_resource', $request->working_resource);
