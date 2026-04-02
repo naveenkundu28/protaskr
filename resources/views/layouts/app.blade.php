@@ -65,14 +65,7 @@
                                                 </a>
                                             </li>
                                         @endcan
-                                        @if (Auth::user()->hasRole('Admin'))
-                                            <li>
-                                                <a class="dropdown-item {{ request('type') == 'archived' ? 'active' : '' }}"
-                                                    href="{{ route('clients.index', ['type' => 'archived']) }}">
-                                                    <i class="bi bi-archive me-2"></i> Archived Clients
-                                                </a>
-                                            </li>
-                                        @endif
+                                        
                                         {{-- <li>
                                             <a class="dropdown-item {{ request()->is('clients*') ? 'active' : '' }}" href="{{ route('clients.index') }}">
                                                 <i class="bi bi-list-ul me-2"></i> Services List
