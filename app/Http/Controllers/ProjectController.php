@@ -935,7 +935,7 @@ class ProjectController extends Controller
             ->where('year', $currentYear);
 
         if ($service) {
-            $serviceHoursQuery->where('id', '!=', $service->id)->where('working_resource', $request->working_resource);
+            $serviceHoursQuery->where('id', '!=', $service->id);
         }
 
         $usedHoursForServiceId = (float) $serviceHoursQuery->sum('hours');
@@ -952,12 +952,35 @@ class ProjectController extends Controller
             ]);
         }
 
-        $sameServiceIdExists = (clone $serviceHoursQuery)->exists();
+        $workingResourceExistsQuery = $client->services()
+            ->where('service_id', $request->service_id)
+            ->where('working_resource', $request->working_resource)
+            ->whereMonth('created_at', $currentMonth)
+            ->whereYear('created_at', $currentYear);
 
+        if ($service) {
+            $workingResourceExistsQuery->where('id', '!=', $service->id);
+        }
 
-        if ($sameServiceIdExists && $request->service_type === 'direct') {
+        if (!empty($request->working_resource) && $workingResourceExistsQuery->exists()) {
             return back()->withInput()->withErrors([
-                'service_type' => 'For an existing service ID in the current month, service type cannot be direct.',
+                'working_resource' => 'This working resource is already assigned to the same service ID in the current month.',
+            ]);
+        }
+
+        $existingDirectServiceQuery = $client->services()
+            ->where('service_id', $request->service_id)
+            ->where('service_type', 'direct')
+            ->whereMonth('created_at', $currentMonth)
+            ->whereYear('created_at', $currentYear);
+
+        if ($service) {
+            $existingDirectServiceQuery->where('id', '!=', $service->id);
+        }
+
+        if ($request->service_type === 'direct' && $existingDirectServiceQuery->exists()) {
+            return back()->withInput()->withErrors([
+                'service_type' => 'Only one direct service type is allowed for this service ID in the current month. Use proxy for additional entries.',
             ]);
         }
 

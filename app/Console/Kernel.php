@@ -20,11 +20,11 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('email:daily-tracker-exception-alert')
             ->timezone($timezone)
-            ->dailyAt('23:59');
+            ->dailyAt('09:00');
 
         $schedule->command('app:generate-reports')
             ->timezone($timezone)
-            ->dailyAt('23:59');
+            ->dailyAt('09:00');
 
         $schedule->command('app:generate-backfill-reports')->timezone($timezone)->weekly();
     }

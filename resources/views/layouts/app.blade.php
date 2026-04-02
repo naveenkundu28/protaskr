@@ -107,13 +107,13 @@
 
                             @can('user-show')
                                 <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle {{ request()->is('daily-report*') || request()->is('daily-task-report*') ? 'active' : '' }}"
+                                    <a class="nav-link dropdown-toggle {{ request()->is('hourly-report*') || request()->is('daily-task-report*') ? 'active' : '' }}"
                                         href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         <i class="bi bi-bar-chart"></i> Daily Report
                                     </a>
                                     <ul class="dropdown-menu">
                                         <li>
-                                            <a class="dropdown-item {{ request()->is('daily-report*') ? 'active' : '' }}"
+                                            <a class="dropdown-item {{ request()->is('hourly-report*') ? 'active' : '' }}"
                                                 href="{{ route('daily.report') }}">
                                                 <i class="bi bi-clock"></i> Hourly Report
                                             </a>

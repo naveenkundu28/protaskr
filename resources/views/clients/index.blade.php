@@ -19,31 +19,6 @@
             </div>
             <div class="align-items-center d-flex gap-2">
 
-
-                <ul class="nav nav-tabs">
-
-                    <li class="nav-item">
-                        <a class="nav-link {{ !request('type') ? 'active' : '' }}" href="{{ route('clients.index') }}">
-                            Ongoing
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link {{ request('type') == 'completed' ? 'active' : '' }}"
-                            href="{{ route('clients.index', ['type' => 'completed']) }}">
-                            Completed
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link {{ request('type') == 'archived' ? 'active' : '' }}"
-                            href="{{ route('clients.index', ['type' => 'archived']) }}">
-                            Archived
-                        </a>
-                    </li>
-
-                </ul>
-
                 @if (!request('type'))
                     @can('project-create')
                         <a href="{{ route('clients.create') }}" class="btn btn-primary">Add Client</a>
@@ -61,7 +36,29 @@
                 {{ session('success') }}
             </div>
         @endif
+        <ul class="nav nav-pills service-tabs mb-3">
 
+            <li class="nav-item">
+                <a class="nav-link {{ !request('type') ? 'active' : '' }}" href="{{ route('clients.index') }}">
+                    Ongoing
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request('type') == 'completed' ? 'active' : '' }}"
+                    href="{{ route('clients.index', ['type' => 'completed']) }}">
+                    Completed
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request('type') == 'archived' ? 'active' : '' }}"
+                    href="{{ route('clients.index', ['type' => 'archived']) }}">
+                    Archived
+                </a>
+            </li>
+
+        </ul>
         <div style="display: none" class="row" id="cards">
             @foreach ($projects as $project)
                 <div class="col-md-4 mb-4">

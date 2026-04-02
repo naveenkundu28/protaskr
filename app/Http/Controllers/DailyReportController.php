@@ -54,7 +54,7 @@ class DailyReportController extends Controller
             $dates[] = date('Y-m-d', strtotime("$year-$month-$i"));
         }
 
-        return view('reports.daily', compact('users', 'reports', 'dates', 'month', 'year', 'performances', 'totals'));
+        return view('reports.hourly-task', compact('users', 'reports', 'dates', 'month', 'year', 'performances', 'totals'));
     }
 
     public function update(Request $request)
@@ -147,9 +147,9 @@ class DailyReportController extends Controller
 
         $users->map(function ($user) {
 
-            $totalSeconds = 0;
-
-            if ($user->tasks->isNotEmpty()) {
+                $totalSeconds = 0;
+                $performances = DailyPerformance::all();
+                if ($user->tasks->isNotEmpty()) {
 
                 foreach ($user->tasks as $task) {
 
@@ -164,7 +164,21 @@ class DailyReportController extends Controller
                 }
             }
 
-            $user->total_time = $this->_getTotalTime($totalSeconds);
+                $user->total_time = $this->_getTotalTime($totalSeconds);
+                $totalHours = $totalSeconds / 3600;
+                $performance = $performances->first(function ($item) use ($totalHours) {
+                    return $item->min <= $totalHours && $item->max >= $totalHours;
+                });
+
+                $user->performance = $performance ? [
+                    'title' => $performance->title,
+                    'background_color' => $performance->background_color,
+                    'font_color' => $performance->font_color,
+                ] : [
+                    'title' => 'Absent',
+                    'background_color' => '#8b1c1c',
+                    'font_color' => '#ffffff',
+                ];
 
             return $user;
         });
