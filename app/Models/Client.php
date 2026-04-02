@@ -22,7 +22,7 @@ class Client extends Model
         'deleted_at',
         'client_email',
         'client_code',
-        'project_name'
+        'project_name',
     ];
 
     protected $dates = [

@@ -547,8 +547,9 @@ class ProjectController extends Controller
         $request->validate([
             'service_type' => 'required|in:direct,proxy,external',
             'service_id' => 'required',
-            // 'month' => 'required|numeric',
             'hours' => 'required|numeric',
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2000|max:2100',
             'service_status' => 'required|in:new,in_progress,completed,replacement,canceled',
 
             'front_resource' => 'nullable|exists:users,id',
@@ -582,8 +583,9 @@ class ProjectController extends Controller
         $data = $request->only([
             'service_type',
             'service_id',
-            // 'month',
             'hours',
+            'month',
+            'year',
             'service_status',
             'front_resource',
             'working_resource',
@@ -603,8 +605,10 @@ class ProjectController extends Controller
         $sameServiceExists = $client->services()
             ->where('service_id', $request->service_id)
             ->where('working_resource', $request->working_resource)
-            ->whereMonth('created_at', $currentMonth)
-            ->whereYear('created_at', $currentYear)
+            // ->whereMonth('created_at', $currentMonth)
+            // ->whereYear('created_at', $currentYear)
+            ->where('month', $request->month)
+            ->where('year', $request->year)
             ->exists();
 
         if ($sameServiceExists) {
@@ -612,7 +616,7 @@ class ProjectController extends Controller
                 ->back()
                 ->withInput()
                 ->withErrors([
-                    'service_err' => 'This service already exists for this resource in the current month.'
+                    'service_err' => 'This service already exists for this resource in the selected month.'
                 ]);
         }
 
@@ -649,8 +653,10 @@ class ProjectController extends Controller
                 ->where('service_id', $request->service_id)
                 ->where('service_type', 'direct')
                 ->where('front_resource', $request->front_resource)
-                ->whereMonth('created_at', $currentMonth)
-                ->whereYear('created_at', $currentYear)
+                // ->whereMonth('created_at', $currentMonth)
+                // ->whereYear('created_at', $currentYear)
+                ->where('month', $request->month)
+                ->where('year', $request->year)
                 ->exists();
 
             if ($directResourceExists) {
@@ -658,7 +664,7 @@ class ProjectController extends Controller
                     ->back()
                     ->withInput()
                     ->withErrors([
-                        'service_err' => 'This direct resource is already assigned to some service for this month.'
+                        'service_err' => 'This direct resource is already assigned to some service for selected month.'
                     ]);
             }
         }
@@ -681,6 +687,8 @@ class ProjectController extends Controller
         if ($data['service_status'] !== 'replacement') {
             $data['replacement_reason'] = null;
         }
+
+        // dd($data);
 
         $client->services()->create($data);
 
@@ -706,7 +714,8 @@ class ProjectController extends Controller
         $rules = [
             'service_type'      => 'required|in:direct,proxy,external',
             'service_id'        => 'required',
-            // 'month'             => 'required|numeric',
+            'month' => 'required|integer|min:1|max:12',
+            'year' => 'required|integer|min:2000|max:2100',
             'hours'             => 'required|numeric',
             'service_status'    => 'required|in:new,in_progress,completed,replacement,canceled',
             'front_resource'    => 'required|exists:users,id',
@@ -742,8 +751,9 @@ class ProjectController extends Controller
         $data = $request->only([
             'service_type',
             'service_id',
-            // 'month',
             'hours',
+            'month',
+            'year',
             'service_status',
             'front_resource',
             'working_resource',
@@ -759,20 +769,25 @@ class ProjectController extends Controller
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        if (!empty($service->created_at)) {
-            $serviceMonth = $service->created_at->month;
-            $serviceYear  = $service->created_at->year;
-        } else {
-            $serviceMonth = null;
-            $serviceYear  = null;
-        }
+        // if (!empty($service->created_at)) {
+        //     $serviceMonth = $service->created_at->month;
+        //     $serviceYear  = $service->created_at->year;
+        // } else {
+        //     $serviceMonth = null;
+        //     $serviceYear  = null;
+        // }
+
+        $serviceMonth = $service->month ?? null;
+        $serviceYear  = $service->year ?? null;
 
         $sameServiceExists = $client->services()
             ->where('service_id', $request->service_id)
             ->where('id', '!=', $service->id)
             ->where('working_resource', $request->working_resource)
-            ->whereMonth('created_at', $serviceMonth)
-            ->whereYear('created_at', $serviceYear)
+            // ->whereMonth('created_at', $serviceMonth)
+            // ->whereYear('created_at', $serviceYear)
+            ->where('month', $serviceMonth)
+            ->where('year', $serviceYear)
             ->exists();
 
         // dd($currentMonth);
@@ -783,7 +798,7 @@ class ProjectController extends Controller
                 ->back()
                 ->withInput()
                 ->withErrors([
-                    'service_err' => 'This service already exists for the same resources in the current month.'
+                    'service_err' => 'This service already exists for the same resources in the selected month.'
                 ]);
         }
 
@@ -823,8 +838,10 @@ class ProjectController extends Controller
                 ->where('service_type', 'direct')
                 ->where('id', '!=', $service->id)
                 ->where('front_resource', $request->front_resource)
-                ->whereMonth('created_at', $serviceMonth)
-                ->whereYear('created_at', $serviceYear)
+                // ->whereMonth('created_at', $serviceMonth)
+                // ->whereYear('created_at', $serviceYear)
+                ->where('month', $serviceMonth)
+                ->where('year', $serviceYear)
                 ->exists();
 
             if ($directResourceExists) {
@@ -832,7 +849,7 @@ class ProjectController extends Controller
                     ->back()
                     ->withInput()
                     ->withErrors([
-                        'service_err' => 'This direct resource is already assigned to some service for this month.'
+                        'service_err' => 'This direct resource is already assigned to some service for selected month.'
                     ]);
             }
         }
@@ -877,10 +894,16 @@ class ProjectController extends Controller
     private function validateMonthlyServiceHours(Client $client, Request $request, ?Service $service = null)
     {
         // For updates, validate against the edited service's month/year bucket.
-        $validationDate = $service ? Carbon::parse($service->created_at) : Carbon::now();
-        $currentMonth = $validationDate->month;
-        $currentMonthName = $validationDate->format('F');
-        $currentYear = $validationDate->year;
+        // $validationDate = $service ? Carbon::parse($service->created_at) : Carbon::now();
+        // $currentMonth = $validationDate->month;
+        // $currentMonthName = $validationDate->format('F');
+        // $currentYear = $validationDate->year;
+
+        $currentMonth = $service->month ?? $request->month ?? now()->month;
+        $currentYear  = $service->year ?? $request->year ?? now()->year;
+        $currentMonthName = \Carbon\Carbon::create()
+            ->month($currentMonth)
+            ->format('F');
 
         $maxHours = Hour::where('year', $currentYear)
             ->where('month', $currentMonthName)

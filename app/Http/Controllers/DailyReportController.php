@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use \App\Traits\TrackerTrait;
+use Carbon\Carbon;
 
 class DailyReportController extends Controller
 {
@@ -91,18 +92,32 @@ class DailyReportController extends Controller
             ->with('success', 'Daily report updated successfully.');
     }
 
-    public function generateWeekly()
+    public function generateWeekly(Request $request)
     {
         $this->authorize('role-show');
         abort_unless(Auth::user()?->hasRole('Admin'), 403);
 
+        $dateFrom = $request->report_date ?: 'week';
+
         Artisan::call('app:generate-reports', [
-            '--dateFrom' => 'week',
+            '--dateFrom' => $dateFrom,
         ]);
+
+        if ($dateFrom !== 'week') {
+            // calculate difference in days
+            $days = Carbon::parse($dateFrom)->diffInDays(now());
+
+            // safety (if same day selected)
+            $days = $days == 0 ? 1 : $days;
+
+            $message = "Daily report fetched for the last {$days} days.";
+        } else {
+            $message = "Daily report fetched for the last 7 days.";
+        }
 
         return redirect()
             ->route('daily.report', ['month' => now()->format('Y-m')])
-            ->with('success', 'Daily report fetched for the last 7 days.');
+            ->with('success', $message);
     }
 
 
@@ -115,49 +130,48 @@ class DailyReportController extends Controller
 
     public function getUserTasks(Request $request)
     {
-            $date = $request->tasksDate ?? now()->subDay()->format('Y-m-d');
-            $tagId = $request->tag_id;
-            $users = User::where('user_type', 'Internal')
-                ->when($tagId, function ($q) use ($tagId) {
-                    $q->whereHas('tags', function ($q2) use ($tagId) {
-                        $q2->where('tags.id', $tagId);
-                    });
-                })
-                ->with(['tasks' => function ($q) use ($date) {
-                    $q->whereDate('created_at', $date)
-                        ->with('project'); // client
-                }])
-                ->get();
+        $date = $request->tasksDate ?? now()->subDay()->format('Y-m-d');
+        $tagId = $request->tag_id;
+        $users = User::where('user_type', 'Internal')
+            ->when($tagId, function ($q) use ($tagId) {
+                $q->whereHas('tags', function ($q2) use ($tagId) {
+                    $q2->where('tags.id', $tagId);
+                });
+            })
+            ->with(['tasks' => function ($q) use ($date) {
+                $q->whereDate('created_at', $date)
+                    ->with('project'); // client
+            }])
+            ->get();
 
 
-            $users->map(function ($user) {
+        $users->map(function ($user) {
 
-                $totalSeconds = 0;
+            $totalSeconds = 0;
 
-                if ($user->tasks->isNotEmpty()) {
+            if ($user->tasks->isNotEmpty()) {
 
-                    foreach ($user->tasks as $task) {
+                foreach ($user->tasks as $task) {
 
-                        $taskSeconds = TrackerHistory::query()
-                            ->where('user_id', $user->id)
-                            ->where('task_id', $task->id)
-                            ->sum('elapsed_time');
+                    $taskSeconds = TrackerHistory::query()
+                        ->where('user_id', $user->id)
+                        ->where('task_id', $task->id)
+                        ->sum('elapsed_time');
 
-                        $task->total_task_time = $this->_getTotalTime($taskSeconds);
+                    $task->total_task_time = $this->_getTotalTime($taskSeconds);
 
-                        $totalSeconds += $taskSeconds;
-                    }
+                    $totalSeconds += $taskSeconds;
                 }
+            }
 
-                $user->total_time = $this->_getTotalTime($totalSeconds);
+            $user->total_time = $this->_getTotalTime($totalSeconds);
 
-                return $user;
-            });
+            return $user;
+        });
 
-            return response()->json([
-                'status' => true,
-                'data' => $users
-            ]);
-        
+        return response()->json([
+            'status' => true,
+            'data' => $users
+        ]);
     }
 }

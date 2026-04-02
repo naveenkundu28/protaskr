@@ -20,8 +20,7 @@
             </div>
 
             <div>
-                <a class="btn btn-primary"
-                    href="{{ route('clients.index') }}">
+                <a class="btn btn-primary" href="{{ route('clients.index') }}">
                     Back
                 </a>
             </div>
@@ -56,9 +55,12 @@
                         <div class="col-md-4 mb-3">
                             <label>Service Type <span class="text-danger">*</span></label>
                             <select name="service_type" id="service_type" class="form-select" required>
-                                <option value="direct" {{ old('service_type', 'direct') == 'direct' ? 'selected' : '' }}>Direct</option>
-                                <option value="proxy" {{ old('service_type') == 'proxy' ? 'selected' : '' }}>Proxy</option>
-                                <option value="external" {{ old('service_type') == 'external' ? 'selected' : '' }}>External</option>
+                                <option value="direct" {{ old('service_type', 'direct') == 'direct' ? 'selected' : '' }}>
+                                    Direct</option>
+                                <option value="proxy" {{ old('service_type') == 'proxy' ? 'selected' : '' }}>Proxy
+                                </option>
+                                <option value="external" {{ old('service_type') == 'external' ? 'selected' : '' }}>External
+                                </option>
                             </select>
 
                             @error('service_type')
@@ -69,7 +71,8 @@
 
                         <div class="col-md-4 mb-3">
                             <label>Service ID <span class="text-danger">*</span></label>
-                            <input type="text" name="service_id" id="service_id" value="{{ old('service_id') }}" class="form-control" required>
+                            <input type="text" name="service_id" id="service_id" value="{{ old('service_id') }}"
+                                class="form-control" required>
                             @error('service_id')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -78,9 +81,48 @@
 
                         <div class="col-md-4 mb-3">
                             <label>Hours <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" name="hours" id="hours" value="{{ old('hours') }}" class="form-control"
-                                required>
+                            <input type="number" step="0.01" name="hours" id="hours" value="{{ old('hours') }}"
+                                class="form-control" required>
                             @error('hours')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label>Month <span class="text-danger">*</span></label>
+                            <select name="month" id="month" class="form-select" required>
+                                <option value="">Select Month</option>
+                                @foreach (range(1, 12) as $m)
+                                    <option value="{{ $m }}"
+                                        {{ old('month', now()->month) == $m ? 'selected' : '' }}>
+                                        {{ \Carbon\Carbon::create()->month($m)->format('F') }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            @error('month')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label>Year <span class="text-danger">*</span></label>
+                            <select name="year" id="year" class="form-select" required>
+                                <option value="">Select Year</option>
+
+                                @php
+                                    $currentYear = now()->year;
+                                @endphp
+
+                                @for ($y = $currentYear - 5; $y <= $currentYear + 10; $y++)
+                                    <option value="{{ $y }}"
+                                        {{ old('year', now()->year) == $y ? 'selected' : '' }}>
+                                        {{ $y }}
+                                    </option>
+                                @endfor
+                            </select>
+
+                            @error('year')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
@@ -111,7 +153,8 @@
                                 <option value="">Select</option>
 
                                 @foreach ($employees as $employee)
-                                    <option value="{{ $employee->id }}" {{ old('front_resource') == $employee->id ? 'selected' : '' }}>
+                                    <option value="{{ $employee->id }}"
+                                        {{ old('front_resource') == $employee->id ? 'selected' : '' }}>
                                         {{ $employee->name }}{{ $employee->employee_id ? ' - ' . $employee->employee_id : '' }}
                                     </option>
                                 @endforeach
@@ -129,7 +172,8 @@
                                 <option value="">Select</option>
 
                                 @foreach ($employees as $employee)
-                                    <option value="{{ $employee->id }}" {{ old('working_resource') == $employee->id ? 'selected' : '' }}>
+                                    <option value="{{ $employee->id }}"
+                                        {{ old('working_resource') == $employee->id ? 'selected' : '' }}>
                                         {{ $employee->name }}{{ $employee->employee_id ? ' - ' . $employee->employee_id : '' }}
                                     </option>
                                 @endforeach
@@ -143,7 +187,8 @@
 
                         <div class="col-md-4 mb-3 d-none" id="start_date_div">
                             <label>Start Date <span class="text-danger">*</span></label>
-                            <input type="date" name="start_date" value="{{ old('start_date') }}" id="start_date" class="form-control">
+                            <input type="date" name="start_date" value="{{ old('start_date') }}" id="start_date"
+                                class="form-control">
                             @error('start_date')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -152,7 +197,8 @@
 
                         <div class="col-md-4 mb-3 d-none" id="end_date_div">
                             <label>End Date <span class="text-danger">*</span></label>
-                            <input type="date" name="end_date" value="{{ old('end_date') }}" id="end_date" class="form-control">
+                            <input type="date" name="end_date" value="{{ old('end_date') }}" id="end_date"
+                                class="form-control">
                             @error('end_date')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
@@ -222,6 +268,7 @@
                         <th>Working Resource</th>
                         <th>Service ID</th>
                         <th>Month</th>
+                        <th>Year</th>
                         <th>Hours</th>
                         <th>Status</th>
                         <th>Start Date</th>
@@ -261,7 +308,8 @@
 
                             <td>{{ $service->service_id }}</td>
 
-                            <td>{{ $service->created_at ? $service->created_at->format('F') : '' }}</td>
+                            <td>{{ $service->month ? \Carbon\Carbon::create()->month($service->month)->format('F') : '' }} </td>
+                            <td>{{ $service->year ?? '' }}</td>
                             @php
                                 $year = $service->created_at->format('Y');
                                 $month = $service->created_at->format('F');
@@ -420,7 +468,7 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-           
+
             // --------------to handle service type & resources--------------
             function handleResource() {
                 let serviceType = $('#service_type').val();
@@ -497,6 +545,7 @@
                 $('#service_id').val(service.service_id)
                 $('#hours').val(service.hours)
                 $('#month').val(service.month)
+                $('#year').val(service.year)
                 $('#service_status').val(service.service_status)
                 $('#front_resource').val(service.front_resource?.id)
                 $('#working_resource').val(service.working_resource?.id)
