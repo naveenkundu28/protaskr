@@ -27,6 +27,18 @@ class ProjectController extends Controller
 
         $projects = $projectQuery->when($request->type == 'archived', function ($query) {
             return $query->onlyTrashed();
+        }, function ($query) use ($request) {
+
+            // Non-archived → exclude deleted
+            $query->whereNull('deleted_at');
+
+            // Completed tab
+            if ($request->type == 'completed') {
+                $query->where('status', 'completed');
+            } else {
+                // DEFAULT → Ongoing
+                $query->where('status', 'in_progress');
+            }
         })->when($search !== '', function ($query) use ($search) {
             return $query->where(function ($subQuery) use ($search) {
                 $subQuery->where('name', 'like', "%{$search}%")

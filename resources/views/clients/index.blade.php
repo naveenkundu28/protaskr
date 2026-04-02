@@ -7,15 +7,17 @@
         <div class="d-flex justify-content-between align-items-center bg-white mb-4 shadow-sm p-3 rounded">
             <div class="d-flex align-items-center gap-3 flex-wrap">
                 <h2 class="mb-0">{{ request('type') == 'archived' ? 'Archived Clients' : 'Clients' }}</h2>
-                <form method="GET" action="{{ route('clients.index') }}" class="d-flex gap-2 auto-search-form" data-search-target="#tableSearchResults">
-                    @if(request('type'))
+                <form method="GET" action="{{ route('clients.index') }}" class="d-flex gap-2 auto-search-form"
+                    data-search-target="#tableSearchResults">
+                    @if (request('type'))
                         <input type="hidden" name="type" value="{{ request('type') }}">
                     @endif
-                    <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search Clients">
+                    <input type="text" name="search" value="{{ request('search') }}" class="form-control"
+                        placeholder="Search Clients">
                     {{-- <button class="btn btn-outline-secondary">Search</button> --}}
                 </form>
             </div>
-            <div>
+            <div class="align-items-center d-flex gap-2">
 
                 @if (!request('type'))
                     @can('project-create')
@@ -34,7 +36,29 @@
                 {{ session('success') }}
             </div>
         @endif
+        <ul class="nav nav-pills service-tabs mb-3">
 
+            <li class="nav-item">
+                <a class="nav-link {{ !request('type') ? 'active' : '' }}" href="{{ route('clients.index') }}">
+                    Ongoing
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request('type') == 'completed' ? 'active' : '' }}"
+                    href="{{ route('clients.index', ['type' => 'completed']) }}">
+                    Completed
+                </a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link {{ request('type') == 'archived' ? 'active' : '' }}"
+                    href="{{ route('clients.index', ['type' => 'archived']) }}">
+                    Archived
+                </a>
+            </li>
+
+        </ul>
         <div style="display: none" class="row" id="cards">
             @foreach ($projects as $project)
                 <div class="col-md-4 mb-4">
@@ -135,144 +159,145 @@
 
         {{-- Table view --}}
         <div id="tableSearchResults">
-        <div id="table">
+            <div id="table">
 
-            <table class="table table-bordered">
-                <tr>
-                    <th>No</th>
-                    <th>Client Name</th>
-                    <th>Client Email</th>
-                    {{-- <th>Client Code</th> --}}
-                    <th>Project Name</th>
-                    {{-- <th>Description</th> --}}
-                    <th>Assigned To</th>
-                    <th>Start Date</th>
-                    {{-- <th>Pending Tasks</th> --}}
-                    <th>Status</th>
-                    <th width="180px">Action</th>
-                </tr>
-
-
-                @foreach ($projects as $project)
+                <table class="table table-bordered">
                     <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td> @isset($project)
-                                <span class="">{{ $project->name }}</span>
-                            @endisset
-                        </td>
-                        <td> @isset($project)
-                                <span class="">{{ $project->client_email }}</span>
-                            @endisset
-                        </td>
-                        {{-- <td> @isset($project)
+                        <th>No</th>
+                        <th>Client Name</th>
+                        <th>Client Email</th>
+                        {{-- <th>Client Code</th> --}}
+                        <th>Project Name</th>
+                        {{-- <th>Description</th> --}}
+                        <th>Assigned To</th>
+                        <th>Start Date</th>
+                        {{-- <th>Pending Tasks</th> --}}
+                        <th>Status</th>
+                        <th width="180px">Action</th>
+                    </tr>
+
+
+                    @foreach ($projects as $project)
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
+                            <td> @isset($project)
+                                    <span class="">{{ $project->name }}</span>
+                                @endisset
+                            </td>
+                            <td> @isset($project)
+                                    <span class="">{{ $project->client_email }}</span>
+                                @endisset
+                            </td>
+                            {{-- <td> @isset($project)
                                 <span class="">{{ $project->client_code }}</span>
                             @endisset
                         </td> --}}
-                        <td> {{ $project->project_name }}</td>
-                        {{-- <td>{{ $project->description }}</td> --}}
-                        <td> @isset($project->users)
-                                @foreach ($project->users as $user)
-                                    <span class="{{ $user->trashed() ? 'text-danger' : '' }}">{{ $user->name }}</span><br>
-                                @endforeach
-                            @endisset
-                        </td>
-                        <td> 
-                            {{  $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('j F Y') : '' }}
-                        </td>
-                        {{-- <td>{{$project->to_do_tasks + $project->in_progress_tasks + $project->in_review_tasks}}</td> --}}
-                        <td>{{ $project->status == 'not_started' ? 'Not Started' : ($project->status == 'in_progress' ? 'In Progress' : 'Completed') }}
-                        </td>
+                            <td> {{ $project->project_name }}</td>
+                            {{-- <td>{{ $project->description }}</td> --}}
+                            <td> @isset($project->users)
+                                    @foreach ($project->users as $user)
+                                        <span
+                                            class="{{ $user->trashed() ? 'text-danger' : '' }}">{{ $user->name }}</span><br>
+                                    @endforeach
+                                @endisset
+                            </td>
+                            <td>
+                                {{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('j F Y') : '' }}
+                            </td>
+                            {{-- <td>{{$project->to_do_tasks + $project->in_progress_tasks + $project->in_review_tasks}}</td> --}}
+                            <td>{{ $project->status == 'not_started' ? 'Not Started' : ($project->status == 'in_progress' ? 'In Progress' : 'Completed') }}
+                            </td>
 
-                        <td>
-                            <div class="dropdown service-action-dropdown">
-                                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-list-task"></i> 
-                                </button>
-                                <ul class="dropdown-menu py-0">
-                                    @if (request('type') == 'archived')
-                                        <li class="px-2 py-2">
-                                            <form action="{{ route('clients.restore', $project->id) }}" method="POST"
-                                                class="d-inline">
-                                                @csrf
-                                                <button type="submit"
-                                                    class="border-0 text-danger text-start w-100 bg-white"
-                                                    onclick="return confirm('Are you sure you want to restore this project?')">
-                                                    Restore
-                                                </button>
-                                            </form>
-                                        </li>
-                                    @else
-                                        <li class="px-2 py-2">
-                                            <a href="{{ route('tasks.index', ['project_id' => $project->id]) }}"
-                                                class="w-100 text-decoration-none d-block">
-                                                Tasks
-                                            </a>
-                                        </li>
-
-                                        <li>
-                                            <hr class="my-1" />
-                                        </li>
-                                        @can('service-show')
-                                            
+                            <td>
+                                <div class="dropdown service-action-dropdown">
+                                    <button class="btn btn-secondary dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown">
+                                        <i class="bi bi-list-task"></i>
+                                    </button>
+                                    <ul class="dropdown-menu py-0">
+                                        @if (request('type') == 'archived')
                                             <li class="px-2 py-2">
-                                                <a href="{{ route('clients.services.index', $project->id) }}"
-                                                    class="w-100 text-decoration-none text-warning d-block">
-                                                    Services
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <hr class="my-1" />
-                                            </li>
-                                        @endcan
-                                        
-                                        <li class="px-2 py-2">
-                                            <a href="{{ route('clients.show', $project->id) }}"
-                                                class="w-100 text-decoration-none text-success d-block">
-                                                View
-                                            </a>
-                                        </li>
-
-                                        @can('project-edit')
-                                            <li>
-                                                <hr class="my-1" />
-                                            </li>
-
-                                            <li class="px-2 py-2">
-                                                <a href="{{ route('clients.edit', $project->id) }}"
-                                                    class="w-100 text-decoration-none text-info d-block">
-                                                    Edit
-                                                </a>
-                                            </li>
-                                        @endcan
-
-                                        @can('project-delete')
-                                            <li>
-                                                <hr class="my-1" />
-                                            </li>
-
-                                            <li class="py-2">
-                                                <form action="{{ route('clients.destroy', $project->id) }}" method="POST"
+                                                <form action="{{ route('clients.restore', $project->id) }}" method="POST"
                                                     class="d-inline">
                                                     @csrf
-                                                    @method('DELETE')
                                                     <button type="submit"
                                                         class="border-0 text-danger text-start w-100 bg-white"
-                                                        onclick="return confirm('Are you sure you want to delete this project?')">
-                                                        Delete
+                                                        onclick="return confirm('Are you sure you want to restore this project?')">
+                                                        Restore
                                                     </button>
                                                 </form>
                                             </li>
-                                        @endcan
-                                    @endif
+                                        @else
+                                            <li class="px-2 py-2">
+                                                <a href="{{ route('tasks.index', ['project_id' => $project->id]) }}"
+                                                    class="w-100 text-decoration-none d-block">
+                                                    Tasks
+                                                </a>
+                                            </li>
 
-                                </ul>
-                            </div>
-                        </td>
-                    </tr>
-                @endforeach
-            </table>
-            {!! $projects->links('pagination::bootstrap-5') !!}
-        </div>
+                                            <li>
+                                                <hr class="my-1" />
+                                            </li>
+                                            @can('service-show')
+                                                <li class="px-2 py-2">
+                                                    <a href="{{ route('clients.services.index', $project->id) }}"
+                                                        class="w-100 text-decoration-none text-warning d-block">
+                                                        Services
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <hr class="my-1" />
+                                                </li>
+                                            @endcan
+
+                                            <li class="px-2 py-2">
+                                                <a href="{{ route('clients.show', $project->id) }}"
+                                                    class="w-100 text-decoration-none text-success d-block">
+                                                    View
+                                                </a>
+                                            </li>
+
+                                            @can('project-edit')
+                                                <li>
+                                                    <hr class="my-1" />
+                                                </li>
+
+                                                <li class="px-2 py-2">
+                                                    <a href="{{ route('clients.edit', $project->id) }}"
+                                                        class="w-100 text-decoration-none text-info d-block">
+                                                        Edit
+                                                    </a>
+                                                </li>
+                                            @endcan
+
+                                            @can('project-delete')
+                                                <li>
+                                                    <hr class="my-1" />
+                                                </li>
+
+                                                <li class="py-2">
+                                                    <form action="{{ route('clients.destroy', $project->id) }}"
+                                                        method="POST" class="d-inline">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit"
+                                                            class="border-0 text-danger text-start w-100 bg-white"
+                                                            onclick="return confirm('Are you sure you want to delete this project?')">
+                                                            Delete
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            @endcan
+                                        @endif
+
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </table>
+                {!! $projects->links('pagination::bootstrap-5') !!}
+            </div>
         </div>
         {{--  --}}
     </div>
