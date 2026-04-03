@@ -42,7 +42,7 @@ class GenerateDailyReports extends Command
             )
             ->whereNotNull('end_time')
             ->whereBetween(DB::raw('DATE(start_time)'), [$dateFrom->toDateString(), $dateTo->toDateString()])
-            ->groupBy('user_id','work_date')
+            ->groupBy('user_id', 'work_date')
             ->orderBy('work_date')
             ->get();
 
@@ -52,20 +52,22 @@ class GenerateDailyReports extends Command
 
             $hours = $minutes / 60;
 
-            $performance = DailyPerformance::where('min','<=',$hours)
-                ->where('max','>=',$hours)
+            $performance = DailyPerformance::where('min', '<=', $hours)
+                ->where('max', '>=', $hours)
                 ->first();
 
-            DailyReport::updateOrCreate(
-                [
-                    'user_id' => $row->user_id,
-                    'date' => $row->work_date
-                ],
-                [
-                    'time' => $minutes,
-                    'daily_performance_id' => $performance?->id
-                ]
-            );
+            DailyReport::where('user_id', '!=', $row->user_id)
+                ->where('date', '!=', $row->work_date)
+                ->updateOrCreate(
+                    [
+                        'user_id' => $row->user_id,
+                        'date' => $row->work_date
+                    ],
+                    [
+                        'time' => $minutes,
+                        'daily_performance_id' => $performance?->id
+                    ]
+                );
         }
 
         $this->info('Daily reports generated successfully');

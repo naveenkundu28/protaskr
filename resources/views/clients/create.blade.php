@@ -14,8 +14,8 @@
                             <label for="employee" class="form-label">Employee <span class="text-danger">*</span></label>
                             <select name="employee[]" id="employee" class="form-select select2" required multiple>
                                 {{-- <option value="">Select Employee</option> --}}
-                                @foreach($employees as $employee)
-                                <option value="{{$employee->id}}">{{$employee->name}}</option>
+                                @foreach ($employees as $employee)
+                                    <option value="{{ $employee->id }}">{{ $employee->name }}</option>
                                 @endforeach
                             </select>
                             @error('employee')
@@ -36,17 +36,33 @@
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
-                        <div class="mb-3 col-sm-12 col-md-6">
+                        <div class="mb-3 col-sm-12 col-md-4">
                             <label for="code" class="form-label">Client Code <span class="text-danger">*</span></label>
                             <input type="text" name="client_code" id="code" class="form-control" required>
                             @error('client_code')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
-                        <div class="mb-3 col-sm-12 col-md-12 col-lg-6">
-                            <label for="project_name" class="form-label">Project Name <span class="text-danger">*</span></label>
+                        <div class="mb-3 col-sm-12 col-md-4">
+                            <label for="project_name" class="form-label">Project Name <span
+                                    class="text-danger">*</span></label>
                             <input type="text" name="project_name" id="project_name" class="form-control" required>
                             @error('project_name')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3 col-sm-12 col-md-4">
+                            <label for="client_type" class="form-label">
+                                Client Type <span class="text-danger">*</span>
+                            </label>
+                            <select name="client_type" id="client_type" class="form-select" required>
+                                <option value="internal">Internal</option>
+                                <option value="external" selected>External</option>
+                                <option value="other">Other</option>
+                            </select>
+
+                            @error('client_type')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
@@ -57,7 +73,7 @@
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
-                        
+
                         <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
                             <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
                             <input type="date" name="start_date" id="start_date" class="form-control" required>
@@ -65,7 +81,7 @@
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
-                        
+
                         <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
                             <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
                             <select name="status" id="client_status" class="form-select" required>
@@ -102,15 +118,14 @@
 @endsection
 @push('scripts')
     <script>
-        $(document).ready(function () {
+        $(document).ready(function() {
             function toggleFields() {
 
                 let status = $('#client_status').val()
 
-                if (status === 'completed'){
+                if (status === 'completed') {
                     $('#end_date_div').removeClass('d-none');
-                }
-                else{
+                } else {
                     $('#end_date_div').addClass('d-none');
                     $('#end_date').val('');
                 }

@@ -23,6 +23,7 @@ class Client extends Model
         'client_email',
         'client_code',
         'project_name',
+        'client_type',
     ];
 
     protected $dates = [

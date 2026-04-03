@@ -200,7 +200,7 @@
                                             </thead>
                                             <tbody>
                                                 @forelse($skillSetSummary as $index => $skill)
-                                                    <tr class="skill-bench-row"
+                                                    {{-- <tr class="skill-bench-row"
                                                         data-search="{{ strtolower($skill['name'] . ' ' . collect($skill['users'])->pluck('name')->join(' ')) }}">
 
                                                         <td>{{ $index + 1 }}</td>
@@ -208,6 +208,19 @@
                                                         <td>{{ $skill['name'] }}</td>
 
                                                         <td>
+                                                            {{ collect($skill['users'])->map(fn($u) => $u->name . ' - ' . $u->employee_id)->join(', ') }}
+                                                        </td>
+
+                                                    </tr> --}}
+                                                    <tr class="skill-bench-row"
+                                                        data-skill="{{ strtolower($skill['name']) }}"
+                                                        data-users='@json($skill['users'])'>
+
+                                                        <td>{{ $index + 1 }}</td>
+
+                                                        <td>{{ $skill['name'] }}</td>
+
+                                                        <td class="users-cell">
                                                             {{ collect($skill['users'])->map(fn($u) => $u->name . ' - ' . $u->employee_id)->join(', ') }}
                                                         </td>
 
@@ -327,6 +340,43 @@
                 }
             });
 
+            function filterSkillsTable(table, searchTerm) {
+                const rows = table.querySelectorAll('.skill-bench-row');
+
+                rows.forEach(function(row) {
+                    const skillName = row.getAttribute('data-skill') || '';
+                    const users = JSON.parse(row.getAttribute('data-users') || '[]');
+
+                    let matchedUsers = users.filter(u => {
+                        const text = (u.name + ' ' + u.employee_id).toLowerCase();
+                        return text.includes(searchTerm);
+                    });
+
+                    // Also allow skill name search
+                    const skillMatch = skillName.includes(searchTerm);
+
+                    if (searchTerm === '') {
+                        matchedUsers = users;
+                    }
+
+                    if (matchedUsers.length || skillMatch) {
+                        row.style.display = '';
+
+                        const cell = row.querySelector('.users-cell');
+
+                        const displayUsers = (matchedUsers.length || !skillMatch) ?
+                            matchedUsers :
+                            users;
+
+                        cell.innerHTML = displayUsers
+                            .map(u => `${u.name} - ${u.employee_id}`)
+                            .join(', ');
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+
             function filterGroupedTable(table, searchTerm) {
                 const tbody = table.querySelector('tbody');
 
@@ -403,8 +453,15 @@
             searchInput.addEventListener('input', function() {
                 const searchTerm = this.value.trim().toLowerCase();
 
+                // tables.forEach(function(table) {
+                //     filterGroupedTable(table, searchTerm);
+                // });
                 tables.forEach(function(table) {
-                    filterGroupedTable(table, searchTerm);
+                    if (table.id === 'skillsSetTable') {
+                        filterSkillsTable(table, searchTerm);
+                    } else {
+                        filterGroupedTable(table, searchTerm); // bench stays same
+                    }
                 });
             });
         });
