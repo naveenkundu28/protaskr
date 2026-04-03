@@ -42,15 +42,15 @@
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
-                        <div class="mb-3 col-sm-12 col-md-4">
+                        {{-- <div class="mb-3 col-sm-12 col-md-6">
                             <label for="code" class="form-label">Client Code <span class="text-danger">*</span></label>
                             <input type="text" name="client_code" id="code" class="form-control"
                                 value="{{ $client->client_code }}" required>
                             @error('client_code')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
-                        </div>
-                        <div class="mb-3 col-sm-12 col-md-4">
+                        </div> --}}
+                        <div class="mb-3 col-sm-12 col-md-6">
                             <label for="project_name" class="form-label">Project Name <span
                                     class="text-danger">*</span></label>
                             <input type="text" name="project_name" id="project_name" class="form-control"
@@ -60,7 +60,7 @@
                             @enderror
                         </div>
 
-                        <div class="mb-3 col-sm-12 col-md-4">
+                        <div class="mb-3 col-sm-12 col-md-6">
                             <label for="client_type" class="form-label">
                                 Client Type <span class="text-danger">*</span>
                             </label>
@@ -81,6 +81,7 @@
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
+
                         <div class="mb-3">
                             <label for="description" class="form-label">Description</label>
                             <textarea name="description" id="summernote" class="form-control">{{ $client->description }}</textarea>
@@ -106,6 +107,15 @@
                             @enderror
                         </div> --}}
 
+                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4" id="end_date_div">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" name="end_date" id="end_date" class="form-control"
+                                value="{{ \Carbon\Carbon::parse($client->end_date)->format('Y-m-d') }}">
+                            @error('end_date')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
                             <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
                             <select name="status" id="client_status" class="form-select" required>
@@ -120,19 +130,11 @@
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
-                        <div class="mb-3 col-sm-12 col-md-12 col-lg-4">
+                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
                             <label for="budget" class="form-label">Budget</label>
                             <input type="number" name="budget" id="budget" class="form-control" step="0.01"
                                 value="{{ $client->budget }}">
                             @error('budget')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4" id="end_date_div">
-                            <label for="end_date" class="form-label">End Date</label>
-                            <input type="date" name="end_date" id="end_date" class="form-control"
-                                value="{{ \Carbon\Carbon::parse($client->end_date)->format('Y-m-d') }}">
-                            @error('end_date')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>

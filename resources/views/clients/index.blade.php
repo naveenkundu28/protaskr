@@ -65,6 +65,11 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">{{ $project->name }}</h5>
+                            @if ($project->client_type)
+                                <p class="card-text">
+                                    <strong>Client Type:</strong> {{ ucfirst($project->client_type) }}
+                                </p>
+                            @endif
                             @if ($project->client_email)
                                 <p class="card-text">
                                     <strong>Email:</strong> {{ $project->client_email }}
@@ -181,15 +186,15 @@
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td> @isset($project)
-                                    <span class="">{{ $project->name }}</span>
+                                    <span>{{ $project->name }} <span class="text-muted small">{{ $project->client_type ? '('.ucfirst($project->client_type) .')' : '' }}</span></span>
                                 @endisset
                             </td>
                             <td> @isset($project)
-                                    <span class="">{{ $project->client_email }}</span>
+                                    <span>{{ $project->client_email }}</span>
                                 @endisset
                             </td>
                             {{-- <td> @isset($project)
-                                <span class="">{{ $project->client_code }}</span>
+                                <span>{{ $project->client_code }}</span>
                             @endisset
                         </td> --}}
                             <td> {{ $project->project_name }}</td>
