@@ -36,9 +36,10 @@ class ProjectController extends Controller
             if ($request->type == 'completed') {
                 $query->where('status', 'completed');
             } else {
-                // DEFAULT → Ongoing
-                $query->where('status', 'in_progress');
-                $query->orWhere('status', 'not_started');
+                $query->where(function ($q) {
+                    $q->where('status', 'in_progress')
+                      ->orWhere('status', 'not_started');
+                });
             }
             
         })->when($search !== '', function ($query) use ($search) {
