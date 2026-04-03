@@ -36,20 +36,40 @@
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
-                        <div class="mb-3 col-sm-12 col-md-6">
+                        {{-- <div class="mb-3 col-sm-12 col-md-6">
                             <label for="code" class="form-label">Client Code <span class="text-danger">*</span></label>
                             <input type="text" name="client_code" id="code" class="form-control" required>
                             @error('client_code')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
-                        </div>
-                        <div class="mb-3 col-sm-12 col-md-12 col-lg-6">
+                        </div> --}}
+                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
                             <label for="project_name" class="form-label">Project Name <span class="text-danger">*</span></label>
                             <input type="text" name="project_name" id="project_name" class="form-control" required>
                             @error('project_name')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
+
+                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
+                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                            <select name="status" id="client_status" class="form-select" required>
+                                <option value="not_started">Not Started</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                            @error('status')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
+                            <label for="budget" class="form-label">Budget</label>
+                            <input type="number" name="budget" id="budget" class="form-control" step="0.01">
+                            @error('budget')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         <div class="mb-3 col-sm-12">
                             <label for="description" class="form-label">Description</label>
                             <textarea name="description" id="summernote" class="form-control"></textarea>
@@ -66,24 +86,7 @@
                             @enderror
                         </div>
                         
-                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
-                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                            <select name="status" id="client_status" class="form-select" required>
-                                <option value="not_started">Not Started</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="completed">Completed</option>
-                            </select>
-                            @error('status')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        <div class="mb-3 col-sm-12 col-md-12 col-lg-4">
-                            <label for="budget" class="form-label">Budget</label>
-                            <input type="number" name="budget" id="budget" class="form-control" step="0.01">
-                            @error('budget')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
+                        
                         <div class="mb-3 col-sm-12 col-md-6 col-lg-4" id="end_date_div">
                             <label for="end_date" class="form-label">End Date</label>
                             <input type="date" name="end_date" id="end_date" class="form-control">

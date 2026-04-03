@@ -41,17 +41,39 @@
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
-                        <div class="mb-3 col-sm-12 col-md-6">
+                        {{-- <div class="mb-3 col-sm-12 col-md-6">
                             <label for="code" class="form-label">Client Code <span class="text-danger">*</span></label>
                             <input type="text" name="client_code" id="code" class="form-control" value="{{ $client->client_code }}" required>
                             @error('client_code')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
-                        </div>
-                        <div class="mb-3 col-sm-12 col-md-12 col-lg-6">
+                        </div> --}}
+                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
                             <label for="project_name" class="form-label">Project Name <span class="text-danger">*</span></label>
                             <input type="text" name="project_name" id="project_name" class="form-control" value="{{ $client->project_name }}" required>
                             @error('project_name')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
+                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                            <select name="status" id="client_status" class="form-select" required>
+                                <option value="not_started" {{ $client->status == 'not_started' ? 'selected' : '' }}>Not
+                                    Started</option>
+                                <option value="in_progress" {{ $client->status == 'in_progress' ? 'selected' : '' }}>In
+                                    Progress</option>
+                                <option value="completed" {{ $client->status == 'completed' ? 'selected' : '' }}>Completed
+                                </option>
+                            </select>
+                            @error('status')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
+                            <label for="budget" class="form-label">Budget</label>
+                            <input type="number" name="budget" id="budget" class="form-control" step="0.01"
+                                value="{{ $client->budget }}">
+                            @error('budget')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
@@ -80,28 +102,6 @@
                             @enderror
                         </div> --}}
                         
-                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
-                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                            <select name="status" id="client_status" class="form-select" required>
-                                <option value="not_started" {{ $client->status == 'not_started' ? 'selected' : '' }}>Not
-                                    Started</option>
-                                <option value="in_progress" {{ $client->status == 'in_progress' ? 'selected' : '' }}>In
-                                    Progress</option>
-                                <option value="completed" {{ $client->status == 'completed' ? 'selected' : '' }}>Completed
-                                </option>
-                            </select>
-                            @error('status')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        <div class="mb-3 col-sm-12 col-md-12 col-lg-4">
-                            <label for="budget" class="form-label">Budget</label>
-                            <input type="number" name="budget" id="budget" class="form-control" step="0.01"
-                                value="{{ $client->budget }}">
-                            @error('budget')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
                         <div class="mb-3 col-sm-12 col-md-6 col-lg-4" id="end_date_div">
                             <label for="end_date" class="form-label">End Date</label>
                             <input type="date" name="end_date" id="end_date" class="form-control"

@@ -38,7 +38,9 @@ class ProjectController extends Controller
             } else {
                 // DEFAULT → Ongoing
                 $query->where('status', 'in_progress');
+                $query->orWhere('status', 'not_started');
             }
+            
         })->when($search !== '', function ($query) use ($search) {
             return $query->where(function ($subQuery) use ($search) {
                 $subQuery->where('name', 'like', "%{$search}%")
@@ -48,7 +50,7 @@ class ProjectController extends Controller
                     ->orWhere('end_date', 'like', "%{$search}%")
                     ->orWhere('budget', 'like', "%{$search}%")
                     ->orWhere('status', 'like', "%{$search}%")
-                    ->orWhere('client_code', 'like', "%{$search}%")
+                    // ->orWhere('client_code', 'like', "%{$search}%")
                     ->orWhere('project_name', 'like', "%{$search}%")
                     ->orWhereHas('users', function ($memberQuery) use ($search) {
                         $memberQuery->where('name', 'like', "%{$search}%")
@@ -99,7 +101,7 @@ class ProjectController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'client_email' => 'required|email',
-            'client_code' => 'required',
+            // 'client_code' => 'required',
             'project_name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'start_date' => 'nullable|date',
@@ -143,7 +145,7 @@ class ProjectController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'client_email' => 'required|email',
-            'client_code' => 'required',
+            // 'client_code' => 'required',
             'project_name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'start_date' => 'nullable|date',
@@ -913,10 +915,11 @@ class ProjectController extends Controller
 
         $currentMonth = $service->month ?? $request->month ?? now()->month;
         $currentYear  = $service->year ?? $request->year ?? now()->year;
+        
         $currentMonthName = \Carbon\Carbon::create()
             ->month($currentMonth)
             ->format('F');
-
+        
         $maxHours = Hour::where('year', $currentYear)
             ->where('month', $currentMonthName)
             ->value('hours');
@@ -933,14 +936,13 @@ class ProjectController extends Controller
             // ->whereYear('created_at', $currentYear);
             ->where('month', $currentMonth)
             ->where('year', $currentYear);
-
+        
         if ($service) {
             $serviceHoursQuery->where('id', '!=', $service->id);
         }
 
         $usedHoursForServiceId = (float) $serviceHoursQuery->sum('hours');
         $remainingHour = (float) $maxHours - $usedHoursForServiceId;
-
 
         $isSameServiceAndHours = $service
             && $service->service_id === $request->service_id
@@ -955,13 +957,13 @@ class ProjectController extends Controller
         $workingResourceExistsQuery = $client->services()
             ->where('service_id', $request->service_id)
             ->where('working_resource', $request->working_resource)
-            ->whereMonth('created_at', $currentMonth)
-            ->whereYear('created_at', $currentYear);
-
+            ->whereMonth('month', $currentMonth)
+            ->whereYear('year', $currentYear);
+        
         if ($service) {
             $workingResourceExistsQuery->where('id', '!=', $service->id);
         }
-
+        
         if (!empty($request->working_resource) && $workingResourceExistsQuery->exists()) {
             return back()->withInput()->withErrors([
                 'working_resource' => 'This working resource is already assigned to the same service ID in the current month.',
@@ -971,8 +973,8 @@ class ProjectController extends Controller
         $existingDirectServiceQuery = $client->services()
             ->where('service_id', $request->service_id)
             ->where('service_type', 'direct')
-            ->whereMonth('created_at', $currentMonth)
-            ->whereYear('created_at', $currentYear);
+            ->whereMonth('month', $currentMonth)
+            ->whereYear('year', $currentYear);
 
         if ($service) {
             $existingDirectServiceQuery->where('id', '!=', $service->id);
