@@ -13,6 +13,8 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
 
+        // dd($user);
+
         $skills = Skill::all();
 
         $userPrimarySkills = $user->primarySkills->pluck('id')->toArray();
@@ -28,12 +30,14 @@ class ProfileController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'employee_id' => 'required|string|max:50|unique:users,employee_id,' . $user->id,
             'password' => 'same:confirm-password',
         ]);
 
         $data = $request->only([
             'name',
             'email',
+            'employee_id',
             'joining_date',
             'experience',
             'phone_no',

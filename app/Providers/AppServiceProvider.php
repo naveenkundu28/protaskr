@@ -31,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
 
             if ($user && $user->hasRole('Employee')) {
                 $hiddenStatuses = ['closed', 'completed'];
+                // $hiddenStatuses = [];
             }
             if ($user) {
                 $projectQuery = $user->hasRole('Admin') ? $user->projects() : $user->projectMembers();

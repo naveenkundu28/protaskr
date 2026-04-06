@@ -36,51 +36,51 @@
                     <div class="form-group">
                         <strong>User Type: <span class="text-danger">*</span></strong>
                         <select name="user_type" class="form-control mt-2" required>
-                            <option value="Internal" {{ $user->user_type == 'Internal' ? 'selected' : '' }}>Internal</option>
-                            <option value="External" {{ $user->user_type == 'External' ? 'selected' : '' }}>External</option>
+                            <option value="Internal" {{ old('user_type', $user->user_type) == 'Internal' ? 'selected' : '' }}>Internal</option>
+                            <option value="External" {{ old('user_type', $user->user_type) == 'External' ? 'selected' : '' }}>External</option>
                         </select>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
                         <strong>Employee ID: <span class="text-danger">*</span></strong>
-                        <input autocomplete="new-password" type="text" name="employee_id" placeholder="Employee ID" class="form-control mt-2" autocomplete="off" value="{{ $user->employee_id }}" required>
+                        <input autocomplete="new-password" type="text" name="employee_id" placeholder="Employee ID" class="form-control mt-2" autocomplete="off" value="{{ old('employee_id', $user->employee_id) }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
                         <strong>Joining Date: <span class="text-danger">*</span></strong>
-                        <input type="date" name="joining_date" class="form-control mt-2" value="{{ $user->joining_date }}" required>
+                        <input type="date" name="joining_date" class="form-control mt-2" value="{{ old('joining_date', $user->joining_date) }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
                         <strong>Name: <span class="text-danger">*</span></strong>
-                        <input type="text" name="name" placeholder="Name" class="form-control mt-2" value="{{ $user->name }}" required>
+                        <input type="text" name="name" placeholder="Name" class="form-control mt-2" value="{{ old('name', $user->name) }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
                         <strong>Email: <span class="text-danger">*</span></strong>
-                        <input type="email" name="email" placeholder="Email" class="form-control mt-2" value="{{ $user->email }}" required>
+                        <input type="email" name="email" placeholder="Email" class="form-control mt-2" value="{{ old('email', $user->email) }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
                         <strong>Experience (Years): <span class="text-danger">*</span></strong>
-                        <input type="number" name="experience" placeholder="Experience (Years)" class="form-control mt-2" value="{{ $user->experience }}" required>
+                        <input type="number" step="0.1" name="experience" placeholder="Experience (Years)" class="form-control mt-2" value="{{ old('experience', $user->experience) }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
                         <strong>Phone No: <span class="text-danger">*</span></strong>
-                        <input type="text" name="phone_no" placeholder="Phone No" class="form-control mt-2" value="{{ $user->phone_no }}" required>
+                        <input type="text" name="phone_no" placeholder="Phone No" class="form-control mt-2" value="{{ old('phone_no', $user->phone_no) }}" required>
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
                         <strong>Alternate Phone No:</strong>
-                        <input type="text" name="alt_phone_no" placeholder="Alternate Phone No" class="form-control mt-2" value="{{ $user->alt_phone_no }}">
+                        <input type="text" name="alt_phone_no" placeholder="Alternate Phone No" class="form-control mt-2" value="{{ old('alt_phone_no', $user->alt_phone_no) }}">
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
@@ -92,7 +92,7 @@
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                     <div class="form-group">
                         <strong>Confirm Password:</strong>
-                        <input type="password" name="confirm-password" placeholder="Confirm Password" class="form-control mt-2">
+                        <input type="password" name="confirm-password" placeholder="Confirm Password" class="form-control mt-2" value="{{ old('confirm-password')}}">
                     </div>
                 </div>
                 <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
@@ -100,7 +100,7 @@
                         <strong>Primary Skills: <span class="text-danger">*</span></strong>
                         <select name="primary_skills[]" class="form-control mt-2 select2" required multiple>
                             @foreach($skills as $skill)
-                                <option value="{{ $skill->id }}" {{ in_array($skill->id,$userPrimarySkills) ? 'selected' : '' }}>{{ $skill->name }}</option>
+                                <option value="{{ $skill->id }}" {{ in_array($skill->id, old('primary_skills', $userPrimarySkills)) ? 'selected' : '' }}>{{ $skill->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -111,7 +111,7 @@
                         <strong>Secondary Skills:</strong>
                         <select name="secondary_skills[]" class="form-control mt-2 select2" multiple>
                             @foreach($skills as $skill)
-                                <option value="{{ $skill->id }}"  {{ in_array($skill->id,$userSecondarySkills) ? 'selected' : '' }}>{{ $skill->name }}</option>
+                                <option value="{{ $skill->id }}"  {{ in_array($skill->id, old('secondary_skills', $userSecondarySkills)) ? 'selected' : '' }}>{{ $skill->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -122,7 +122,7 @@
                         <strong>Tags:</strong>
                         <select name="tags[]" class="form-control mt-2 select2 select2-mandatory">
                             @foreach($tags as $tag)
-                                <option value="{{ $tag->id }}" {{ in_array($tag->id,$userTags) ? 'selected' : '' }}>{{ $tag->name }}</option>
+                                <option value="{{ $tag->id }}" {{ in_array($tag->id,old('tags', $userTags)) ? 'selected' : '' }}>{{ $tag->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -132,10 +132,10 @@
                     <div class="form-group">
                         <strong>Allow Manual Tracking:</strong>
                         <select name="manual" class="form-control mt-2 select2 select2-mandatory">
-                            <option value="1" {{ $user->manual ? 'selected':'' }}>
+                            <option value="1" {{ old('manual', $user->manual) ? 'selected':'' }}>
                                 Yes
                             </option>
-                            <option value="0" {{ !$user->manual ? 'selected':'' }}>
+                            <option value="0" {{ !old('manual', $user->manual) ? 'selected':'' }}>
                                 No
                             </option>
 
@@ -147,7 +147,7 @@
                         <strong>Role:</strong>
                         <select name="roles[]" class="form-control mt-2 select2 select2-mandatory">
                             @foreach ($roles as $value => $label)
-                                <option value="{{ $value }}" {{ isset($userRole[$value]) ? 'selected' : '' }}>
+                                <option value="{{ $value }}" {{ in_array($value, old('roles', $userRole)) ? 'selected' : '' }}>
                                     {{ $label }}
                                 </option>
                             @endforeach

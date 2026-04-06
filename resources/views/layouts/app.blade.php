@@ -65,7 +65,7 @@
                                                 </a>
                                             </li>
                                         @endcan
-                                        
+
                                         {{-- <li>
                                             <a class="dropdown-item {{ request()->is('clients*') ? 'active' : '' }}" href="{{ route('clients.index') }}">
                                                 <i class="bi bi-list-ul me-2"></i> Services List
@@ -238,6 +238,7 @@
 
         <script>
             $(document).ready(function() {
+                $('[data-bs-toggle="tooltip"]').tooltip();
                 $('.select2').select2({
                     placeholder: "--Select--",
                     width: '100%',

@@ -11,29 +11,32 @@
                     @csrf
                     @method('PUT')
                     <div class="row">
-                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
-                            <label for="employee" class="form-label">Employee <span class="text-danger">*</span></label>
-                            <select name="employee[]" id="employee" class="form-select select2" required multiple>
-                                {{-- <option value="">Select Employee</option> --}}
-                                @foreach ($employees as $employee)
-                                    <option value="{{ $employee->id }}"
-                                        {{ in_array($employee->id, $client->teamProjects->pluck('id')->toArray()) ? 'selected' : '' }}>
-                                        {{ $employee->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('employee')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
-                            <label for="name" class="form-label">Client Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="name" class="form-control"
-                                value="{{ $client->name }}" required>
-                            @error('name')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
+                        @can('project-edit')
+                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
+                                <label for="employee" class="form-label">Employee <span class="text-danger">*</span></label>
+                                <select name="employee[]" id="employee" class="form-select select2" required multiple>
+                                    {{-- <option value="">Select Employee</option> --}}
+                                    @foreach ($employees as $employee)
+                                        <option value="{{ $employee->id }}"
+                                            {{ in_array($employee->id, $client->teamProjects->pluck('id')->toArray()) ? 'selected' : '' }}>
+                                            {{ $employee->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('employee')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
+                                <label for="name" class="form-label">Client Name <span class="text-danger">*</span></label>
+                                <input type="text" name="name" id="name" class="form-control"
+                                    value="{{ $client->name }}" required>
+                                @error('name')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        @endcan
+
                         <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
                             <label for="email" class="form-label">Client Email <span class="text-danger">*</span></label>
                             <input type="email" name="client_email" id="email" class="form-control"
@@ -50,101 +53,140 @@
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div> --}}
-                        <div class="mb-3 col-sm-12 col-md-6">
-                            <label for="project_name" class="form-label">Project Name <span
-                                    class="text-danger">*</span></label>
-                            <input type="text" name="project_name" id="project_name" class="form-control"
-                                value="{{ $client->project_name }}" required>
-                            @error('project_name')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
 
-                        <div class="mb-3 col-sm-12 col-md-6">
-                            <label for="client_type" class="form-label">
-                                Client Type <span class="text-danger">*</span>
-                            </label>
+                        @can('project-edit')
+                            <div class="mb-3 col-sm-12 col-md-4">
+                                <label for="client_type" class="form-label">
+                                    Type <span class="text-danger">*</span>
+                                </label>
+                                <select name="type" id="type" class="form-select" required>
+                                    <option value="">Select Type</option>
+                                    <option value="internal_team"
+                                        {{ old('type', $client->type) == 'internal_team' ? 'selected' : '' }}>Internal Team
+                                    </option>
+                                    <option value="client" {{ old('type', $client->type) == 'client' ? 'selected' : '' }}>
+                                        Client</option>
+                                    <option value="project" {{ old('type', $client->type) == 'project' ? 'selected' : '' }}>
+                                        Project</option>
+                                </select>
 
-                            <select name="client_type" id="client_type" class="form-select" required>
-                                <option value="internal" {{ $client->client_type == 'internal' ? 'selected' : '' }}>
-                                    Internal
-                                </option>
-                                <option value="external" {{ $client->client_type == 'external' ? 'selected' : '' }}>
-                                    External
-                                </option>
-                                <option value="other" {{ $client->client_type == 'other' ? 'selected' : '' }}>
-                                    Other
-                                </option>
-                            </select>
+                                @error('type')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-3 col-sm-12 col-md-4">
+                                <label for="project_name" class="form-label">Project Name <span
+                                        class="text-danger">*</span></label>
+                                <input type="text" name="project_name" id="project_name" class="form-control"
+                                    value="{{ $client->project_name }}" required>
+                                @error('project_name')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
 
-                            @error('client_type')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
+                            <div class="mb-3 col-sm-12 col-md-4">
+                                <label for="client_type" class="form-label">
+                                    Client Type <span class="text-danger">*</span>
+                                </label>
 
-                        <div class="mb-3">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea name="description" id="summernote" class="form-control">{{ $client->description }}</textarea>
-                            @error('description')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
+                                <select name="client_type" id="client_type" class="form-select" required>
+                                    <option value="internal" {{ $client->client_type == 'internal' ? 'selected' : '' }}>
+                                        Internal
+                                    </option>
+                                    <option value="external" {{ $client->client_type == 'external' ? 'selected' : '' }}>
+                                        External
+                                    </option>
+                                    <option value="other" {{ $client->client_type == 'other' ? 'selected' : '' }}>
+                                        Other
+                                    </option>
+                                </select>
 
-                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
-                            <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
-                            <input type="date" name="start_date" id="start_date" class="form-control" required
-                                value="{{ \Carbon\Carbon::parse($client->start_date)->format('Y-m-d') }}">
-                            @error('start_date')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        {{-- <div class="mb-3">
+                                @error('client_type')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea name="description" id="summernote" class="form-control">{{ $client->description }}</textarea>
+                                @error('description')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
+                                <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                <input type="date" name="start_date" id="start_date" class="form-control" required
+                                    value="{{ \Carbon\Carbon::parse($client->start_date)->format('Y-m-d') }}">
+                                @error('start_date')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            {{-- <div class="mb-3">
                             <label for="end_date" class="form-label">End Date</label>
                             <input type="date" name="end_date" id="end_date" class="form-control"
                                 value="{{ \Carbon\Carbon::parse($client->end_date)->format('Y-m-d') }}">
                             @error('end_date')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
-                        </div> --}}
+                            </div> --}}
 
-                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4" id="end_date_div">
-                            <label for="end_date" class="form-label">End Date</label>
-                            <input type="date" name="end_date" id="end_date" class="form-control"
-                                value="{{ \Carbon\Carbon::parse($client->end_date)->format('Y-m-d') }}">
-                            @error('end_date')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
+                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4" id="end_date_div">
+                                <label for="end_date" class="form-label">End Date</label>
+                                <input type="date" name="end_date" id="end_date" class="form-control"
+                                    value="{{ \Carbon\Carbon::parse($client->end_date)->format('Y-m-d') }}">
+                                @error('end_date')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
 
-                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
-                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                            <select name="status" id="client_status" class="form-select" required>
-                                <option value="not_started" {{ $client->status == 'not_started' ? 'selected' : '' }}>Not
-                                    Started</option>
-                                <option value="in_progress" {{ $client->status == 'in_progress' ? 'selected' : '' }}>In
-                                    Progress</option>
-                                <option value="completed" {{ $client->status == 'completed' ? 'selected' : '' }}>Completed
-                                </option>
-                            </select>
-                            @error('status')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
-                            <label for="budget" class="form-label">Budget</label>
-                            <input type="number" name="budget" id="budget" class="form-control" step="0.01"
-                                value="{{ $client->budget }}">
-                            @error('budget')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-                        <div class="text-center">
+                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
+                                <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                                <select name="status" id="client_status" class="form-select" required>
+                                    <option value="not_started" {{ $client->status == 'not_started' ? 'selected' : '' }}>Not
+                                        Started</option>
+                                    <option value="in_progress" {{ $client->status == 'in_progress' ? 'selected' : '' }}>In
+                                        Progress</option>
+                                    <option value="completed" {{ $client->status == 'completed' ? 'selected' : '' }}>Completed
+                                    </option>
+                                </select>
+                                @error('status')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
+                                <label for="budget" class="form-label">Budget</label>
+                                <input type="number" name="budget" id="budget" class="form-control" step="0.01"
+                                    value="{{ $client->budget }}">
+                                @error('budget')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        @endcan
+
+                        <div class="{{ auth()->user()->can('project-edit') ? 'text-center' : 'text-start' }}">
                             <button type="submit" class="btn btn-primary">Update Client</button>
                         </div>
                     </div>
                 </form>
             </div>
         </div>
+
+        {{-- <pre>
+        {{ print_r($client) }}
+        </pre> --}}
+        @if ($client->emailUpdatedBy)
+            <div class="card border-0 shadow-sm m-auto mt-4">
+                <div class="card-body">
+                    <div>
+                        Email last updated by
+                        <strong>{{ $client->emailUpdatedBy->name }}</strong>
+                        on
+                        <strong>{{ \Carbon\Carbon::parse($client->email_updated_at)->timezone('Asia/Kolkata')->format('j M Y, h:i A') }}</strong>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 @endsection
 @push('scripts')

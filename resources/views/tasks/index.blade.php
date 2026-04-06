@@ -122,7 +122,7 @@
 
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                                     @foreach (config('site.tasks.status') as $key => $value)
-                                        @unless (in_array($key, $hiddenStatuses))
+                                        {{-- @unless (in_array($key, $hiddenStatuses)) --}}
                                             <li>
                                                 <form action="{{ route('task.updateStatus', $task->id) }}" method="POST"
                                                     style="display:inline;">
@@ -131,7 +131,7 @@
                                                     <button type="submit" class="dropdown-item">{{ $value }}</button>
                                                 </form>
                                             </li>
-                                        @endunless
+                                        {{-- @endunless --}}
                                     @endforeach
 
                                 </ul>

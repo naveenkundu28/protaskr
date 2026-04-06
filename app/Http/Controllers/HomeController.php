@@ -35,6 +35,8 @@ class HomeController extends Controller
             ])
             ->orderBy('name')
             ->get();
+
+        $totalResources = User::where('user_type', 'Internal')->count();
         
         $masterHours = Hour::where('year', $now->year)
             ->where('month', $now->format('F'))
@@ -89,6 +91,7 @@ class HomeController extends Controller
                 'workingHoursSummary',
                 'profitLossSummary',
                 'now',
+                'totalResources'
             ));
         }
 
@@ -202,6 +205,7 @@ class HomeController extends Controller
             'workingHoursSummary',
             'profitLossSummary',
             'now',
+            'totalResources'
         ));
     }
 
