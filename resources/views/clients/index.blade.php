@@ -169,6 +169,7 @@
                 <table class="table table-bordered">
                     <tr>
                         <th>No</th>
+                        <th>Client Type</th>
                         <th>Client Name</th>
                         <th>Client Email</th>
                         {{-- <th>Client Code</th> --}}
@@ -185,8 +186,11 @@
                     @foreach ($projects as $project)
                         <tr>
                             <td>{{ $loop->iteration }}</td>
+                            <td> 
+                                <span class="text-uppercase">{{ $project->client_type }}</span>
+                            </td>
                             <td> @isset($project)
-                                    <span>{{ $project->name }} <span class="text-muted small">{{ $project->client_type ? '('.ucfirst($project->client_type) .')' : '' }}</span></span>
+                                    <span>{{ $project->name }}</span>
                                 @endisset
                             </td>
                             <td> @isset($project)

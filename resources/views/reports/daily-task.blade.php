@@ -167,8 +167,9 @@
                             </tr>
                         `;
                     }
-
+                    
                     let bgColor = user.performance?.background_color ?? '#8b1c1c';
+                    console.log(user.name, user.performance);
                     let fontColor = user.performance?.font_color ?? '#ffffff';
                     let performanceTitle = user.performance?.title ?? 'Absent';
 

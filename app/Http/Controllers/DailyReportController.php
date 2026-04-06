@@ -132,42 +132,82 @@ class DailyReportController extends Controller
     {
         $date = $request->tasksDate ?? now()->subDay()->format('Y-m-d');
         $tagId = $request->tag_id;
+
+        $performances = DailyPerformance::orderBy('min', 'desc')->get();
+
         $users = User::where('user_type', 'Internal')
             ->when($tagId, function ($q) use ($tagId) {
                 $q->whereHas('tags', function ($q2) use ($tagId) {
                     $q2->where('tags.id', $tagId);
                 });
             })
-            ->with(['tasks' => function ($q) use ($date) {
-                $q->whereDate('created_at', $date)
-                    ->with('project'); // client
-            }])
             ->get();
 
+        $userIds = $users->pluck('id')->toArray();
 
-        $users->map(function ($user) {
+        // Get tracker history only for selected date
+        $trackerSums = TrackerHistory::selectRaw('user_id, task_id, SUM(elapsed_time) as total_seconds')
+            ->whereIn('user_id', $userIds)
+            ->whereDate('start_time', $date) // OR start_time if that is your actual tracking date
+            ->groupBy('user_id', 'task_id')
+            ->get();
 
-                $totalSeconds = 0;
-                $performances = DailyPerformance::all();
-                if ($user->tasks->isNotEmpty()) {
+        // Group by user
+        $trackerByUser = $trackerSums->groupBy('user_id');
 
-                foreach ($user->tasks as $task) {
+        // Get all task IDs which were actually tracked that day
+        $taskIds = $trackerSums->pluck('task_id')->unique()->values();
 
-                    $taskSeconds = TrackerHistory::query()
-                        ->where('user_id', $user->id)
-                        ->where('task_id', $task->id)
-                        ->sum('elapsed_time');
+        // Load tasks once
+        $tasks = \App\Models\Task::with('project')
+            ->whereIn('id', $taskIds)
+            ->get()
+            ->keyBy('id');
 
-                    $task->total_task_time = $this->_getTotalTime($taskSeconds);
+        $users = $users->map(function ($user) use ($trackerByUser, $tasks, $performances) {
+            $userTrackers = $trackerByUser->get($user->id, collect());
 
-                    $totalSeconds += $taskSeconds;
+            $totalSeconds = 0;
+            $userTasks = collect();
+
+            foreach ($userTrackers as $tracker) {
+                $task = $tasks->get($tracker->task_id);
+
+                if (!$task) {
+                    continue;
                 }
+
+                $taskClone = clone $task;
+                $taskClone->total_task_seconds = (int) $tracker->total_seconds;
+                $taskClone->total_task_time = $this->_getTotalTime((int) $tracker->total_seconds);
+
+                $userTasks->push($taskClone);
+
+                $totalSeconds += (int) $tracker->total_seconds;
             }
 
-                $user->total_time = $this->_getTotalTime($totalSeconds);
-                $totalHours = $totalSeconds / 3600;
+            $user->setRelation('tasks', $userTasks);
+
+            $user->total_time_seconds = $totalSeconds;
+            $user->total_time = $this->_getTotalTime($totalSeconds);
+
+            $totalHours = round($totalSeconds / 3600, 2);
+
+            if ($userTasks->isEmpty()) {
+                $user->performance = [
+                    'title' => 'Absent',
+                    'background_color' => '#8b1c1c',
+                    'font_color' => '#ffffff',
+                ];
+            } elseif ($totalSeconds <= 0) {
+                $user->performance = [
+                    'title' => "Didn't Track",
+                    'background_color' => '#8b1c1c',
+                    'font_color' => '#ffffff',
+                ];
+            } else {
                 $performance = $performances->first(function ($item) use ($totalHours) {
-                    return $item->min <= $totalHours && $item->max >= $totalHours;
+                    return $item->min <= $totalHours && $item->max > $totalHours;
                 });
 
                 $user->performance = $performance ? [
@@ -175,13 +215,14 @@ class DailyReportController extends Controller
                     'background_color' => $performance->background_color,
                     'font_color' => $performance->font_color,
                 ] : [
-                    'title' => 'Absent',
-                    'background_color' => '#8b1c1c',
-                    'font_color' => '#ffffff',
+                    'title' => 'Wrong Entry',
+                    'background_color' => '#002589',
+                    'font_color' => '#F5F5F5',
                 ];
+            }
 
             return $user;
-        });
+        })->sortByDesc('total_time_seconds')->values();
 
         return response()->json([
             'status' => true,
