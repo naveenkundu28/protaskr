@@ -43,7 +43,22 @@
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div> --}}
-                        <div class="mb-3 col-sm-12 col-md-6">
+                        <div class="mb-3 col-sm-12 col-md-4">
+                            <label for="client_type" class="form-label">
+                                Type <span class="text-danger">*</span>
+                            </label>
+                            <select name="type" id="type" class="form-select" required>
+                                <option value="internal_team">Internal Team</option>
+                                <option value="client" selected>Client</option>
+                                <option value="project">Project</option>
+                            </select>
+
+                            @error('type')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3 col-sm-12 col-md-4">
                             <label for="project_name" class="form-label">Project Name <span
                                     class="text-danger">*</span></label>
                             <input type="text" name="project_name" id="project_name" class="form-control" required>
@@ -52,7 +67,7 @@
                             @enderror
                         </div>
 
-                        <div class="mb-3 col-sm-12 col-md-6">
+                        <div class="mb-3 col-sm-12 col-md-4">
                             <label for="client_type" class="form-label">
                                 Client Type <span class="text-danger">*</span>
                             </label>

@@ -24,6 +24,9 @@ class Client extends Model
         'client_code',
         'project_name',
         'client_type',
+        'email_updated_by',
+        'email_updated_at',
+        'type'
     ];
 
     protected $dates = [
@@ -49,6 +52,11 @@ class Client extends Model
     public function files()
     {
         return $this->hasMany(File::class);
+    }
+
+    public function emailUpdatedBy()
+    {
+        return $this->belongsTo(User::class, 'email_updated_by');
     }
 
     // public function getStatusAttribute()

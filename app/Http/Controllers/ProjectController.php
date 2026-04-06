@@ -21,6 +21,8 @@ class ProjectController extends Controller
     {
         $this->authorize('project-show');
         $user = Auth::user();
+
+        $typeFilter = $request->input('type_filter', []);
         $search = trim((string) $request->input('search'));
 
         $projectQuery = $user->hasRole('Admin') ? $user->projects() : $user->projectMembers();
@@ -38,10 +40,9 @@ class ProjectController extends Controller
             } else {
                 $query->where(function ($q) {
                     $q->where('status', 'in_progress')
-                      ->orWhere('status', 'not_started');
+                        ->orWhere('status', 'not_started');
                 });
             }
-            
         })->when($search !== '', function ($query) use ($search) {
             return $query->where(function ($subQuery) use ($search) {
                 $subQuery->where('name', 'like', "%{$search}%")
@@ -59,7 +60,10 @@ class ProjectController extends Controller
                             ->orWhere('employee_id', 'like', "%{$search}%");
                     });
             });
-        });
+        })
+            ->when(!empty($typeFilter), function ($query) use ($typeFilter) {
+                $query->whereIn('type', $typeFilter);
+            });
 
         $projects = $projects->withCount([
             'tasks as to_do_tasks' => function ($query) {
@@ -105,6 +109,7 @@ class ProjectController extends Controller
             // 'client_code' => 'required',
             'project_name' => 'required|string|max:255',
             'client_type' => 'required|in:internal,external,other',
+            'type' => 'required|in:internal_team,client,project',
             'description' => 'nullable|string',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
@@ -130,10 +135,16 @@ class ProjectController extends Controller
     }
     public function edit(Client $client)
     {
-        $this->authorize('project-edit');
+        // $this->authorize('project-edit');
+        if (!auth()->user()->can('project-edit') && !auth()->user()->hasRole('Employee')) {
+            abort(403);
+        }
         $employees = User::role('Employee')->withTrashed()->get();
         $client->load([
             'teamProjects' => function ($query) {
+                $query->withTrashed();
+            },
+            'emailUpdatedBy' => function ($query) {
                 $query->withTrashed();
             }
         ]);
@@ -142,26 +153,59 @@ class ProjectController extends Controller
 
     public function update(Request $request, Client $client)
     {
-        $this->authorize('project-edit');
+        // $this->authorize('project-edit');
+        if (!auth()->user()->can('project-edit') && !auth()->user()->hasRole('Employee')) {
+            abort(403);
+        }
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'client_email' => 'required|email',
-            // 'client_code' => 'required',
-            'project_name' => 'required|string|max:255',
-            'client_type' => 'required|in:internal,external,other',
-            'description' => 'nullable|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-            'status' => 'required|in:not_started,in_progress,completed',
-            'budget' => 'nullable|numeric',
-            'employee' => 'required|array',
-        ]);
+        if (auth()->user()->can('project-edit')) {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'client_email' => 'required|email',
+                // 'client_code' => 'required',
+                'project_name' => 'required|string|max:255',
+                'client_type' => 'required|in:internal,external,other',
+                'type' => 'required|in:internal_team,client,project',
+                'description' => 'nullable|string',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date',
+                'status' => 'required|in:not_started,in_progress,completed',
+                'budget' => 'nullable|numeric',
+                'employee' => 'required|array',
+            ]);
+        } else {
+            $request->validate([
+                'client_email' => 'required|email',
+            ]);
+        }
 
-        $client->update($request->all());
 
-        // Sync employees
-        $client->teamProjects()->sync($request->employee);
+        // $client->update($request->all());
+
+        // // Sync employees
+        // $client->teamProjects()->sync($request->employee);
+
+        $emailChanged = $client->client_email !== $request->client_email;
+        if (auth()->user()->can('project-edit')) {
+            // Admin → update all fields
+
+            $data = $request->all();
+
+            if ($emailChanged) {
+                $data['email_updated_by'] = auth()->user()->id;
+                $data['email_updated_at'] = now();
+            }
+            $client->update($data);
+
+            $client->teamProjects()->sync($request->employee);
+        } else {
+            // Employee → update ONLY email
+            $client->update([
+                'client_email' => $request->client_email,
+                'email_updated_by' => auth()->user()->id,
+                'email_updated_at' => now()
+            ]);
+        }
 
         return redirect()->route('clients.index')->with('success', 'Client updated successfully.');
     }
@@ -918,11 +962,11 @@ class ProjectController extends Controller
 
         $currentMonth = $service->month ?? $request->month ?? now()->month;
         $currentYear  = $service->year ?? $request->year ?? now()->year;
-        
+
         $currentMonthName = \Carbon\Carbon::create()
             ->month($currentMonth)
             ->format('F');
-        
+
         $maxHours = Hour::where('year', $currentYear)
             ->where('month', $currentMonthName)
             ->value('hours');
@@ -939,7 +983,7 @@ class ProjectController extends Controller
             // ->whereYear('created_at', $currentYear);
             ->where('month', $currentMonth)
             ->where('year', $currentYear);
-        
+
         if ($service) {
             $serviceHoursQuery->where('id', '!=', $service->id);
         }
@@ -962,11 +1006,11 @@ class ProjectController extends Controller
             ->where('working_resource', $request->working_resource)
             ->whereMonth('month', $currentMonth)
             ->whereYear('year', $currentYear);
-        
+
         if ($service) {
             $workingResourceExistsQuery->where('id', '!=', $service->id);
         }
-        
+
         if (!empty($request->working_resource) && $workingResourceExistsQuery->exists()) {
             return back()->withInput()->withErrors([
                 'working_resource' => 'This working resource is already assigned to the same service ID in the current month.',

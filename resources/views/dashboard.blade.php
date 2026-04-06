@@ -6,6 +6,12 @@
     <div class="container">
         <h2>VE Emp Tracker</h2>
 
+        @session('success')
+            <div class="alert alert-success" role="alert">
+                {{ $value }}
+            </div>
+        @endsession
+
         <div class="row mb-4">
             @if (!Auth::user()->hasRole('Admin'))
                 <div class="col-md-3 mb-4">
@@ -21,7 +27,7 @@
             @endif
 
             @if (Auth::user()->hasRole('Admin'))
-                <div class="col-sm-6 col-md-3 col-lg-2 mb-4">
+                <div class="col-sm-6 col-md-2 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Tags Summary</h5>
@@ -59,6 +65,17 @@
                                                 <td colspan="2" class="text-center text-muted">No tags found</td>
                                             </tr>
                                         @endforelse
+                                        <tr>
+                                            <td style="font-weight: 600;">
+                                                Total Resources
+                                            </td>
+                                            <td class="text-center fw-semibold">
+                                                <a href="{{ route('users.listing', ['tag_scope' => 'internal']) }}"
+                                                    class="text-decoration-none">
+                                                    {{ $totalResources }}
+                                                </a>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -66,7 +83,7 @@
                     </div>
                 </div>
 
-                <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
+                <div class="col-sm-6 col-md-3 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Work Type</h5>
@@ -102,7 +119,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-5 col-lg-3 mb-4">
+                <div class="col-md-3 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Profit / Loss Summary</h5>
@@ -159,12 +176,8 @@
                         </div>
                     </div>
                 </div>
-            @endif
-        </div>
 
-        @if (Auth::user()->hasRole('Admin'))
-            <div class="row mb-4">
-                <div class="col-12 col-lg-5 mb-4">
+                <div class="col-12 col-md-4 mb-4">
                     <div class="card shadow-sm h-100">
                         <div class="card-body">
                             <ul class="nav nav-tabs mb-3" id="skillBenchTabs" role="tablist">
@@ -290,8 +303,10 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        @endif
+            @endif
+        </div>
+
+
 
         <div class="row align-items-start mb-4">
             @if (!Auth::user()->hasRole('Admin'))

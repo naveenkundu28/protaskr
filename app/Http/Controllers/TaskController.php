@@ -143,17 +143,21 @@ class TaskController extends Controller
         if ($task->status == 'completed') {
             $taskHistory = TrackerHistory::where('task_id', $task->id)
                 ->where('is_running', true);
+
             if ($taskHistory) {
                 $taskhistorydata = $taskHistory->first();
-                $startTime = Carbon::parse($taskhistorydata->start_time);
-                $endTime = Carbon::now();
-
-                $timeDifferenceInSeconds = $endTime->diffInSeconds($startTime);
-                $taskHistory->update([
-                    'end_time' => Carbon::now(),
-                    'is_running' => false,
-                    'elapsed_time' => $timeDifferenceInSeconds,
-                ]);
+                if ($taskhistorydata) {
+                    $startTime = Carbon::parse($taskhistorydata->start_time);
+                    $endTime = Carbon::now();
+    
+                    $timeDifferenceInSeconds = $endTime->diffInSeconds($startTime);
+                    $taskHistory->update([
+                        'end_time' => $endTime,
+                        'is_running' => false,
+                        'elapsed_time' => $timeDifferenceInSeconds,
+                    ]);
+                }
+                
             }
         }
         $task->save();

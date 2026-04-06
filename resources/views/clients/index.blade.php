@@ -7,15 +7,44 @@
         <div class="d-flex justify-content-between align-items-center bg-white mb-4 shadow-sm p-3 rounded">
             <div class="d-flex align-items-center gap-3 flex-wrap">
                 <h2 class="mb-0">{{ request('type') == 'archived' ? 'Archived Clients' : 'Clients' }}</h2>
-                <form method="GET" action="{{ route('clients.index') }}" class="d-flex gap-2 auto-search-form"
-                    data-search-target="#tableSearchResults">
+                <form method="GET" action="{{ route('clients.index') }}" class="d-flex gap-2 align-items-center">
+
+                    {{-- Preserve tab (ongoing/completed/archived) --}}
                     @if (request('type'))
                         <input type="hidden" name="type" value="{{ request('type') }}">
                     @endif
+
+                    {{-- Search --}}
                     <input type="text" name="search" value="{{ request('search') }}" class="form-control"
                         placeholder="Search Clients">
-                    {{-- <button class="btn btn-outline-secondary">Search</button> --}}
+
+                    {{-- Type Filter --}}
+                    <select name="type_filter[]" class="form-control select2" multiple>
+                        <option value="internal_team"
+                            {{ collect(request('type_filter'))->contains('internal_team') ? 'selected' : '' }}>
+                            Internal Team
+                        </option>
+                        <option value="client" {{ collect(request('type_filter'))->contains('client') ? 'selected' : '' }}>
+                            Client
+                        </option>
+                        <option value="project"
+                            {{ collect(request('type_filter'))->contains('project') ? 'selected' : '' }}>
+                            Project
+                        </option>
+                    </select>
+
+                    {{-- Submit --}}
+                    <button type="submit" class="btn btn-primary">Filter</button>
+
+                    {{-- Clear --}}
+                    <a href="{{ route('clients.index', request()->only('type')) }}" class="btn btn-secondary">
+                        Clear
+                    </a>
+
                 </form>
+
+
+
             </div>
             <div class="align-items-center d-flex gap-2">
 
@@ -94,6 +123,19 @@
                                 </p>
                             @endif
 
+                            @if ($project->type)
+                                <p class="card-text">
+                                    <strong>Type:</strong>
+                                    {{ $project->type == 'internal_team'
+                                        ? 'Internal Team'
+                                        : ($project->type == 'client'
+                                            ? 'Client'
+                                            : ($project->type == 'project'
+                                                ? 'Project'
+                                                : '')) }}
+                                </p>
+                            @endif
+
                             {{-- <p class="card-text">{{ $project->description }}</p> --}}
                             <p class="card-text">
                                 <strong>Status:</strong>
@@ -101,9 +143,31 @@
                             </p>
                             <p class="card-text"> <strong>Assigned to:</strong>
                                 @isset($project->users)
-                                    @foreach ($project->users as $user)
+                                    {{-- @foreach ($project->users as $user)
                                         <br> <span class="">{{ $user->name }}</span>
-                                    @endforeach
+                                    @endforeach --}}
+                                    @php
+                                        $users = $project->users;
+                                        $visibleUsers = $users->take(2);
+                                        $remainingCount = $users->count() - 2;
+                                    @endphp
+
+                                    <span>
+                                        {{-- Visible Users --}}
+                                        @foreach ($visibleUsers as $index => $user)
+                                            <span class="{{ $user->trashed() ? 'text-danger' : '' }}">
+                                                {{ $user->name }}
+                                            </span>{{ !$loop->last ? ',' : '' }}
+                                        @endforeach
+
+                                        {{-- Remaining Count --}}
+                                        @if ($remainingCount > 0)
+                                            <span class="text-primary" data-bs-toggle="tooltip" style="cursor: pointer;"
+                                                title="@foreach ($users as $user){{ $user->name }}{{ !$loop->last ? ', ' : '' }} @endforeach">
+                                                +{{ $remainingCount }}
+                                            </span>
+                                        @endif
+                                    </span>
                                 @endisset
                             </p>
                             {{-- <p class="card-text">
@@ -137,11 +201,13 @@
 
 
 
-                                @can('project-edit')
+                                {{-- @can('project-edit') --}}
+                                @if (auth()->user()->can('project-edit') || auth()->user()->hasRole('Employee'))
                                     <a href="{{ route('clients.edit', $project->id) }}" class="btn btn-warning">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
-                                @endcan
+                                @endif
+                                {{-- @endcan --}}
 
                                 @can('project-delete')
                                     <form action="{{ route('clients.destroy', $project->id) }}" method="POST"
@@ -176,6 +242,7 @@
                         {{-- <th>Description</th> --}}
                         <th>Assigned To</th>
                         <th>Start Date</th>
+                        <th>Type</th>
                         {{-- <th>Pending Tasks</th> --}}
                         <th>Status</th>
                         <th width="180px">Action</th>
@@ -186,7 +253,8 @@
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td> @isset($project)
-                                    <span>{{ $project->name }} <span class="text-muted small">{{ $project->client_type ? '('.ucfirst($project->client_type) .')' : '' }}</span></span>
+                                    <span>{{ $project->name }} <span
+                                            class="text-muted small">{{ $project->client_type ? '(' . ucfirst($project->client_type) . ')' : '' }}</span></span>
                                 @endisset
                             </td>
                             <td> @isset($project)
@@ -200,14 +268,45 @@
                             <td> {{ $project->project_name }}</td>
                             {{-- <td>{{ $project->description }}</td> --}}
                             <td> @isset($project->users)
-                                    @foreach ($project->users as $user)
+                                    {{-- @foreach ($project->users as $user)
                                         <span
                                             class="{{ $user->trashed() ? 'text-danger' : '' }}">{{ $user->name }}</span><br>
-                                    @endforeach
+                                    @endforeach --}}
+                                    @php
+                                        $users = $project->users;
+                                        $visibleUsers = $users->take(2);
+                                        $remainingCount = $users->count() - 2;
+                                    @endphp
+
+                                    <span>
+                                        {{-- Visible Users --}}
+                                        @foreach ($visibleUsers as $index => $user)
+                                            <span class="{{ $user->trashed() ? 'text-danger' : '' }}">
+                                                {{ $user->name }}
+                                            </span>{{ !$loop->last ? ',' : '' }}
+                                        @endforeach
+
+                                        {{-- Remaining Count --}}
+                                        @if ($remainingCount > 0)
+                                            <span class="text-primary" data-bs-toggle="tooltip" style="cursor: pointer;"
+                                                title="@foreach ($users as $user){{ $user->name }}{{ !$loop->last ? ', ' : '' }} @endforeach">
+                                                +{{ $remainingCount }}
+                                            </span>
+                                        @endif
+                                    </span>
                                 @endisset
                             </td>
                             <td>
                                 {{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('j F Y') : '' }}
+                            </td>
+                            <td>
+                                {{ $project->type == 'internal_team'
+                                    ? 'Internal Team'
+                                    : ($project->type == 'client'
+                                        ? 'Client'
+                                        : ($project->type == 'project'
+                                            ? 'Project'
+                                            : '')) }}
                             </td>
                             {{-- <td>{{$project->to_do_tasks + $project->in_progress_tasks + $project->in_review_tasks}}</td> --}}
                             <td>{{ $project->status == 'not_started' ? 'Not Started' : ($project->status == 'in_progress' ? 'In Progress' : 'Completed') }}
@@ -222,8 +321,8 @@
                                     <ul class="dropdown-menu py-0">
                                         @if (request('type') == 'archived')
                                             <li class="px-2 py-2">
-                                                <form action="{{ route('clients.restore', $project->id) }}" method="POST"
-                                                    class="d-inline">
+                                                <form action="{{ route('clients.restore', $project->id) }}"
+                                                    method="POST" class="d-inline">
                                                     @csrf
                                                     <button type="submit"
                                                         class="border-0 text-danger text-start w-100 bg-white"
@@ -262,7 +361,8 @@
                                                 </a>
                                             </li>
 
-                                            @can('project-edit')
+                                            {{-- @can('project-edit') --}}
+                                            @if (auth()->user()->can('project-edit') || auth()->user()->hasRole('Employee'))
                                                 <li>
                                                     <hr class="my-1" />
                                                 </li>
@@ -273,7 +373,8 @@
                                                         Edit
                                                     </a>
                                                 </li>
-                                            @endcan
+                                            @endif
+                                            {{-- @endcan --}}
 
                                             @can('project-delete')
                                                 <li>
