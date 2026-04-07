@@ -101,6 +101,9 @@
     <script>
         $(document).ready(function() {
 
+            const taskShowRoute = "{{ route('tasks.show', ':id') }}";
+
+
             function loadTasks(accordionId = 'dailyTasksAccordion-all', tagId = '') {
                 let date = $('#tasksDate').val();
 
@@ -149,10 +152,12 @@
                     if (user.tasks.length > 0) {
 
                         user.tasks.forEach((task, index) => {
+                            let taskUrl = taskShowRoute.replace(':id', task.id);
+
                             tasksRows += `
                                 <tr>
                                     <td>${index + 1}</td>
-                                    <td>${task.title ?? '-'}</td>
+                                    <td><a href="${taskUrl}">${task.title ?? '-'}</a></td>
                                     <td>${task.project?.name ?? '-'}</td>
                                     <td>${task.total_task_time}</td>
                                     <td>${task.status ? formatStatus(task.status) : '-'}</td>

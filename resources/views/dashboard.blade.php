@@ -25,10 +25,13 @@
                     </div>
                 </div>
             @endif
+        </div>
 
-            @if (Auth::user()->hasRole('Admin'))
-                <div class="col-sm-6 col-md-2 mb-4">
-                    <div class="card shadow-sm">
+        @if (Auth::user()->hasRole('Admin'))
+            <div class="row mb-4 align-items-start custom-dashboard-tables">
+
+                <div class="col-sm-6 col-md-2 mb-4 d-flex">
+                    <div class="card shadow-sm w-100 h-100 custom-min-height">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Tags Summary</h5>
 
@@ -83,8 +86,8 @@
                     </div>
                 </div>
 
-                <div class="col-sm-6 col-md-3 mb-4">
-                    <div class="card shadow-sm">
+                <div class="col-sm-6 col-md-3 mb-4 d-flex">
+                    <div class="card shadow-sm w-100 h-100 custom-min-height">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Work Type</h5>
                             <div class="table-responsive">
@@ -119,8 +122,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-4">
-                    <div class="card shadow-sm">
+                <div class="col-md-3 mb-4 d-flex">
+                    <div class="card shadow-sm w-100 h-100 custom-min-height">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Profit / Loss Summary</h5>
                             <div class="table-responsive">
@@ -303,8 +306,11 @@
                         </div>
                     </div>
                 </div>
-            @endif
-        </div>
+
+            </div>
+        @endif
+
+
 
 
 

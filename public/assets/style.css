@@ -400,3 +400,7 @@ main {
     display: flex;
     align-items: center;
 }
+
+.custom-dashboard-tables .custom-min-height {
+    min-height: 320px;
+}
