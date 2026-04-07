@@ -149,6 +149,7 @@
                                     @php
                                         $users = $project->users;
                                         $visibleUsers = $users->take(2);
+                                        $remainingUsers = $users->slice(2);
                                         $remainingCount = $users->count() - 2;
                                     @endphp
 
@@ -163,7 +164,7 @@
                                         {{-- Remaining Count --}}
                                         @if ($remainingCount > 0)
                                             <span class="text-primary" data-bs-toggle="tooltip" style="cursor: pointer;"
-                                                title="@foreach ($users as $user){{ $user->name }}{{ !$loop->last ? ', ' : '' }} @endforeach">
+                                                title="@foreach ($remainingUsers as $user){{ $user->name }}{{ !$loop->last ? ', ' : '' }} @endforeach">
                                                 +{{ $remainingCount }}
                                             </span>
                                         @endif
@@ -278,6 +279,7 @@
                                     @php
                                         $users = $project->users;
                                         $visibleUsers = $users->take(2);
+                                        $remainingUsers = $users->slice(2);
                                         $remainingCount = $users->count() - 2;
                                     @endphp
 
@@ -292,7 +294,7 @@
                                         {{-- Remaining Count --}}
                                         @if ($remainingCount > 0)
                                             <span class="text-primary" data-bs-toggle="tooltip" style="cursor: pointer;"
-                                                title="@foreach ($users as $user){{ $user->name }}{{ !$loop->last ? ', ' : '' }} @endforeach">
+                                                title="@foreach ($remainingUsers as $user){{ $user->name }}{{ !$loop->last ? ', ' : '' }} @endforeach">
                                                 +{{ $remainingCount }}
                                             </span>
                                         @endif

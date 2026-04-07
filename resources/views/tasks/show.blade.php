@@ -6,7 +6,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
-                <h3 class="w-90">{{ $task->title }} - Task Details</h3>
+                <h3 class="w-90">{{ $task->title }} - Task Details </h3>
                 <div>
                     @if (auth()->id() == $task->user_id || Auth::user()->hasRole('Admin'))
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editTaskModal">
@@ -118,15 +118,18 @@
                                                     <div class="card-body">
                                                         <h5 class="card-title">{{ $file->name }}</h5>
                                                         <p class="card-text"><strong>Type:</strong> {{ $file->type }}</p>
-                                                        <a href="{{ route('task.files.show', [$task->id, $file->id]) }}" target="_blank"
-                                                            class="btn btn-primary"> <i class="bi bi-eye"></i> </a>
+                                                        <a href="{{ route('task.files.show', [$task->id, $file->id]) }}"
+                                                            target="_blank" class="btn btn-primary"> <i
+                                                                class="bi bi-eye"></i> </a>
                                                         <a href="{{ route('task.files.download', [$task->id, $file->id]) }}"
-                                                            class="btn btn-info text-white"> <i class="bi bi-download"></i> </a>
+                                                            class="btn btn-info text-white"> <i class="bi bi-download"></i>
+                                                        </a>
                                                         @if (auth()->id() == $task->user_id || Auth::user()->hasRole('Admin'))
                                                             <a href="{{ route('task.files.edit', [$task->id, $file->id]) }}"
                                                                 class="btn btn-warning"> <i class="bi bi-pencil-square"></i>
                                                             </a>
-                                                            <form action="{{ route('task.files.destroy', [$task->id, $file->id]) }}"
+                                                            <form
+                                                                action="{{ route('task.files.destroy', [$task->id, $file->id]) }}"
                                                                 method="POST" class="d-inline"
                                                                 onsubmit="return confirm('Are you sure you want to delete this file?');">
                                                                 @csrf
@@ -157,7 +160,40 @@
                             <td data-id="{{ $taskHistory->id }}">{{ $loop->iteration }}</td>
                             <td> {{ $taskHistory->start_time }} </td>
                             <td>{{ $taskHistory->end_time }}</td>
-                            <td>{{ $taskHistory->elapsed_time_formatted }}</td>
+                            {{-- <td>{{ $taskHistory->elapsed_time_formatted }}</td> --}}
+                            <td data-id="{{ $taskHistory->id }}">
+
+                                {{-- Display Mode --}}
+                                <span class="time-text">
+                                    {{ $taskHistory->elapsed_time_formatted }}
+                                </span>
+
+                                @if (Auth::user()->hasRole('Admin'))
+                                    <button class="btn btn-sm btn-primary edit-time ms-2">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+
+
+                                    {{-- Edit Mode --}}
+                                    <div class="align-items-center d-flex gap-2 mt-1 time-edit d-none">
+                                        <div>
+                                            <input type="text" class="form-control form-control-sm time-input"
+                                                value="{{ $taskHistory->elapsed_time_formatted }}"
+                                                placeholder="HH:MM:SS">
+                                        </div>
+
+                                        <div class="mt-1">
+                                            <button class="btn btn-success btn-sm save-time">
+                                                <i class="bi bi-check"></i>
+                                            </button>
+                                            <button class="btn btn-secondary btn-sm cancel-time">
+                                                <i class="bi bi-x"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endif
+                            </td>
+
                         </tr>
                     @endforeach
                 </table>
@@ -324,7 +360,7 @@
     </div>
     @push('scripts')
         <script>
-            function start(){
+            function start() {
                 console.log('inhere');
             }
             let timer;
@@ -472,6 +508,89 @@
             });
 
             updateTimeDisplay();
+
+
+
+
+            // ------------------inline edit section js for admin
+            // Convert HH:MM:SS → seconds
+            function timeToSeconds(time) {
+                let parts = time.split(':').map(p => parseInt(p) || 0);
+
+                let h = 0,
+                    m = 0,
+                    s = 0;
+
+                if (parts.length === 3) {
+                    [h, m, s] = parts;
+                } else if (parts.length === 2) {
+                    [h, m] = parts; // treat as HH:MM
+                } else if (parts.length === 1) {
+                    h = parts[0];
+                }
+
+                return (h * 3600) + (m * 60) + s;
+            }
+
+            // Convert seconds → HH:MM:SS
+            function secondsToTime(sec) {
+                let h = Math.floor(sec / 3600);
+                let m = Math.floor((sec % 3600) / 60);
+                let s = sec % 60;
+
+                return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            }
+
+
+            // Edit Click
+            $(document).on('click', '.edit-time', function() {
+                let td = $(this).closest('td');
+
+                td.find('.time-text, .edit-time').hide();
+                td.find('.time-edit').removeClass('d-none');
+            });
+
+            // Cancel Click
+            $(document).on('click', '.cancel-time', function() {
+                let td = $(this).closest('td');
+
+                td.find('.time-edit').addClass('d-none');
+                td.find('.time-text, .edit-time').show();
+            });
+
+            // Save Click
+            $(document).on('click', '.save-time', function() {
+                let td = $(this).closest('td');
+                let id = td.data('id');
+                let inputVal = td.find('.time-input').val();
+
+                let tracker_seconds = timeToSeconds(inputVal);
+
+                let url = "{{ route('tasks.updateTime', ':id') }}";
+                url = url.replace(':id', id);
+
+                $.ajax({
+                    url: url,
+                    method: 'PUT',
+                    data: {
+                        elapsed_time: tracker_seconds,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(res) {
+                        if (res.success) {
+                            console.log('res', res.success);
+
+                            td.find('.time-text').text(secondsToTime(tracker_seconds));
+
+                            td.find('.time-edit').addClass('d-none');
+                            td.find('.time-text, .edit-time').show();
+                        }
+                    },
+                    error: function(error) {
+                        console.log('Something went wrong', error);
+                    }
+                });
+            });
         </script>
     @endpush
 @endsection

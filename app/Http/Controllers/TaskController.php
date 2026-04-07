@@ -134,6 +134,24 @@ class TaskController extends Controller
         return back()->with('success', 'Task updated successfully.');
     }
 
+    public function updateTime(Request $request, $trackerId)
+    {
+        $this->authorize('task-edit');
+
+        $request->validate([
+            'elapsed_time' => 'required|integer|min:0'
+        ]);
+
+        $history = TrackerHistory::findOrFail($trackerId);
+
+        $history->elapsed_time = $request->elapsed_time;
+        $history->save();
+
+        return response()->json([
+            'success' => true
+        ]);
+    }
+
     public function updateStatus(Request $request, Task $task)
     {
         $task->status = $request->input('status');
@@ -149,7 +167,7 @@ class TaskController extends Controller
                 if ($taskhistorydata) {
                     $startTime = Carbon::parse($taskhistorydata->start_time);
                     $endTime = Carbon::now();
-    
+
                     $timeDifferenceInSeconds = $endTime->diffInSeconds($startTime);
                     $taskHistory->update([
                         'end_time' => $endTime,
@@ -157,7 +175,6 @@ class TaskController extends Controller
                         'elapsed_time' => $timeDifferenceInSeconds,
                     ]);
                 }
-                
             }
         }
         $task->save();

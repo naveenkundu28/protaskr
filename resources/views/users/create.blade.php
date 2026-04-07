@@ -85,7 +85,7 @@
                     </div>
                     <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
                         <div class="form-group">
-                            <strong>Password:</strong>
+                            <strong>Password:<span class="text-danger">*</span></strong>
                             <input value="{{ old('password') }}" type="password" autocomplete="new-password" name="password" placeholder="Password" class="form-control mt-2">
                         </div>
                     </div>
