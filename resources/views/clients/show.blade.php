@@ -15,10 +15,33 @@
             <div class="col-md-7">
                 <div class="card mb-4 shadow-sm">
                     <div class="card-body">
-                        <h5 class="card-title">{{ $client->name }}</h5>
+                        {{-- <h5 class="card-title">{{ $client->name }}</h5> --}}
                         <p class="card-text">{!! $client->description !!}</p>
+
+                        @if ($client->client_type)
+                            <p class="card-text"><strong>Client Type:</strong> {{ $client->client_type }}</p>
+                        @endif
+                        @if ($client->client_email)
+                            <p class="card-text"><strong>Client Email:</strong> {{ $client->client_email }}</p>
+                        @endif
+                        @if ($client->project_name)
+                            <p class="card-text"><strong>Project Name:</strong> {{ $client->project_name }}</p>
+                        @endif
+                        @if ($client->type)
+                            <p class="card-text"><strong>Type:</strong>
+                                {{ $client->type == 'internal_team'
+                                    ? 'Internal Team'
+                                    : ($client->type == 'client'
+                                        ? 'Client'
+                                        : ($client->type == 'project'
+                                            ? 'Project'
+                                            : '')) }}
+                            </p>
+                        @endif
+                        
                         <p class="card-text"><strong>Start Date:</strong>
-                            {{ $client->start_date ? \Carbon\Carbon::parse($client->start_date)->format('j F Y') : '' }}</p>
+                            {{ $client->start_date ? \Carbon\Carbon::parse($client->start_date)->format('j F Y') : '' }}
+                        </p>
                         <p class="card-text"><strong>End Date:</strong>
                             {{ $client->end_date ? \Carbon\Carbon::parse($client->end_date)->format('j F Y') : '' }}</p>
                         <p class="card-text"><strong>Status:</strong>

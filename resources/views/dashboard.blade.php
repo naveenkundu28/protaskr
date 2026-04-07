@@ -28,7 +28,7 @@
 
             @if (Auth::user()->hasRole('Admin'))
                 <div class="col-sm-6 col-md-2 mb-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card shadow-sm">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Tags Summary</h5>
 
@@ -84,7 +84,7 @@
                 </div>
 
                 <div class="col-sm-6 col-md-3 mb-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card shadow-sm">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Work Type</h5>
                             <div class="table-responsive">
@@ -120,7 +120,7 @@
                     </div>
                 </div>
                 <div class="col-md-3 mb-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card shadow-sm">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Profit / Loss Summary</h5>
                             <div class="table-responsive">
@@ -178,7 +178,7 @@
                 </div>
 
                 <div class="col-12 col-md-4 mb-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card shadow-sm">
                         <div class="card-body">
                             <ul class="nav nav-tabs mb-3" id="skillBenchTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
@@ -201,7 +201,7 @@
                             <div class="tab-content" id="skillBenchTabsContent">
                                 <div class="tab-pane fade show active" id="skills-set-pane" role="tabpanel"
                                     aria-labelledby="skills-set-tab" tabindex="0">
-                                    <div class="table-responsive">
+                                    <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
                                         <table class="table table-bordered table-sm align-middle f-14 mb-0"
                                             id="skillsSetTable">
                                             <thead>
@@ -251,7 +251,7 @@
 
                                 <div class="tab-pane fade" id="bench-users-pane" role="tabpanel"
                                     aria-labelledby="bench-users-tab" tabindex="0">
-                                    <div class="table-responsive">
+                                    <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
                                         <table class="table table-bordered table-sm align-middle f-14 mb-0"
                                             id="benchUsersTable">
                                             <thead>
