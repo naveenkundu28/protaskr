@@ -12,7 +12,7 @@ class HourController extends Controller
         $this->authorize('user-create');
         $currentYear = date('Y');
         $hours = Hour::where('year', $currentYear)->get()->keyBy('month');
-        $years = range($currentYear, $currentYear + 10);
+        $years = range($currentYear - 1, $currentYear + 10);
 
         $months = [
             'January',

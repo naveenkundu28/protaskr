@@ -90,15 +90,22 @@
                                     @foreach ($chats as $chat)
                                         <div class="card-body border p-1 mb-2">
                                             <small>{{ $chat->user->name }}</small>
-                                            <p class="m-0">{{ $chat->message }}</p>
+                                            <p class="m-0">{!! $chat->message !!}</p>
                                             <small>{{ date('d-m-Y', strtotime($chat->created_at)) }}</small>
                                         </div>
                                     @endforeach
-                                    <form method="POST" action="{{ route('chat.send', $task->id) }}">
+                                    <form id="chatForm" method="POST" action="{{ route('chat.send', $task->id) }}">
                                         @csrf
-                                        <textarea class="form-control" name="message" required></textarea>
+                                        {{-- <textarea class="form-control" name="message" required></textarea> --}}
+                                        <textarea id="editor" class="form-control" name="message"></textarea>
                                         <button class="btn btn-primary mt-2 float-end" type="submit">Send</button>
+
+                                        @error('message')
+                                            <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </form>
+
+
                                 </div>
                             </div>
                             <div class="col-md-12 mt-3">
@@ -360,6 +367,14 @@
     </div>
     @push('scripts')
         <script>
+            let config = {};
+            config.toolbar = "basic";
+            let editor = new RichTextEditor("#editor", config);
+
+            $('#chatForm').on('submit', function() {
+                $('#editor').val(editor.getHTMLCode());
+            });
+
             function start() {
                 console.log('inhere');
             }

@@ -189,9 +189,18 @@ class TaskController extends Controller
         $this->authorizeTaskAccess($task);
 
         $userId = auth()->id();
-        $request->validate([
-            'message' => 'required'
-        ]);
+
+        $content = html_entity_decode($request->message);
+        $content = trim(preg_replace('/\s+/u', '', strip_tags($content)));
+        // $content = trim(strip_tags($request->message));
+        if (empty($content)) {
+            return back()
+                ->withErrors(['message' => 'Message is required'])
+                ->withInput();
+        }
+        // $request->validate([
+        //     'message' => 'required'
+        // ]);
         $savechat = new Chat();
         $savechat->user_id = $userId;
         $savechat->task_id = $taskid;

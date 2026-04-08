@@ -3,7 +3,7 @@
     Dashboard
 @endsection
 @section('content')
-    <div class="container">
+    <div class="container-fluid">
         <h2>VE Emp Tracker</h2>
 
         @session('success')
@@ -28,10 +28,10 @@
         </div>
 
         @if (Auth::user()->hasRole('Admin'))
-            <div class="row mb-4 align-items-start custom-dashboard-tables">
+            <div class="row mb-4">
 
-                <div class="col-sm-6 col-md-2 mb-4 d-flex">
-                    <div class="card shadow-sm w-100 h-100 custom-min-height">
+                <div class="col-sm-6 col-md-2 mb-4">
+                    <div class="card shadow-sm w-100 h-100">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Tags Summary</h5>
 
@@ -86,8 +86,8 @@
                     </div>
                 </div>
 
-                <div class="col-sm-6 col-md-3 mb-4 d-flex">
-                    <div class="card shadow-sm w-100 h-100 custom-min-height">
+                <div class="col-sm-6 col-md-3 mb-4">
+                    <div class="card shadow-sm w-100 h-100">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Work Type</h5>
                             <div class="table-responsive">
@@ -122,8 +122,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3 mb-4 d-flex">
-                    <div class="card shadow-sm w-100 h-100 custom-min-height">
+                <div class="col-md-3 mb-4">
+                    <div class="card shadow-sm w-100 h-100">
                         <div class="card-body">
                             <h5 class="card-title f-16 mb-1">Profit / Loss Summary</h5>
                             <div class="table-responsive">
@@ -183,26 +183,30 @@
                 <div class="col-12 col-md-4 mb-4">
                     <div class="card shadow-sm">
                         <div class="card-body">
-                            <ul class="nav nav-tabs mb-3" id="skillBenchTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="skills-set-tab" data-bs-toggle="tab"
-                                        data-bs-target="#skills-set-pane" type="button" role="tab"
-                                        aria-controls="skills-set-pane" aria-selected="true">Skills Set</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link color-bench" id="bench-users-tab" data-bs-toggle="tab"
-                                        data-bs-target="#bench-users-pane" type="button" role="tab"
-                                        aria-controls="bench-users-pane" aria-selected="false">Bench</button>
-                                </li>
-                            </ul>
+                            <div class="align-items-center d-flex justify-content-between mb-3">
 
-                            <div class="mb-3">
-                                <input type="text" class="form-control form-control-sm" id="skillBenchSearch"
-                                    placeholder="Search skills or users">
+                                <ul class="nav nav-tabs w-50" id="skillBenchTabs" role="tablist">
+                                    {{-- <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="skills-set-tab" data-bs-toggle="tab"
+                                            data-bs-target="#skills-set-pane" type="button" role="tab"
+                                            aria-controls="skills-set-pane" aria-selected="true">Skills Set</button>
+                                    </li> --}}
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active color-bench" id="bench-users-tab" data-bs-toggle="tab"
+                                            data-bs-target="#bench-users-pane" type="button" role="tab"
+                                            aria-controls="bench-users-pane" aria-selected="false">Bench</button>
+                                    </li>
+                                </ul>
+    
+                                <div class="mb-3">
+                                    <input type="text" class="form-control form-control-sm" id="skillBenchSearch"
+                                        placeholder="Search skills or users">
+                                </div>
+
                             </div>
 
                             <div class="tab-content" id="skillBenchTabsContent">
-                                <div class="tab-pane fade show active" id="skills-set-pane" role="tabpanel"
+                                {{-- <div class="tab-pane fade" id="skills-set-pane" role="tabpanel"
                                     aria-labelledby="skills-set-tab" tabindex="0">
                                     <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
                                         <table class="table table-bordered table-sm align-middle f-14 mb-0"
@@ -216,18 +220,7 @@
                                             </thead>
                                             <tbody>
                                                 @forelse($skillSetSummary as $index => $skill)
-                                                    {{-- <tr class="skill-bench-row"
-                                                        data-search="{{ strtolower($skill['name'] . ' ' . collect($skill['users'])->pluck('name')->join(' ')) }}">
-
-                                                        <td>{{ $index + 1 }}</td>
-
-                                                        <td>{{ $skill['name'] }}</td>
-
-                                                        <td>
-                                                            {{ collect($skill['users'])->map(fn($u) => $u->name . ' - ' . $u->employee_id)->join(', ') }}
-                                                        </td>
-
-                                                    </tr> --}}
+                                                    
                                                     <tr class="skill-bench-row"
                                                         data-skill="{{ strtolower($skill['name']) }}"
                                                         data-users='@json($skill['users'])'>
@@ -250,9 +243,9 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                </div>
+                                </div> --}}
 
-                                <div class="tab-pane fade" id="bench-users-pane" role="tabpanel"
+                                <div class="tab-pane fade show active" id="bench-users-pane" role="tabpanel"
                                     aria-labelledby="bench-users-tab" tabindex="0">
                                     <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
                                         <table class="table table-bordered table-sm align-middle f-14 mb-0"
