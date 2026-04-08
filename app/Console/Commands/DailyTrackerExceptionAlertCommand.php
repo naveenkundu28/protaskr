@@ -30,21 +30,22 @@ class DailyTrackerExceptionAlertCommand extends Command
      */
     public function handle(): int
     {
-        $today = Carbon::today('Asia/Kolkata');
+        $yesterday = Carbon::yesterday('Asia/Kolkata');
 
-        if ($today->isWeekend()) {
+        if ($yesterday->isWeekend()) {
             $this->info('Weekend detected. Daily tracker exception alerts skipped.');
             return self::SUCCESS;
         }
 
         $managerEmails = [
-            'anshulsehgal@virtualemployee.com',
+            // 'anshulsehgal@virtualemployee.com',
             'naveenkundu@virtualemployee.com',
+            // 'moizcutpiecewala@virtualemployee.com',
         ];
 
         $trackedSecondsByUser = DB::table('tracker_histories')
             ->select('user_id', DB::raw('SUM(elapsed_time) as total_seconds'))
-            ->whereDate('start_time', $today->toDateString())
+            ->whereDate('start_time', $yesterday->toDateString())
             ->whereNotNull('end_time')
             ->groupBy('user_id')
             ->pluck('total_seconds', 'user_id');
@@ -65,14 +66,14 @@ class DailyTrackerExceptionAlertCommand extends Command
             if ($totalSeconds === 0) {
                 $user->tracked_hours = $totalHours;
                 $user->alert_reason = 'absent';
-                $user->question_text = 'Why were you absent today? Please share the reason.';
+                $user->question_text = 'Why were you absent yesterday? Please share the reason.';
                 return $user;
             }
 
             if ($totalSeconds >= (13 * 3600)) {
                 $user->tracked_hours = $totalHours;
                 $user->alert_reason = 'excess';
-                $user->question_text = 'Why did you track more than 13 hours today? Please share the reason.';
+                $user->question_text = 'Why did you track more than 13 hours yesterday? Please share the reason.';
                 return $user;
             }
 
@@ -84,10 +85,11 @@ class DailyTrackerExceptionAlertCommand extends Command
 
             if (!empty($user->email)) {
                 $toEmails[] = $user->email;
+                // $toEmails[] = 'moizcutpiecewala@virtualemployee.com';
             }
 
             Mail::to(array_values(array_unique($toEmails)))
-                ->send(new DailyTrackerExceptionAlertMail($user, $today));
+                ->send(new DailyTrackerExceptionAlertMail($user, $yesterday));
         }
 
         $this->info("Daily tracker exception alerts sent: {$flaggedUsers->count()}");

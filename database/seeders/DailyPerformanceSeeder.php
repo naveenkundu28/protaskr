@@ -21,7 +21,7 @@ class DailyPerformanceSeeder extends Seeder
                 'font_color' => '#ffffff',
                 'need_a_reason' => 0,
                 'min' => 9,
-                'max' => 18
+                'max' => 13
             ],
 
             [
