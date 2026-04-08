@@ -23,7 +23,6 @@ class Client extends Model
         'client_email',
         'client_code',
         'project_name',
-        'client_type',
         'email_updated_by',
         'email_updated_at',
         'type'

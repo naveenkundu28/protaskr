@@ -181,11 +181,11 @@
                 </div>
 
                 <div class="col-12 col-md-4 mb-4">
-                    <div class="card shadow-sm">
+                    <div class="card shadow-sm h-100">
                         <div class="card-body">
-                            <div class="align-items-center d-flex justify-content-between mb-3">
+                            <div class="align-items-start d-flex justify-content-start gap-2 mb-3">
 
-                                <ul class="nav nav-tabs w-50" id="skillBenchTabs" role="tablist">
+                                <ul class="nav nav-tabs" id="skillBenchTabs" role="tablist">
                                     {{-- <li class="nav-item" role="presentation">
                                         <button class="nav-link" id="skills-set-tab" data-bs-toggle="tab"
                                             data-bs-target="#skills-set-pane" type="button" role="tab"
@@ -198,8 +198,8 @@
                                     </li>
                                 </ul>
     
-                                <div class="mb-3">
-                                    <input type="text" class="form-control form-control-sm" id="skillBenchSearch"
+                                <div>
+                                    <input type="text" class="form-control form-control-sm" id="skillBenchSearch" style="height: 42px;"
                                         placeholder="Search skills or users">
                                 </div>
 
@@ -247,7 +247,7 @@
 
                                 <div class="tab-pane fade show active" id="bench-users-pane" role="tabpanel"
                                     aria-labelledby="bench-users-tab" tabindex="0">
-                                    <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                                    <div class="table-responsive" style="max-height: 182px; overflow-y: auto;">
                                         <table class="table table-bordered table-sm align-middle f-14 mb-0"
                                             id="benchUsersTable">
                                             <thead>
