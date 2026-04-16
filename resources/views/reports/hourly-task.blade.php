@@ -34,13 +34,13 @@
 
             @if (auth()->user()?->hasRole('Admin'))
                 <div class="col-md-3">
-                    <form method="POST" class="input-group"
-                        action="{{ route('daily.report.generate-weekly') }}">
-    
+                    <form method="POST" class="input-group" action="{{ route('daily.report.generate-weekly') }}">
+
                         @csrf
-    
-                        <input type="date" name="report_date" class="form-control" max="{{ now()->format('Y-m-d') }}" value="{{ now()->format('Y-m-d') }}">
-    
+
+                        <input type="date" name="report_date" class="form-control" max="{{ now()->format('Y-m-d') }}"
+                            value="{{ now()->format('Y-m-d') }}">
+
                         <button type="submit" class="btn btn-info text-white">
                             <i class="bi bi-arrow-repeat me-1"></i> Fetch
                         </button>
@@ -50,7 +50,11 @@
             @endif
         </div>
 
-        <div class="table-responsive">
+        <div class="table-scroll-top mb-1">
+            <div></div>
+        </div>
+
+        <div class="table-responsive table-scroll-bottom">
 
             <table class="table table-bordered table-sm text-center text-nowrap report-table">
                 <thead>
@@ -215,10 +219,68 @@
 
 @endsection
 
+@push('styles')
+    <style>
+        .table-scroll-top {
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .table-scroll-top div {
+            height: 1px;
+        }
+
+        .table-scroll-bottom {
+            overflow-x: auto;
+        }
+    </style>
+@endpush
+
 @push('scripts')
     <script>
+        // -----------START: code for top scroll and bottom scroll sync----------------
+
+        let topScroll;
+        let bottomScroll;
+
+        // ✅ Make function global
+        function syncWidth() {
+            if (!topScroll || !bottomScroll) return;
+
+            const table = bottomScroll.find('table');
+            const tableWidth = table.outerWidth();
+            const containerWidth = bottomScroll.outerWidth();
+
+            topScroll.find('div').width(tableWidth);
+
+            if (tableWidth > containerWidth) {
+                topScroll.show();
+            } else {
+                topScroll.hide();
+            }
+        }
         $(document).ready(function() {
             $('[title]').tooltip();
+
+
+            topScroll = $('.table-scroll-top');
+            bottomScroll = $('.table-scroll-bottom');
+
+            syncWidth();
+
+            // Sync scroll positions
+            topScroll.on('scroll', function() {
+                bottomScroll.scrollLeft($(this).scrollLeft());
+            });
+
+            bottomScroll.on('scroll', function() {
+                topScroll.scrollLeft($(this).scrollLeft());
+            });
+
+            // Recalculate on window resize
+            $(window).on('resize', syncWidth);
+
+            // -----------END: code for top scroll and bottom scroll sync----------------
         });
 
         $('#userFilter').change(function() {
@@ -236,6 +298,10 @@
                 $('.report-table th[data-user=' + user + '], .report-table td[data-user=' + user + ']').css('width',
                     '50%');
             }
+
+            // $('.table-scroll-top').toggle();
+            syncWidth();
+
         });
 
         const dailyReportEditModal = document.getElementById('dailyReportEditModal');

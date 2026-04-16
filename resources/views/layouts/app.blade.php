@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="{{ asset('richtexteditor/rte_theme_default.css') }}">
     <script src="{{ asset('richtexteditor/rte.js') }}"></script>
     <script src="{{ asset('richtexteditor/plugins/all_plugins.js') }}"></script>
+    @stack('styles')
 </head>
 
 <body>

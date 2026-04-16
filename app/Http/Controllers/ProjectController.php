@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\DailyPerformance;
 use App\Models\Hour;
 use App\Models\User;
 use App\Models\Project;
@@ -88,7 +89,9 @@ class ProjectController extends Controller
             ->withQueryString();
         // dd($projects);
 
-        return view('clients.index', compact('projects'));
+        $performances = DailyPerformance::all();
+
+        return view('clients.index', compact('projects', 'performances'));
     }
 
     public function create()

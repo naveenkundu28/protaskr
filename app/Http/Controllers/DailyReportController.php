@@ -30,10 +30,13 @@ class DailyReportController extends Controller
 
         $users = User::whereDoesntHave('roles', function ($q) {
             $q->where('name', 'Admin');
-        })->orderBy('created_at')->get();
+        })->where('is_show_report', true)->orderBy('created_at')->get();
         $performances = DailyPerformance::all();
 
-        $reports = DailyReport::with('performance')
+        $reports = DailyReport::with(['performance', 'user'])
+            ->whereHas('user', function ($q) {
+                $q->where('is_show_report', 1);
+            })
             ->whereMonth('date', $month)
             ->whereYear('date', $year)
             ->get()
@@ -42,6 +45,9 @@ class DailyReportController extends Controller
         $dates = [];
 
         $totals = DailyReport::selectRaw('user_id, SUM(time) as total_minutes')
+            ->whereHas('user', function ($q) {
+                $q->where('is_show_report', 1);
+            })
             ->whereMonth('date', $month)
             ->whereYear('date', $year)
             ->groupBy('user_id')
@@ -135,7 +141,7 @@ class DailyReportController extends Controller
 
         $performances = DailyPerformance::orderBy('min', 'desc')->get();
 
-        $users = User::where('user_type', 'Internal')
+        $users = User::where('user_type', 'Internal')->where('is_show_report', true)
             ->when($tagId, function ($q) use ($tagId) {
                 $q->whereHas('tags', function ($q2) use ($tagId) {
                     $q2->where('tags.id', $tagId);

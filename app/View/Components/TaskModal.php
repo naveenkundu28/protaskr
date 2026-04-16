@@ -13,11 +13,16 @@ class TaskModal extends Component
      */
     public $projects;
     public $users;
+    public $inProgressProjects;
     public function __construct(public $project)
     {
         $this->projects = auth()->user()->hasRole('Admin')
             ? auth()->user()->projects
             : auth()->user()->projectMembers;
+
+        $this->inProgressProjects = auth()->user()->hasRole('Admin')
+            ? auth()->user()->projects
+            : auth()->user()->projectMembers()->where('status', '!=', 'completed')->get();
 
         $this->users = collect([]);
         if ($this->project) {

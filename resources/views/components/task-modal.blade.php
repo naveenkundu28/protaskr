@@ -12,7 +12,7 @@
                         <label for="project" class="form-label">Project</label>
                         <select name="client_id" id="project" class="form-select">
                             <option value="">Select a project</option>
-                            @foreach ($projects as $thisProject)
+                            @foreach ($inProgressProjects as $thisProject)
                                 <option value="{{ $thisProject->id }}" @selected($thisProject->id == $project?->id)>
                                     {{ $thisProject->name }}
                                 </option>

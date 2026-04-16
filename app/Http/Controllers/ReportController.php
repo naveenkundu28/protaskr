@@ -15,13 +15,23 @@ class ReportController extends Controller
     {
         $this->authorize('user-show');
 
+        // $fromDate = $request->filled('from')
+        //     ? Carbon::parse($request->input('from'))->startOfDay()
+        //     : Carbon::now()->startOfMonth()->startOfDay();
+
+        // $toDate = $request->filled('to')
+        //     ? Carbon::parse($request->input('to'))->endOfDay()
+        //     : Carbon::now()->endOfDay();
+
+        $date = Carbon::now();
+
         $fromDate = $request->filled('from')
             ? Carbon::parse($request->input('from'))->startOfDay()
-            : Carbon::now()->startOfMonth()->startOfDay();
+            : $date->copy()->startOfQuarter()->startOfDay();
 
         $toDate = $request->filled('to')
             ? Carbon::parse($request->input('to'))->endOfDay()
-            : Carbon::now()->endOfDay();
+            : $date->copy()->endOfQuarter()->endOfDay();
 
         if ($fromDate->gt($toDate)) {
             [$fromDate, $toDate] = [$toDate->copy()->startOfDay(), $fromDate->copy()->endOfDay()];
@@ -40,35 +50,42 @@ class ReportController extends Controller
                 $query->withTrashed();
             }])
             ->whereNull('deleted_at')
-            ->where('status', '!=' , 'completed')
-            ->where(function ($query) use ($fromDate, $toDate) {
-                $query->whereNull('start_date')
-                    ->orWhereDate('start_date', '<=', $toDate->toDateString());
-            })
-            ->where(function ($query) use ($fromDate) {
-                $query->whereNull('end_date')
-                    ->orWhereDate('end_date', '>=', $fromDate->toDateString());
-            })
+            ->where('status', '!=', 'completed')
+            ->whereBetween('start_date', [$fromDate->toDateString(), $toDate->toDateString()])
+            
+            // ->where(function ($query) use ($fromDate, $toDate) {
+            //     $query->whereNull('start_date')
+            //         ->orWhereDate('start_date', '<=', $toDate->toDateString());
+            // })
+            // ->where(function ($query) use ($fromDate) {
+            //     $query->whereNull('end_date')
+            //         ->orWhereDate('end_date', '>=', $fromDate->toDateString());
+            // })
             ->orderBy('name')
             ->get();
 
         $newServices = Service::with(['client', 'frontResource', 'workingResource'])
             ->where('service_status', 'new')
-            ->whereBetween('created_at', [$fromDate, $toDate])
-            ->orderByDesc('created_at')
+            ->where('service_type', 'direct')
+            // ->whereBetween('created_at', [$fromDate, $toDate])
+            ->whereBetween('start_date', [$fromDate->toDateString(), $toDate->toDateString()])
+            ->orderByDesc('start_date')
             ->get();
 
         $completedServices = Service::with(['client', 'frontResource', 'workingResource'])
             ->where('service_status', 'completed')
+            ->where('service_type', 'direct')
             ->whereBetween('end_date', [$fromDate->toDateString(), $toDate->toDateString()])
             ->orderByDesc('end_date')
             ->get();
+            
 
         $cancelledServices = Service::with(['client', 'frontResource', 'workingResource'])
             ->where(function ($query) {
                 $query->where('service_status', 'canceled')
                     ->orWhere('service_status', 'replacement');
             })
+            ->where('service_type', 'direct')
             ->whereBetween('end_date', [$fromDate->toDateString(), $toDate->toDateString()])
             ->orderByDesc('end_date')
             ->get();
@@ -82,6 +99,8 @@ class ReportController extends Controller
             ->whereDate('deleted_at', '>=', $fromDate->toDateString())
             ->whereDate('deleted_at', '<=', $toDate->toDateString())
             ->count();
+
+        // dd($newServices);
 
         $newServices = $this->appendServiceWorkType($newServices, 'created_at');
         $completedServices = $this->appendServiceWorkType($completedServices, 'end_date');
@@ -100,6 +119,7 @@ class ReportController extends Controller
         ]);
     }
 
+
     private function appendServiceWorkType($services, string $dateField)
     {
         $groupedTotals = [];
@@ -113,13 +133,31 @@ class ReportController extends Controller
 
             // $groupKey = $service->service_id.'|'.$referenceDate->format('Y-m');
             // $groupedTotals[$groupKey] = ($groupedTotals[$groupKey] ?? 0) + (float) $service->hours;
-            
+
         }
-        
+
         return $services->map(function ($service) use ($groupedTotals, $dateField) {
+            $resources = Service::with(['workingResource'])
+                ->where('service_id', $service->service_id)
+                ->where('service_type', '!=', 'direct')
+                ->get()
+                ->groupBy('working_resource')
+                ->map(function ($items) {
+                    $resource = $items->first()->workingResource;
+
+                    return [
+                        'resource_name' => $resource ? $resource->name : null,
+                        'total_hours'   => $items->sum('hours'),
+                    ];
+                })
+                ->values()
+                ->toArray();
+
             $referenceDate = $this->resolveServiceReferenceDate($service, $dateField);
             $service->service_total_hours = (float) $service->hours;
             $service->service_work_type = 'ADHOC';
+            $service->service_other_resources = $resources;
+
 
             if (!$referenceDate) {
                 return $service;
