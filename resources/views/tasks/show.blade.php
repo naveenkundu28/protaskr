@@ -586,10 +586,11 @@
 
                 $.ajax({
                     url: url,
-                    method: 'PUT',
+                    method: 'POST',
                     data: {
                         elapsed_time: tracker_seconds,
-                        _token: '{{ csrf_token() }}'
+                        _token: '{{ csrf_token() }}',
+                        _method: 'PUT'
                     },
                     success: function(res) {
                         if (res.success) {
