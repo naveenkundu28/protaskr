@@ -59,17 +59,18 @@
                         <td>{{ $lead->call_done ? 'Yes' : 'No' }}</td>
                         <td>{{ $lead->cam_member }}</td>
                         <td>{{ $lead->date }}</td>
-                        <td>{{ $lead->jd }}</td>
+                        <td>{!! $lead->jd !!}</td>
                         {{-- <td>{{ $lead->notesHistories->notes ?? '' }}</td> --}}
                         <td>
                             {{ optional($lead->notesHistories()->latest()->first())->notes }}
                         </td>
+                        
                         <td>
-                            <div class="dropdown">
+                            <div class="dropdown position-static">
                                 <button class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                    Action
+                                    <i class="bi bi-list-task"></i>
                                 </button>
-                                <ul class="dropdown-menu">
+                                <ul class="dropdown-menu dropdown-menu-end">
 
                                     <li>
                                         <a class="dropdown-item text-primary"

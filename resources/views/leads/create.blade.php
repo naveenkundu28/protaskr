@@ -6,9 +6,11 @@
             <div class="row">
                 <div class="col-lg-12 d-flex justify-content-between mb-4 bg-white shadow-sm p-3 rounded">
                     <h2>Create Lead</h2>
-                    <a class="btn btn-primary btn-sm" href="{{ route('leads.index') }}">
-                        <i class="fa fa-arrow-left"></i> Back
-                    </a>
+                    <div>
+                        <a class="btn btn-primary btn-sm" href="{{ route('leads.index') }}">
+                            <i class="fa fa-arrow-left"></i> Back
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -24,7 +26,7 @@
         @endif
 
         <div class="card p-4 shadow-sm">
-            <form method="POST" action="{{ route('leads.store') }}">
+            <form id="leadForm" method="POST" action="{{ route('leads.store') }}">
                 @csrf
 
                 <div class="row">
@@ -39,8 +41,10 @@
                     <div class="col-md-4 mb-3">
                         <label>Status <span class="text-danger">*</span></label>
                         <select name="status" class="form-control">
-                            <option value="email_inputs_shared" {{ old('status') == 'email_inputs_shared' ? 'selected' : '' }}>Email inputs shared</option>
-                            <option value="in_call_discussion" {{ old('status') == 'in_call_discussion' ? 'selected' : '' }}>In call discussion</option>
+                            <option value="email_inputs_shared"
+                                {{ old('status') == 'email_inputs_shared' ? 'selected' : '' }}>Email inputs shared</option>
+                            <option value="in_call_discussion"
+                                {{ old('status') == 'in_call_discussion' ? 'selected' : '' }}>In call discussion</option>
                         </select>
                     </div>
 
@@ -73,7 +77,8 @@
                             <option value="">Select</option>
 
                             @foreach ($requirements as $req)
-                                <option value="{{ $req->id }}" {{ old('requirement_id') == $req->id ? 'selected' : '' }}>
+                                <option value="{{ $req->id }}"
+                                    {{ old('requirement_id') == $req->id ? 'selected' : '' }}>
                                     {{ ucwords(str_replace('_', '-', $req->requirement)) }}
                                 </option>
                             @endforeach
@@ -111,13 +116,13 @@
                     </div>
 
                     <!-- JD -->
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-12 mb-3">
                         <label>JD</label>
-                        <textarea name="jd" class="form-control rich-editor">{{ old('jd') }}</textarea>
+                        <textarea id="editor" name="jd" class="form-control rich-editor">{{ old('jd') }}</textarea>
                     </div>
 
                     <!-- Notes -->
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-12 mb-3">
                         <label>Notes</label>
                         <textarea name="notes" class="form-control">{{ old('notes') }}</textarea>
                     </div>
@@ -133,3 +138,14 @@
         </div>
     </div>
 @endsection
+@push('scripts')
+    <script>
+        let config = {};
+        config.toolbar = "basic";
+        let editor = new RichTextEditor("#editor", config);
+
+        $('#leadForm').on('submit', function() {
+            $('#editor').val(editor.getHTMLCode());
+        });
+    </script>
+@endpush
