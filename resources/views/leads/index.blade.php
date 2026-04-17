@@ -36,8 +36,8 @@
                     <th>Call Done</th>
                     <th>CAM Member</th>
                     <th>Date</th>
-                    <th>JD</th>
-                    <th>Notes</th>
+                    <th width="250px">JD</th>
+                    <th width="250px">Notes</th>
                     <th>Action</th>
                 </tr>
 
@@ -47,7 +47,9 @@
                         <td>{{ $lead->lead }}</td>
                         {{-- Latest Status --}}
                         <td>
-                            {{ optional($lead->notesHistories->last())->status }}
+                            {{ optional($lead->notesHistories->last())->status
+                                ? ucwords(str_replace('_', ' ', optional($lead->notesHistories->last())->status))
+                                : '' }}
                         </td>
                         <td>{{ $lead->tlUser->name ?? '' }}</td>
                         <td>{{ $lead->teamUser->name ?? '' }}</td>
@@ -59,12 +61,12 @@
                         <td>{{ $lead->call_done ? 'Yes' : 'No' }}</td>
                         <td>{{ $lead->cam_member }}</td>
                         <td>{{ \Carbon\Carbon::parse($lead->date)->format('d-m-Y') }}</td>
-                        <td>{!! $lead->jd !!}</td>
+                        <td width="250px">{!! $lead->jd !!}</td>
                         {{-- <td>{{ $lead->notesHistories->notes ?? '' }}</td> --}}
-                        <td>
+                        <td width="250px">
                             {{ optional($lead->notesHistories()->latest()->first())->notes }}
                         </td>
-                        
+
                         <td>
                             <div class="dropdown position-static">
                                 <button class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">

@@ -149,7 +149,7 @@ class LeadController extends Controller
             ]);
 
             // 2. ALWAYS insert new note (history tracking)
-            NotesHistory::create([
+            NotesHistory::update([
                 'lead_id' => $lead->id,
                 'notes'   => $request->notes,
                 'status'  => $request->status,
