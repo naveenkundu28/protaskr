@@ -6,9 +6,12 @@
             <div class="row">
                 <div class="col-lg-12 d-flex justify-content-between mb-4 bg-white shadow-sm p-3 rounded">
                     <h2>Edit Lead</h2>
-                    <a class="btn btn-primary btn-sm" href="{{ route('leads.index') }}">
-                        <i class="fa fa-arrow-left"></i> Back
-                    </a>
+                    <div>
+
+                        <a class="btn btn-primary btn-sm" href="{{ route('leads.index') }}">
+                            <i class="fa fa-arrow-left"></i> Back
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -24,7 +27,7 @@
         @endif
 
         <div class="card p-4 shadow-sm">
-            <form method="POST" action="{{ route('leads.update', $lead->id) }}">
+            <form id="leadForm" method="POST" action="{{ route('leads.update', $lead->id) }}">
                 @csrf
                 @method('PUT')
 
@@ -114,13 +117,13 @@
                     </div>
 
                     <!-- JD -->
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-12 mb-3">
                         <label>JD</label>
-                        <textarea name="jd" class="form-control rich-editor">{{ old('jd', $lead->jd) }}</textarea>
+                        <textarea id="editor" name="jd" class="form-control rich-editor">{{ old('jd', $lead->jd) }}</textarea>
                     </div>
 
                     <!-- Notes -->
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-12 mb-3">
                         <label>Add Notes</label>
                         <textarea name="notes" class="form-control">{{ old('notes', $latestNote ? $latestNote->notes : '') }}</textarea>
                     </div>
@@ -136,3 +139,14 @@
         </div>
     </div>
 @endsection
+@push('scripts')
+    <script>
+        let config = {};
+        config.toolbar = "basic";
+        let editor = new RichTextEditor("#editor", config);
+
+        $('#leadForm').on('submit', function() {
+            $('#editor').val(editor.getHTMLCode());
+        });
+    </script>
+@endpush
