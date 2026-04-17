@@ -191,6 +191,19 @@
                             </select>
                         </div>
                     </div>
+                    <div class="col-xs-12 col-sm-12 col-md-6 mb-4">
+                        <div class="form-group">
+                            <strong>Show Leads:</strong>
+                            <select name="show_leads" class="form-control select2 mt-2">
+                                <option value="1" {{ old('show_leads', $user->show_leads) == 1 ? 'selected' : '' }}>
+                                    Yes
+                                </option>
+                                <option value="0" {{ old('show_leads', $user->show_leads) == 0 ? 'selected' : '' }}>
+                                    No
+                                </option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="col-xs-12 col-sm-12 col-md-12 text-center">
                         <button type="submit" class="btn btn-primary btn-sm mt-2 mb-3"><i
                                 class="fa-solid fa-floppy-disk"></i> Submit</button>

@@ -208,7 +208,8 @@ class UserController extends Controller
             'phone_no',
             'alt_phone_no',
             'experience',
-            'is_show_report'
+            'is_show_report',
+            'show_leads'
         ]);
 
         $input['password'] = Hash::make($input['password']);
