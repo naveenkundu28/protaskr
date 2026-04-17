@@ -17,7 +17,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\HourController;
-
+use App\Http\Controllers\LeadController;
+use App\Http\Controllers\RequirementController;
 use App\Http\Controllers\TagController;
 
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -30,12 +31,20 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/users/listing', [UserController::class, 'listing'])->name('users.listing');
     Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
     Route::resource('users', UserController::class);
+    Route::resource('leads', LeadController::class);
 
     Route::get('mail', [MailController::class, 'index'])->name('mail.inbox');
 
     Route::get('/master-hours', [HourController::class, 'create'])->name('master.hours.create');
     Route::post('/master-hours', [HourController::class, 'store'])->name('master.hours.store');
     Route::get('master/hours/get/{year}', [HourController::class, 'getHoursByYear'])->name('master.hours.get');
+
+    Route::get('/requirements', [RequirementController::class, 'index'])->name('requirements.index');
+    Route::get('/requirements/create', [RequirementController::class, 'create'])->name('requirements.create');
+    Route::post('/requirements', [RequirementController::class, 'store'])->name('requirements.store');
+    Route::get('/requirements/{id}/edit', [RequirementController::class, 'edit'])->name('requirements.edit');
+    Route::put('/requirements/{id}', [RequirementController::class, 'update'])->name('requirements.update');
+    Route::delete('/requirements/{id}', [RequirementController::class, 'destroy'])->name('requirements.destroy');
 
     Route::resource('clients', ProjectController::class);
     Route::get('/service-listing', [ProjectController::class, 'serviceListing'])->name('services.listing');
@@ -87,11 +96,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    Route::get('/hourly-report',[DailyReportController::class,'index'])->name('daily.report');
-    Route::post('/hourly-report/update',[DailyReportController::class,'update'])->name('daily.report.update');
-    Route::post('/hourly-report/generate-weekly',[DailyReportController::class,'generateWeekly'])->name('daily.report.generate-weekly');
-    Route::get('/daily-task-report',[DailyReportController::class,'getDailyTaskReports'])->name('daily.task.report');
-    Route::get('/daily-task-report/users',[DailyReportController::class,'getUserTasks'])->name('daily.task.report.users');
+    Route::get('/hourly-report', [DailyReportController::class, 'index'])->name('daily.report');
+    Route::post('/hourly-report/update', [DailyReportController::class, 'update'])->name('daily.report.update');
+    Route::post('/hourly-report/generate-weekly', [DailyReportController::class, 'generateWeekly'])->name('daily.report.generate-weekly');
+    Route::get('/daily-task-report', [DailyReportController::class, 'getDailyTaskReports'])->name('daily.task.report');
+    Route::get('/daily-task-report/users', [DailyReportController::class, 'getUserTasks'])->name('daily.task.report.users');
 
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 

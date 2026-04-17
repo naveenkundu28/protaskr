@@ -80,6 +80,15 @@
                                     </ul>
                                 </li>
                             @endcan
+
+                            @can('user-show')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('leads*') ? 'active' : '' }}"
+                                        href="{{ route('leads.index') }}">
+                                        <i class="bi bi-person-lines-fill"></i> My Leads
+                                    </a>
+                                </li>
+                            @endcan
                             @can('task-show')
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('tasks*') ? 'active' : '' }}"
@@ -188,6 +197,12 @@
                                                             <a class="dropdown-item ps-4 {{ request()->is('year*') ? 'active' : '' }}"
                                                                 href="{{ route('master.hours.create') }}">
                                                                 <i class="bi bi-clock me-2"></i> Hours
+                                                            </a>
+                                                        </li>
+                                                        <li>
+                                                            <a class="dropdown-item ps-4 {{ request()->is('requirements*') ? 'active' : '' }}"
+                                                                href="{{ route('requirements.index') }}">
+                                                                <i class="bi bi-list-task me-2"></i> Requirements
                                                             </a>
                                                         </li>
                                                     @endcan
