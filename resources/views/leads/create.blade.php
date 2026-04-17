@@ -48,6 +48,8 @@
                     <div class="col-md-4 mb-3">
                         <label>TL <span class="text-danger">*</span></label>
                         <select name="tl" class="form-control">
+                            <option value="">Select</option>
+
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}" {{ old('tl') == $user->id ? 'selected' : '' }}>
                                     {{ $user->name }}

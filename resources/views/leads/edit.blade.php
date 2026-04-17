@@ -50,6 +50,8 @@
                     <div class="col-md-4 mb-3">
                         <label>TL</label>
                         <select name="tl" class="form-control">
+                            <option value="">Select</option>
+
                             @foreach ($users as $user)
                                 <option value="{{ $user->id }}" {{ $lead->tl == $user->id ? 'selected' : '' }}>
                                     {{ $user->name }}

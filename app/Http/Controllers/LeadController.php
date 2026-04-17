@@ -34,7 +34,7 @@ class LeadController extends Controller
         $requirements = Requirement::all();
 
         // Only users who can be TL (example filter)
-        $users = User::all();
+        $users = User::where('show_leads', true)->get();
 
         return view('leads.create', compact('requirements', 'users'));
     }
@@ -97,7 +97,7 @@ class LeadController extends Controller
         $lead = Lead::with('notesHistories')->findOrFail($id);
         $latestNote = $lead->notesHistories()->latest()->first();
 
-        $users = User::all();
+        $users = User::where('show_leads',true)->get();
         $requirements = Requirement::all();
 
         // Latest status from notes_history
