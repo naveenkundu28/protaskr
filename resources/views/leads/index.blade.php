@@ -58,7 +58,7 @@
 
                         <td>{{ $lead->call_done ? 'Yes' : 'No' }}</td>
                         <td>{{ $lead->cam_member }}</td>
-                        <td>{{ $lead->date }}</td>
+                        <td>{{ \Carbon\Carbon::parse($lead->date)->format('d-m-Y') }}</td>
                         <td>{{ $lead->jd }}</td>
                         {{-- <td>{{ $lead->notesHistories->notes ?? '' }}</td> --}}
                         <td>

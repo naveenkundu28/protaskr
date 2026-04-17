@@ -83,6 +83,7 @@ body {
 
 .task-navbar .dropdown-menu-profile{
     right: 0px;
+    width: 180px;
 }
 
 .task-navbar .dropdown-item.active,
