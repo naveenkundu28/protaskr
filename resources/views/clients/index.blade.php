@@ -415,18 +415,14 @@
                 {!! $projects->links('pagination::bootstrap-5') !!}
             </div>
         </div>
-        {{--  --}}
-        {{-- <div>
-            <h5 class="mt-4">Client Legend</h5>
-            <div class="d-flex flex-wrap gap-3 pb-4">
-                @foreach ($performances as $p)
-                    <div
-                        style="background: {{ $p->background_color }}; color: {{ $p->font_color }}; padding:6px 12px; border-radius:4px;">
-                        {{ $p->title }}
-                    </div>
-                @endforeach
-            </div>
-        </div> --}}
+        
+        <h5 class="mt-4">Client Legend</h5>
+        <div class="d-flex flex-wrap gap-3 pb-4">
+            <div style="background: #f1f3f5; color: #495057; padding:6px 12px; border-radius:4px; border: 1px solid #000;">Internal Team</div>
+            <div style="background: #f1f3f5; color: #495057; padding:6px 12px; border-radius:4px; border: 1px solid #000;">External Team</div>
+            <div style="background: #fff3e0; color: #8a4b08; padding:6px 12px; border-radius:4px; border: 1px solid #000;">Project</div>
+            <div style="background: #fff; color: #000; padding:6px 12px; border-radius:4px; border: 1px solid #000;">Client</div>
+        </div>
 
 
     </div>

@@ -31,6 +31,7 @@ class FileController extends Controller
 
     public function store(Request $request, Task $task)
     {
+        dd($request->all());
 		$request->validate([
             'name' => 'nullable|string|max:255',
             'file' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,doc,docx,pdf,txt,html,css,js,php,java,c,cpp',
