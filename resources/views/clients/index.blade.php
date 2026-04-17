@@ -416,6 +416,19 @@
             </div>
         </div>
         {{--  --}}
+        {{-- <div>
+            <h5 class="mt-4">Client Legend</h5>
+            <div class="d-flex flex-wrap gap-3 pb-4">
+                @foreach ($performances as $p)
+                    <div
+                        style="background: {{ $p->background_color }}; color: {{ $p->font_color }}; padding:6px 12px; border-radius:4px;">
+                        {{ $p->title }}
+                    </div>
+                @endforeach
+            </div>
+        </div> --}}
+
+
     </div>
     <script>
         function changeView(type) {

@@ -28,7 +28,8 @@ class User extends Authenticatable
         'phone_no',
         'alt_phone_no',
         'experience',
-        'manual'
+        'manual',
+        'is_show_report'
     ];
 
     /**

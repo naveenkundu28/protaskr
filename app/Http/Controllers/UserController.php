@@ -207,10 +207,12 @@ class UserController extends Controller
             'joining_date',
             'phone_no',
             'alt_phone_no',
-            'experience'
+            'experience',
+            'is_show_report'
         ]);
 
         $input['password'] = Hash::make($input['password']);
+        $input['is_show_report'] = $request->input('is_show_report', true);
 
         $user = User::create($input);
         $user->assignRole($request->input('roles'));
@@ -294,6 +296,7 @@ class UserController extends Controller
         } else {
             $input = Arr::except($input, array('password'));
         }
+        $input['is_show_report'] = $request->input('is_show_report', true);
 
         $user = User::find($id);
         $user->update($input);
