@@ -97,7 +97,7 @@ class LeadController extends Controller
         $lead = Lead::with('notesHistories')->findOrFail($id);
         $latestNote = $lead->notesHistories()->latest()->first();
 
-        $users = User::where('show_leads',true)->get();
+        $users = User::where('show_leads', true)->get();
         $requirements = Requirement::all();
 
         // Latest status from notes_history
@@ -149,12 +149,22 @@ class LeadController extends Controller
             ]);
 
             // 2. ALWAYS insert new note (history tracking)
-            NotesHistory::update([
-                'lead_id' => $lead->id,
-                'notes'   => $request->notes,
-                'status'  => $request->status,
-                'actions' => null
-            ]);
+            // NotesHistory::update([
+            //     'lead_id' => $lead->id,
+            //     'notes'   => $request->notes,
+            //     'status'  => $request->status,
+            //     'actions' => null
+            // ]);
+            $note = NotesHistory::where('lead_id', $lead->id)
+                ->latest()
+                ->first();
+
+            if ($note) {
+                $note->update([
+                    'notes'  => $request->notes,
+                    'status' => $request->status,
+                ]);
+            }
 
             DB::commit();
 
