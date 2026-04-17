@@ -74,7 +74,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('manual/{task}', [TaskController::class, 'mnanualTrack'])->name('tasks.manual');
     Route::put('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
 
-    Route::put('tasks/{trackerId}/update-time', [TaskController::class, 'updateTime'])->name('tasks.updateTime');
+    Route::match(['POST', 'PUT'] ,'tasks/{trackerId}/update-time', [TaskController::class, 'updateTime'])->name('tasks.updateTime');
 
     Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
     Route::post('tasks/{task}/update-status', [TaskController::class, 'updateStatus'])->name('task.updateStatus');

@@ -4,6 +4,17 @@
 @endsection
 @section('content')
     <div class="container-fluid">
+        <style>
+            .type-cell-neutral {
+                background-color: #f1f3f5 !important;
+                color: #495057 !important;
+            }
+
+            .type-cell-project {
+                background-color: #fff3e0 !important;
+                color: #8a4b08 !important;
+            }
+        </style>
         <div class="d-flex justify-content-between align-items-center bg-white mb-4 shadow-sm p-3 rounded">
             <div class="d-flex align-items-center gap-3 flex-wrap">
                 <h2 class="mb-0">{{ request('type') == 'archived' ? 'Archived Clients' : 'Clients' }}</h2>
@@ -23,6 +34,10 @@
                         <option value="internal_team"
                             {{ collect(request('type_filter'))->contains('internal_team') ? 'selected' : '' }}>
                             Internal Team
+                        </option>
+                        <option value="external_team"
+                            {{ collect(request('type_filter'))->contains('external_team') ? 'selected' : '' }}>
+                            External Team
                         </option>
                         <option value="client" {{ collect(request('type_filter'))->contains('client') ? 'selected' : '' }}>
                             Client
@@ -94,11 +109,6 @@
                     <div class="card">
                         <div class="card-body">
                             <h5 class="card-title">{{ $project->name }}</h5>
-                            @if ($project->client_type)
-                                <p class="card-text">
-                                    <strong>Client Type:</strong> {{ ucfirst($project->client_type) }}
-                                </p>
-                            @endif
                             @if ($project->client_email)
                                 <p class="card-text">
                                     <strong>Email:</strong> {{ $project->client_email }}
@@ -128,11 +138,13 @@
                                     <strong>Type:</strong>
                                     {{ $project->type == 'internal_team'
                                         ? 'Internal Team'
-                                        : ($project->type == 'client'
+                                        : ($project->type == 'external_team'
+                                            ? 'External Team'
+                                            : ($project->type == 'client'
                                             ? 'Client'
                                             : ($project->type == 'project'
                                                 ? 'Project'
-                                                : '')) }}
+                                                : ''))) }}
                                 </p>
                             @endif
 
@@ -236,7 +248,6 @@
                 <table class="table table-bordered">
                     <tr>
                         <th>No</th>
-                        <th>Client Type</th>
                         <th>Client Name</th>
                         <th>Client Email</th>
                         {{-- <th>Client Code</th> --}}
@@ -244,7 +255,7 @@
                         {{-- <th>Description</th> --}}
                         <th>Assigned To</th>
                         <th>Start Date</th>
-                        <th>Type</th>
+                        <th>Hours (Current Month)</th>
                         {{-- <th>Pending Tasks</th> --}}
                         <th>Status</th>
                         <th width="180px">Action</th>
@@ -252,16 +263,18 @@
 
 
                     @foreach ($projects as $project)
+                        @php
+                            $rowTypeClass = in_array($project->type, ['internal_team', 'external_team'], true)
+                                ? 'type-cell-neutral'
+                                : ($project->type === 'project' ? 'type-cell-project' : '');
+                        @endphp
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td> 
-                                <span class="text-uppercase">{{ $project->client_type }}</span>
-                            </td>
-                            <td> @isset($project)
+                            <td class="{{ $rowTypeClass }}">{{ $loop->iteration }}</td>
+                            <td class="{{ $rowTypeClass }}"> @isset($project)
                                     <span>{{ $project->name }}</span>
                                 @endisset
                             </td>
-                            <td> @isset($project)
+                            <td class="{{ $rowTypeClass }}"> @isset($project)
                                     <span>{{ $project->client_email }}</span>
                                 @endisset
                             </td>
@@ -269,9 +282,9 @@
                                 <span>{{ $project->client_code }}</span>
                             @endisset
                         </td> --}}
-                            <td> {{ $project->project_name }}</td>
+                            <td class="{{ $rowTypeClass }}"> {{ $project->project_name }}</td>
                             {{-- <td>{{ $project->description }}</td> --}}
-                            <td> @isset($project->users)
+                            <td class="{{ $rowTypeClass }}"> @isset($project->users)
                                     {{-- @foreach ($project->users as $user)
                                         <span
                                             class="{{ $user->trashed() ? 'text-danger' : '' }}">{{ $user->name }}</span><br>
@@ -301,23 +314,15 @@
                                     </span>
                                 @endisset
                             </td>
-                            <td>
+                            <td class="{{ $rowTypeClass }}">
                                 {{ $project->start_date ? \Carbon\Carbon::parse($project->start_date)->format('j F Y') : '' }}
                             </td>
-                            <td>
-                                {{ $project->type == 'internal_team'
-                                    ? 'Internal Team'
-                                    : ($project->type == 'client'
-                                        ? 'Client'
-                                        : ($project->type == 'project'
-                                            ? 'Project'
-                                            : '')) }}
-                            </td>
+                            <td class="{{ $rowTypeClass }}">{{ number_format((float) ($project->current_month_hours ?? 0), 2) }}</td>
                             {{-- <td>{{$project->to_do_tasks + $project->in_progress_tasks + $project->in_review_tasks}}</td> --}}
-                            <td>{{ $project->status == 'not_started' ? 'Not Started' : ($project->status == 'in_progress' ? 'In Progress' : 'Completed') }}
+                            <td class="{{ $rowTypeClass }}">{{ $project->status == 'not_started' ? 'Not Started' : ($project->status == 'in_progress' ? 'In Progress' : 'Completed') }}
                             </td>
 
-                            <td>
+                            <td class="{{ $rowTypeClass }}">
                                 <div class="dropdown service-action-dropdown">
                                     <button class="btn btn-secondary dropdown-toggle" type="button"
                                         data-bs-toggle="dropdown">
@@ -410,18 +415,14 @@
                 {!! $projects->links('pagination::bootstrap-5') !!}
             </div>
         </div>
-        {{--  --}}
-        {{-- <div>
-            <h5 class="mt-4">Client Legend</h5>
-            <div class="d-flex flex-wrap gap-3 pb-4">
-                @foreach ($performances as $p)
-                    <div
-                        style="background: {{ $p->background_color }}; color: {{ $p->font_color }}; padding:6px 12px; border-radius:4px;">
-                        {{ $p->title }}
-                    </div>
-                @endforeach
-            </div>
-        </div> --}}
+        
+        <h5 class="mt-4">Client Legend</h5>
+        <div class="d-flex flex-wrap gap-3 pb-4">
+            <div style="background: #f1f3f5; color: #495057; padding:6px 12px; border-radius:4px; border: 1px solid #000;">Internal Team</div>
+            <div style="background: #f1f3f5; color: #495057; padding:6px 12px; border-radius:4px; border: 1px solid #000;">External Team</div>
+            <div style="background: #fff3e0; color: #8a4b08; padding:6px 12px; border-radius:4px; border: 1px solid #000;">Project</div>
+            <div style="background: #fff; color: #000; padding:6px 12px; border-radius:4px; border: 1px solid #000;">Client</div>
+        </div>
 
 
     </div>

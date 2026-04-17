@@ -56,13 +56,16 @@
 
                         @can('project-edit')
                             <div class="mb-3 col-sm-12 col-md-4">
-                                <label for="client_type" class="form-label">
+                                <label for="type" class="form-label">
                                     Type <span class="text-danger">*</span>
                                 </label>
                                 <select name="type" id="type" class="form-select" required>
                                     <option value="">Select Type</option>
                                     <option value="internal_team"
                                         {{ old('type', $client->type) == 'internal_team' ? 'selected' : '' }}>Internal Team
+                                    </option>
+                                    <option value="external_team"
+                                        {{ old('type', $client->type) == 'external_team' ? 'selected' : '' }}>External Team
                                     </option>
                                     <option value="client" {{ old('type', $client->type) == 'client' ? 'selected' : '' }}>
                                         Client</option>
@@ -84,24 +87,11 @@
                                 @enderror
                             </div>
 
-                            <div class="mb-3 col-sm-12 col-md-4">
-                                <label for="client_type" class="form-label">
-                                    Client Type <span class="text-danger">*</span>
-                                </label>
-
-                                <select name="client_type" id="client_type" class="form-select" required>
-                                    <option value="internal" {{ $client->client_type == 'internal' ? 'selected' : '' }}>
-                                        Internal
-                                    </option>
-                                    <option value="external" {{ $client->client_type == 'external' ? 'selected' : '' }}>
-                                        External
-                                    </option>
-                                    <option value="other" {{ $client->client_type == 'other' ? 'selected' : '' }}>
-                                        Other
-                                    </option>
-                                </select>
-
-                                @error('client_type')
+                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
+                                <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                <input type="date" name="start_date" id="start_date" class="form-control" required
+                                    value="{{ \Carbon\Carbon::parse($client->start_date)->format('Y-m-d') }}">
+                                @error('start_date')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -114,14 +104,7 @@
                                 @enderror
                             </div>
 
-                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
-                                <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
-                                <input type="date" name="start_date" id="start_date" class="form-control" required
-                                    value="{{ \Carbon\Carbon::parse($client->start_date)->format('Y-m-d') }}">
-                                @error('start_date')
-                                    <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
+                            
                             {{-- <div class="mb-3">
                             <label for="end_date" class="form-label">End Date</label>
                             <input type="date" name="end_date" id="end_date" class="form-control"

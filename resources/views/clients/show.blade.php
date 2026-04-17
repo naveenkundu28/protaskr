@@ -18,9 +18,6 @@
                         {{-- <h5 class="card-title">{{ $client->name }}</h5> --}}
                         <p class="card-text">{!! $client->description !!}</p>
 
-                        @if ($client->client_type)
-                            <p class="card-text"><strong>Client Type:</strong> {{ $client->client_type }}</p>
-                        @endif
                         @if ($client->client_email)
                             <p class="card-text"><strong>Client Email:</strong> {{ $client->client_email }}</p>
                         @endif
@@ -31,11 +28,13 @@
                             <p class="card-text"><strong>Type:</strong>
                                 {{ $client->type == 'internal_team'
                                     ? 'Internal Team'
-                                    : ($client->type == 'client'
+                                    : ($client->type == 'external_team'
+                                        ? 'External Team'
+                                        : ($client->type == 'client'
                                         ? 'Client'
                                         : ($client->type == 'project'
                                             ? 'Project'
-                                            : '')) }}
+                                            : ''))) }}
                             </p>
                         @endif
                         

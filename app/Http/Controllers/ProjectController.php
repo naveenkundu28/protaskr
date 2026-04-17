@@ -84,7 +84,14 @@ class ProjectController extends Controller
 
         $projects = $projects->with(['users' => function ($query) {
             $query->withTrashed();
-        }])->latest()
+        }])
+            ->withSum([
+                'services as current_month_hours' => function ($query) {
+                    $query->where('month', now()->month)
+                        ->where('year', now()->year);
+                }
+            ], 'hours')
+            ->latest()
             ->paginate(50)
             ->withQueryString();
         // dd($projects);
@@ -111,8 +118,7 @@ class ProjectController extends Controller
             'client_email' => 'required|email',
             // 'client_code' => 'required',
             'project_name' => 'required|string|max:255',
-            'client_type' => 'required|in:internal,external,other',
-            'type' => 'required|in:internal_team,client,project',
+            'type' => 'required|in:internal_team,external_team,client,project',
             'description' => 'nullable|string',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
@@ -167,8 +173,7 @@ class ProjectController extends Controller
                 'client_email' => 'required|email',
                 // 'client_code' => 'required',
                 'project_name' => 'required|string|max:255',
-                'client_type' => 'required|in:internal,external,other',
-                'type' => 'required|in:internal_team,client,project',
+                'type' => 'required|in:internal_team,external_team,client,project',
                 'description' => 'nullable|string',
                 'start_date' => 'nullable|date',
                 'end_date' => 'nullable|date',

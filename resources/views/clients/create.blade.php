@@ -44,11 +44,12 @@
                             @enderror
                         </div> --}}
                         <div class="mb-3 col-sm-12 col-md-4">
-                            <label for="client_type" class="form-label">
+                            <label for="type" class="form-label">
                                 Type <span class="text-danger">*</span>
                             </label>
                             <select name="type" id="type" class="form-select" required>
                                 <option value="internal_team">Internal Team</option>
+                                <option value="external_team">External Team</option>
                                 <option value="client" selected>Client</option>
                                 <option value="project">Project</option>
                             </select>
@@ -66,35 +67,19 @@
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
-
-                        <div class="mb-3 col-sm-12 col-md-4">
-                            <label for="client_type" class="form-label">
-                                Client Type <span class="text-danger">*</span>
-                            </label>
-                            <select name="client_type" id="client_type" class="form-select" required>
-                                <option value="internal">Internal</option>
-                                <option value="external" selected>External</option>
-                                <option value="other">Other</option>
-                            </select>
-
-                            @error('client_type')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-
-                        <div class="mb-3 col-sm-12">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea name="description" id="summernote" class="form-control"></textarea>
-                            @error('description')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                        </div>
-
+                        
                         <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
                             <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
                             <input type="date" name="start_date" id="start_date" class="form-control" required>
                             @error('start_date')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                        
+                        <div class="mb-3 col-sm-12">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea name="description" id="summernote" class="form-control"></textarea>
+                            @error('description')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
