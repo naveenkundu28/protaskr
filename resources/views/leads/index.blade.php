@@ -37,7 +37,6 @@
                     <th>CAM Member</th>
                     <th>Date</th>
                     <th width="250px">JD</th>
-                    <th width="250px">Notes</th>
                     <th>Action</th>
                 </tr>
 
@@ -63,9 +62,9 @@
                         <td>{{ \Carbon\Carbon::parse($lead->date)->format('d-m-Y') }}</td>
                         <td class="jd-column">{!! $lead->jd !!}</td>
                         {{-- <td>{{ $lead->notesHistories->notes ?? '' }}</td> --}}
-                        <td class="jd-column">
+                        {{-- <td class="jd-column">
                             {{ optional($lead->latestNotesHistory)->notes }}
-                        </td>
+                        </td> --}}
 
                         <td>
                             <div class="dropdown position-static">

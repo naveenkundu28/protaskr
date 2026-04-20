@@ -32,10 +32,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/users/listing', [UserController::class, 'listing'])->name('users.listing');
     Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
     Route::resource('users', UserController::class);
-    Route::resource('leads', LeadController::class);
-    Route::resource('leads.notes-histories', NotesHistoryController::class)
-        ->parameters(['notes-histories' => 'notesHistory'])
-        ->except(['show']);
+    
+    Route::middleware(['leads_access'])->group(function () {
+        Route::resource('leads', LeadController::class);
+        Route::resource('leads.notes-histories', NotesHistoryController::class)
+            ->parameters(['notes-histories' => 'notesHistory'])
+            ->except(['show']);
+    });
 
     Route::get('mail', [MailController::class, 'index'])->name('mail.inbox');
 

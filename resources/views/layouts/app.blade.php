@@ -81,14 +81,14 @@
                                 </li>
                             @endcan
 
-                            @can('user-show')
+                            @if (auth()->user()->can('user-show') && auth()->user()->show_leads)
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('leads*') ? 'active' : '' }}"
                                         href="{{ route('leads.index') }}">
                                         <i class="bi bi-person-lines-fill"></i> My Leads
                                     </a>
                                 </li>
-                            @endcan
+                            @endif
                             @can('task-show')
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('tasks*') ? 'active' : '' }}"
