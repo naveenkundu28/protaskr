@@ -40,7 +40,7 @@
                     <th>Action</th>
                 </tr>
 
-                @foreach ($notesHistories as $notesHistory)
+                @forelse ($notesHistories as $notesHistory)
                     <tr>
                         <td>{{ ++$i }}</td>
                         <td>{{ ucwords(str_replace('_', ' ', $notesHistory->status)) }}</td>
@@ -70,7 +70,13 @@
                             </div>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            No Notes History Found
+                        </td>
+                    </tr>
+                @endforelse
             </table>
         </div>
 

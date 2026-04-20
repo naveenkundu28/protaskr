@@ -80,7 +80,7 @@ class LeadController extends Controller
             if ($request->notes || $request->status) {
                 NotesHistory::create([
                     'lead_id' => $lead->id,
-                    'notes'   => $request->notes ?? '',
+                    'notes'   => $request->notes ?? 'Status updated',
                     'status'  => $request->status,
                     'actions' => null
                 ]);
@@ -195,7 +195,7 @@ class LeadController extends Controller
             if ($request->filled('notes') || $request->filled('status')) {
                 NotesHistory::create([
                     'lead_id' => $lead->id,
-                    'notes' => $request->notes ?? '',
+                    'notes' => $request->notes ?? 'Status updated',
                     'status' => $request->status,
                     'actions' => null,
                 ]);

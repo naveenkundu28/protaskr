@@ -37,11 +37,10 @@
                     <th>CAM Member</th>
                     <th>Date</th>
                     <th width="250px">JD</th>
-                    <th width="250px">Notes</th>
                     <th>Action</th>
                 </tr>
 
-                @foreach ($leads as $key => $lead)
+                @forelse ($leads as $key => $lead)
                     <tr>
                         <td>{{ ++$i }}</td>
                         <td>{{ $lead->lead }}</td>
@@ -63,9 +62,9 @@
                         <td>{{ \Carbon\Carbon::parse($lead->date)->format('d-m-Y') }}</td>
                         <td class="jd-column">{!! $lead->jd !!}</td>
                         {{-- <td>{{ $lead->notesHistories->notes ?? '' }}</td> --}}
-                        <td class="jd-column">
+                        {{-- <td class="jd-column">
                             {{ optional($lead->latestNotesHistory)->notes }}
-                        </td>
+                        </td> --}}
 
                         <td>
                             <div class="dropdown position-static">
@@ -97,7 +96,13 @@
                             </div>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            No Leads Found
+                        </td>
+                    </tr>
+                @endforelse
             </table>
         </div>
 
