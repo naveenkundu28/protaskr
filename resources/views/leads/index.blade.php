@@ -32,7 +32,7 @@
                     <th>TL</th>
                     <th>Team</th>
                     <th>Requirement</th>
-                    <th>Skills</th>
+                    <th>Technologies</th>
                     <th>Claimed Group</th>
                     <th>Is Call Done</th>
                     <th>CAM Member</th>
