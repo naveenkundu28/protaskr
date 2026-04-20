@@ -122,11 +122,11 @@
                         <textarea id="editor" name="jd" class="form-control rich-editor">{{ old('jd') }}</textarea>
                     </div>
 
-                    <!-- Notes -->
+                    {{-- <!-- Notes -->
                     <div class="col-md-12 mb-3">
                         <label>Notes</label>
                         <textarea name="notes" class="form-control">{{ old('notes') }}</textarea>
-                    </div>
+                    </div> --}}
 
                     <div class="text-center">
                         <button type="submit" class="btn btn-primary btn-sm">

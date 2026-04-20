@@ -18,6 +18,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\HourController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\NotesHistoryController;
 use App\Http\Controllers\RequirementController;
 use App\Http\Controllers\TagController;
 
@@ -32,6 +33,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/users/{id}/restore', [UserController::class, 'restore'])->name('users.restore');
     Route::resource('users', UserController::class);
     Route::resource('leads', LeadController::class);
+    Route::resource('leads.notes-histories', NotesHistoryController::class)
+        ->parameters(['notes-histories' => 'notesHistory'])
+        ->except(['show']);
 
     Route::get('mail', [MailController::class, 'index'])->name('mail.inbox');
 

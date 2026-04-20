@@ -47,8 +47,8 @@
                         <td>{{ $lead->lead }}</td>
                         {{-- Latest Status --}}
                         <td>
-                            {{ optional($lead->notesHistories->last())->status
-                                ? ucwords(str_replace('_', ' ', optional($lead->notesHistories->last())->status))
+                            {{ optional($lead->latestNotesHistory)->status
+                                ? ucwords(str_replace('_', ' ', optional($lead->latestNotesHistory)->status))
                                 : '' }}
                         </td>
                         <td>{{ $lead->tlUser->name ?? '' }}</td>
@@ -64,7 +64,7 @@
                         <td class="jd-column">{!! $lead->jd !!}</td>
                         {{-- <td>{{ $lead->notesHistories->notes ?? '' }}</td> --}}
                         <td class="jd-column">
-                            {{ optional($lead->notesHistories()->latest()->first())->notes }}
+                            {{ optional($lead->latestNotesHistory)->notes }}
                         </td>
 
                         <td>
@@ -73,6 +73,11 @@
                                     <i class="bi bi-list-task"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
+
+                                    <li>
+                                        <a class="dropdown-item text-warning"
+                                            href="{{ route('leads.notes-histories.index', $lead->id) }}">Notes Histories</a>
+                                    </li>
 
                                     <li>
                                         <a class="dropdown-item text-primary"

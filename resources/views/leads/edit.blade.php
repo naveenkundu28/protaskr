@@ -97,7 +97,7 @@
 
                     <!-- Call Done -->
                     <div class="col-md-4 mb-3">
-                        <label>Call Done</label>
+                        <label>Is Call Done</label>
                         <select name="call_done" class="form-control">
                             <option value="1" {{ $lead->call_done ? 'selected' : '' }}>Yes</option>
                             <option value="0" {{ !$lead->call_done ? 'selected' : '' }}>No</option>
@@ -124,10 +124,10 @@
                     </div>
 
                     <!-- Notes -->
-                    <div class="col-md-12 mb-3">
+                    {{-- <div class="col-md-12 mb-3">
                         <label>Add Notes</label>
                         <textarea name="notes" class="form-control">{{ old('notes', $latestNote ? $latestNote->notes : '') }}</textarea>
-                    </div>
+                    </div> --}}
 
                     <div class="text-center">
                         <button type="submit" class="btn btn-primary btn-sm">

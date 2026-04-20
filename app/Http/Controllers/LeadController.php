@@ -17,7 +17,7 @@ class LeadController extends Controller
 
         $search = trim((string) $request->input('search'));
 
-        $leads = Lead::with(['requirement', 'tlUser', 'teamUser', 'notesHistories'])
+        $leads = Lead::with(['requirement', 'tlUser', 'teamUser', 'latestNotesHistory'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where('lead', 'like', "%{$search}%");
             })
@@ -52,7 +52,6 @@ class LeadController extends Controller
             'call_done'      => 'required|boolean',
             'date'           => 'nullable|date',
             'jd'             => 'nullable|string',
-            'notes'          => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -75,7 +74,7 @@ class LeadController extends Controller
             if ($request->notes || $request->status) {
                 NotesHistory::create([
                     'lead_id' => $lead->id,
-                    'notes'   => $request->notes,
+                    'notes'   => $request->notes ?? '',
                     'status'  => $request->status,
                     'actions' => null
                 ]);
@@ -129,7 +128,6 @@ class LeadController extends Controller
             'call_done'      => 'required|boolean',
             'date'           => 'nullable|date',
             'jd'             => 'nullable|string',
-            'notes'          => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -155,14 +153,12 @@ class LeadController extends Controller
             //     'status'  => $request->status,
             //     'actions' => null
             // ]);
-            $note = NotesHistory::where('lead_id', $lead->id)
-                ->latest()
-                ->first();
-
-            if ($note) {
-                $note->update([
-                    'notes'  => $request->notes,
+            if ($request->filled('notes') || $request->filled('status')) {
+                NotesHistory::create([
+                    'lead_id' => $lead->id,
+                    'notes' => $request->notes ?? '',
                     'status' => $request->status,
+                    'actions' => null,
                 ]);
             }
 

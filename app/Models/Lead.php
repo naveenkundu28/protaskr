@@ -42,4 +42,9 @@ class Lead extends Model
     {
         return $this->hasMany(NotesHistory::class);
     }
+
+    public function latestNotesHistory()
+    {
+        return $this->hasOne(NotesHistory::class)->latestOfMany();
+    }
 }
