@@ -66,7 +66,7 @@
                     <div class="col-md-4 mb-3">
                         <label>Team</label>
                         <select name="team" class="form-control">
-                            <option value="1" {{ old('team') == 1 ? 'selected' : '' }}>Anshul</option>
+                            <option value="1" {{ old('team') == 44 ? 'selected' : '' }}>Anshul</option>
                         </select>
                     </div>
 

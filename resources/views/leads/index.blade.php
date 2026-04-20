@@ -61,9 +61,9 @@
                         <td>{{ $lead->call_done ? 'Yes' : 'No' }}</td>
                         <td>{{ $lead->cam_member }}</td>
                         <td>{{ \Carbon\Carbon::parse($lead->date)->format('d-m-Y') }}</td>
-                        <td width="250px">{!! $lead->jd !!}</td>
+                        <td class="jd-column">{!! $lead->jd !!}</td>
                         {{-- <td>{{ $lead->notesHistories->notes ?? '' }}</td> --}}
-                        <td width="250px">
+                        <td class="jd-column">
                             {{ optional($lead->notesHistories()->latest()->first())->notes }}
                         </td>
 

@@ -401,3 +401,11 @@ main {
     display: flex;
     align-items: center;
 }
+
+td.jd-column {
+    width: 250px;
+    max-width: 250px;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: anywhere; /* VERY important for long URLs */
+}
