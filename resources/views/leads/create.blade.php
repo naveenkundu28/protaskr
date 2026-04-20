@@ -70,6 +70,32 @@
                         </select>
                     </div>
 
+                    <!-- Skills -->
+                    <div class="col-md-4 mb-3">
+                        <label>Skills</label>
+                        <select name="skills[]" class="form-control select2-tags" multiple>
+                            @php
+                                $selectedSkills = old('skills', []);
+                            @endphp
+
+                            @foreach ($skills as $skill)
+                                <option value="{{ $skill->id }}"
+                                    {{ in_array($skill->id, $selectedSkills) ? 'selected' : '' }}>
+                                    {{ $skill->name }}
+                                </option>
+                            @endforeach
+
+                            @if (is_array($selectedSkills))
+                                @foreach ($selectedSkills as $selectedSkill)
+                                    @if (!is_numeric($selectedSkill))
+                                        <option value="{{ $selectedSkill }}" selected>{{ $selectedSkill }}</option>
+                                    @endif
+                                @endforeach
+                            @endif
+                        </select>
+                        <small class="text-muted">Type a new skill and press Enter to create it.</small>
+                    </div>
+
                     <!-- Requirement -->
                     <div class="col-md-4 mb-3">
                         <label>Requirement <span class="text-danger">*</span></label>

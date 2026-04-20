@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Lead;
 use App\Models\NotesHistory;
 use App\Models\Requirement;
+use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,11 +33,12 @@ class LeadController extends Controller
     {
         $this->authorize('user-create');
         $requirements = Requirement::all();
+        $skills = Skill::all();
 
         // Only users who can be TL (example filter)
         $users = User::where('show_leads', true)->get();
 
-        return view('leads.create', compact('requirements', 'users'));
+        return view('leads.create', compact('requirements', 'users', 'skills'));
     }
 
     public function store(Request $request)
@@ -48,6 +50,8 @@ class LeadController extends Controller
             'tl'             => 'required|exists:users,id',
             'team'           => 'required|exists:users,id',
             'requirement_id' => 'required|exists:requirements,id',
+            'skills'         => 'nullable|array',
+            'skills.*'       => 'required|string|max:255',
             'claimed_group'  => 'required|in:chat,gl,email',
             'call_done'      => 'required|boolean',
             'date'           => 'nullable|date',
@@ -70,6 +74,8 @@ class LeadController extends Controller
                 'jd'             => $request->jd,
             ]);
 
+            $lead->skills()->sync($this->resolveSkillIds($request->input('skills', [])));
+
             // 2. Insert Notes History
             if ($request->notes || $request->status) {
                 NotesHistory::create([
@@ -90,6 +96,32 @@ class LeadController extends Controller
         }
     }
 
+    protected function resolveSkillIds(array $skills): array
+    {
+        return collect($skills)
+            ->map(function ($skill) {
+                $skill = trim((string) $skill);
+                if ($skill === '') {
+                    return null;
+                }
+
+                if (ctype_digit($skill)) {
+                    return Skill::where('id', $skill)->exists() ? (int)$skill : null;
+                }
+
+                $existing = Skill::whereRaw('LOWER(name) = ?', [mb_strtolower($skill)])->first();
+                if ($existing) {
+                    return $existing->id;
+                }
+
+                return Skill::create(['name' => $skill])->id;
+            })
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+    }
+
     public function edit($id)
     {
         $this->authorize('user-edit');
@@ -104,12 +136,15 @@ class LeadController extends Controller
             $lead->notesHistories()->latest()->first()
         )->status;
 
+        $skills = Skill::all();
+
         return view('leads.edit', compact(
             'lead',
             'users',
             'requirements',
             'latestStatus',
-            'latestNote'
+            'latestNote',
+            'skills'
         ));
     }
 
@@ -124,6 +159,8 @@ class LeadController extends Controller
             'tl'             => 'required|exists:users,id',
             'team'           => 'required|exists:users,id',
             'requirement_id' => 'required|exists:requirements,id',
+            'skills'         => 'nullable|array',
+            'skills.*'       => 'required|string|max:255',
             'claimed_group'  => 'nullable|in:chat,gl,email',
             'call_done'      => 'required|boolean',
             'date'           => 'nullable|date',
@@ -145,6 +182,8 @@ class LeadController extends Controller
                 'date'           => $request->date,
                 'jd'             => $request->jd,
             ]);
+
+            $lead->skills()->sync($this->resolveSkillIds($request->input('skills', [])));
 
             // 2. ALWAYS insert new note (history tracking)
             // NotesHistory::update([
