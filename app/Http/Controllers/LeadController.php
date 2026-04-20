@@ -18,7 +18,7 @@ class LeadController extends Controller
 
         $search = trim((string) $request->input('search'));
 
-        $leads = Lead::with(['requirement', 'tlUser', 'teamUser', 'latestNotesHistory'])
+        $leads = Lead::with(['requirement', 'tlUser', 'teamUser', 'latestNotesHistory', 'skills'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where('lead', 'like', "%{$search}%");
             })
