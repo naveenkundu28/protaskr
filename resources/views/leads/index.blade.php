@@ -32,6 +32,7 @@
                     <th>TL</th>
                     <th>Team</th>
                     <th>Requirement</th>
+                    <th>Skills</th>
                     <th>Claimed Group</th>
                     <th>Is Call Done</th>
                     <th>CAM Member</th>
@@ -53,8 +54,40 @@
                         <td>{{ $lead->tlUser->name ?? '' }}</td>
                         <td>{{ $lead->teamUser->name ?? '' }}</td>
                         <td>{{ ucwords(str_replace('_', '-', $lead->requirement->requirement ?? '')) }}</td>
+                        {{-- <td>
+                            @if ($lead->skills->count())
+                                {{ $lead->skills->pluck('name')->join(', ') }}
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td> --}}
+                        <td>
+                            @if ($lead->skills->count())
+                                @php
+                                    $skills = $lead->skills;
+                                    $visibleSkills = $skills->take(2);
+                                    $remainingSkills = $skills->slice(2);
+                                    $remainingCount = $skills->count() - 2;
+                                @endphp
 
+                                <span>
+                                    {{-- Visible Skills --}}
+                                    @foreach ($visibleSkills as $skill)
+                                        <span>{{ $skill->name }}</span>{{ !$loop->last ? ',' : '' }}
+                                    @endforeach
 
+                                    {{-- Remaining Count --}}
+                                    @if ($remainingCount > 0)
+                                        <span class="text-primary" data-bs-toggle="tooltip" style="cursor: pointer;"
+                                            title="@foreach ($remainingSkills as $skill){{ $skill->name }}{{ !$loop->last ? ', ' : '' }} @endforeach">
+                                            +{{ $remainingCount }}
+                                        </span>
+                                    @endif
+                                </span>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
                         <td>{{ $lead->claimed_group }}</td>
 
                         <td>{{ $lead->call_done ? 'Yes' : 'No' }}</td>
@@ -75,7 +108,8 @@
 
                                     <li>
                                         <a class="dropdown-item text-warning"
-                                            href="{{ route('leads.notes-histories.index', $lead->id) }}">Notes Histories</a>
+                                            href="{{ route('leads.notes-histories.index', $lead->id) }}">Notes
+                                            Histories</a>
                                     </li>
 
                                     <li>
