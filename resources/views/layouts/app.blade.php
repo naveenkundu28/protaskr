@@ -265,6 +265,15 @@
                     width: '100%',
                     allowClear: true
                 });
+
+                $('.select2-tags').select2({
+                    placeholder: "Type or select skills",
+                    width: '100%',
+                    tags: true,
+                    tokenSeparators: [','],
+                    allowClear: true
+                });
+
                 $('#userFilter').select2({
                     placeholder: "All Users",
                     width: '100%',

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Skill;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -46,5 +47,10 @@ class Lead extends Model
     public function latestNotesHistory()
     {
         return $this->hasOne(NotesHistory::class)->latestOfMany();
+    }
+
+    public function skills()
+    {
+        return $this->belongsToMany(Skill::class, 'lead_skill')->withTimestamps();
     }
 }
