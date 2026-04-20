@@ -40,7 +40,7 @@
                     <th>Action</th>
                 </tr>
 
-                @foreach ($leads as $key => $lead)
+                @forelse ($leads as $key => $lead)
                     <tr>
                         <td>{{ ++$i }}</td>
                         <td>{{ $lead->lead }}</td>
@@ -96,7 +96,13 @@
                             </div>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            No Leads Found
+                        </td>
+                    </tr>
+                @endforelse
             </table>
         </div>
 
