@@ -72,7 +72,7 @@
 
                     <!-- Skills -->
                     <div class="col-md-4 mb-3">
-                        <label>Skills</label>
+                        <label>Technologies</label>
                         <select name="skills[]" class="form-control select2-tags" multiple>
                             @php
                                 $selectedSkills = old('skills', []);
