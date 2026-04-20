@@ -91,12 +91,13 @@
                         <select name="claimed_group" class="form-control">
                             <option value="chat" {{ old('claimed_group') == 'chat' ? 'selected' : '' }}>Chat</option>
                             <option value="gl" {{ old('claimed_group') == 'gl' ? 'selected' : '' }}>GL</option>
+                            <option value="email" {{ old('claimed_group') == 'email' ? 'selected' : '' }}>Email</option>
                         </select>
                     </div>
 
                     <!-- Call Done -->
                     <div class="col-md-4 mb-3">
-                        <label>Call Done</label>
+                        <label>Is Call Done</label>
                         <select name="call_done" class="form-control">
                             <option value="1" {{ old('call_done') == 1 ? 'selected' : '' }}>Yes</option>
                             <option value="0" {{ old('call_done') == 0 ? 'selected' : '' }}>No</option>
@@ -112,7 +113,7 @@
                     <!-- Date -->
                     <div class="col-md-4 mb-3">
                         <label>Date</label>
-                        <input type="date" name="date" class="form-control" value="{{ old('date') }}">
+                        <input type="date" name="date" class="form-control" value="{{ old('date', date('Y-m-d')) }}">
                     </div>
 
                     <!-- JD -->

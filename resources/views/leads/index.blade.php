@@ -33,7 +33,7 @@
                     <th>Team</th>
                     <th>Requirement</th>
                     <th>Claimed Group</th>
-                    <th>Call Done</th>
+                    <th>Is Call Done</th>
                     <th>CAM Member</th>
                     <th>Date</th>
                     <th width="250px">JD</th>

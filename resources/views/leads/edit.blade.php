@@ -44,8 +44,8 @@
                     <div class="col-md-4 mb-3">
                         <label>Status</label>
                         <select name="status" class="form-control">
-                            <option value="email_inputs_shared" {{ $lead->status == 'email_inputs_shared' ? 'selected' : '' }}>Email inputs shared</option>
-                            <option value="in_call_discussion" {{ $lead->status == 'in_call_discussion' ? 'selected' : '' }}>In call discussion</option>
+                            <option value="email_inputs_shared" {{ old('status', $latestStatus) == 'email_inputs_shared' ? 'selected' : '' }}>Email inputs shared</option>
+                            <option value="in_call_discussion" {{ old('status', $latestStatus) == 'in_call_discussion' ? 'selected' : '' }}>In call discussion</option>
                         </select>
                     </div>
 
@@ -91,6 +91,7 @@
                         <select name="claimed_group" class="form-control">
                             <option value="chat" {{ $lead->claimed_group == 'chat' ? 'selected' : '' }}>Chat</option>
                             <option value="gl" {{ $lead->claimed_group == 'gl' ? 'selected' : '' }}>GL</option>
+                            <option value="email" {{ $lead->claimed_group == 'email' ? 'selected' : '' }}>Email</option>
                         </select>
                     </div>
 
