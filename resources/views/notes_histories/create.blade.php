@@ -37,9 +37,14 @@
 
                     <div class="col-md-4 mb-3">
                         <label>Status <span class="text-danger">*</span></label>
-                        <select name="status" class="form-control">
-                            <option value="email_inputs_shared" {{ old('status') == 'email_inputs_shared' ? 'selected' : '' }}>Email inputs shared</option>
-                            <option value="in_call_discussion" {{ old('status') == 'in_call_discussion' ? 'selected' : '' }}>In call discussion</option>
+                        <select name="lead_status_id" class="form-control">
+                            <option value="">Select Status</option>
+                            @foreach ($leadStatuses as $status)
+                                <option value="{{ $status->id }}"
+                                    {{ old('lead_status_id') == $status->id ? 'selected' : '' }}>
+                                    {{ ucfirst($status->name) }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 

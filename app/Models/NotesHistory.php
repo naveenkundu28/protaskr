@@ -12,11 +12,17 @@ class NotesHistory extends Model
     protected $fillable = [
         'lead_id',
         'notes',
-        'status',
+        'lead_status_id',
         'actions',
     ];
+    
     public function lead()
     {
         return $this->belongsTo(Lead::class);
+    }
+
+    public function leadStatus()
+    {
+        return $this->belongsTo(LeadStatus::class);
     }
 }

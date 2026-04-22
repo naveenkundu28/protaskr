@@ -18,6 +18,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SkillController;
 use App\Http\Controllers\HourController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\LeadStatusController;
 use App\Http\Controllers\NotesHistoryController;
 use App\Http\Controllers\RequirementController;
 use App\Http\Controllers\TagController;
@@ -52,6 +53,13 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/requirements/{id}/edit', [RequirementController::class, 'edit'])->name('requirements.edit');
     Route::put('/requirements/{id}', [RequirementController::class, 'update'])->name('requirements.update');
     Route::delete('/requirements/{id}', [RequirementController::class, 'destroy'])->name('requirements.destroy');
+
+    Route::get('/lead-statuses', [LeadStatusController::class, 'index'])->name('lead-statuses.index');
+    Route::get('/lead-statuses/create', [LeadStatusController::class, 'create'])->name('lead-statuses.create');
+    Route::post('/lead-statuses', [LeadStatusController::class, 'store'])->name('lead-statuses.store');
+    Route::get('/lead-statuses/{id}/edit', [LeadStatusController::class, 'edit'])->name('lead-statuses.edit');
+    Route::put('/lead-statuses/{id}', [LeadStatusController::class, 'update'])->name('lead-statuses.update');
+    Route::delete('/lead-statuses/{id}', [LeadStatusController::class, 'destroy'])->name('lead-statuses.destroy');
 
     Route::resource('clients', ProjectController::class);
     Route::get('/service-listing', [ProjectController::class, 'serviceListing'])->name('services.listing');
