@@ -37,7 +37,7 @@
                     <th>Is Call Done</th>
                     <th>CAM Member</th>
                     <th>Date</th>
-                    <th width="250px">JD</th>
+                    {{-- <th width="250px">JD</th> --}}
                     <th>Action</th>
                 </tr>
 
@@ -93,7 +93,7 @@
                         <td>{{ $lead->call_done ? 'Yes' : 'No' }}</td>
                         <td>{{ $lead->cam_member }}</td>
                         <td>{{ \Carbon\Carbon::parse($lead->date)->format('d-m-Y') }}</td>
-                        <td class="jd-column">{!! $lead->jd !!}</td>
+                        {{-- <td class="jd-column">{!! $lead->jd !!}</td> --}}
                         {{-- <td>{{ $lead->notesHistories->notes ?? '' }}</td> --}}
                         {{-- <td class="jd-column">
                             {{ optional($lead->latestNotesHistory)->notes }}
