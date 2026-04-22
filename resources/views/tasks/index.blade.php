@@ -10,17 +10,17 @@
                     <h2> {{ isset($project) ? $project->name : 'All' }} - Tasks</h2>
                     <div>
                         <a class="btn btn-warning"
-                        href="{{ route('tasks.index', ['filter' => 1] + (isset($project) ? ['project_id' => $project->id] : [])) }}">
-                        Filters
-                    </a>
-                    
+                            href="{{ route('tasks.index', ['filter' => 1, 'tab' => $currentTab] + (isset($project) ? ['project_id' => $project->id] : [])) }}">
+                            Filters
+                        </a>
+
                         <a href="#" data-bs-toggle="modal" data-bs-target="#exportModal" class="btn btn-secondary"
                             data-status="to_do">Export</a>
-                            @can('mark-task-complete')
+                        @can('mark-task-complete')
                             <button id="markCompleteBtn" onclick="submitCompletedTasks()" disabled type="submit"
                                 class="btn btn-success">Mark Tasks As Complete</button>
                         @endcan
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#createTaskModal" class="btn btn-primary"
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#createTaskModal" class="btn btn-primary"
                             data-status="to_do">New Task</a>
                     </div>
                 </div>
@@ -32,10 +32,11 @@
             </div>
         @endsession
         @if (request('filter'))
-            <form class="card" id="filter">
+            <form class="card mb-3" id="filter">
                 @if ($project)
                     <input type="hidden" value="{{ $project->id }}" name="project_id">
                 @endif
+                <input type="hidden" name="tab" value="{{ $currentTab }}">
                 <div class="card-body">
                     <div class="row">
                         <div class="col-12 col-md-3 col-sm-6">
@@ -48,9 +49,13 @@
                             <select name="status" id="status" class="form-select">
                                 <option value="">-- Status --</option>
                                 @foreach (config('site.tasks.status') as $key => $value)
-                                    <option value="{{ $key }}" @selected(request('status') == $key)>
-                                        {{ $value }}
-                                    </option>
+                                    @if ($key != 'closed')
+                                        {{-- Exclude 'closed' status from filter options --}}
+
+                                        <option value="{{ $key }}" @selected(request('status') == $key)>
+                                            {{ $value }}
+                                        </option>
+                                    @endif
                                 @endforeach
 
                             </select>
@@ -82,12 +87,53 @@
                     <button type="submit" class="btn btn-dark  px-3" name="filter" value="1">
                         <i class="fas fa-save"></i> Submit
                     </button>
-                    <a href="{{ route('tasks.index', (isset($project) ? ['project_id' => $project->id] : [])) }}" class="btn btn-danger ms-2  px-3">
+                    <a href="{{ route('tasks.index', isset($project) ? ['project_id' => $project->id] : []) }}"
+                        class="btn btn-danger ms-2  px-3">
                         <i class="fas fa-times"></i> Reset
                     </a>
                 </div>
             </form>
         @endif
+
+        <ul class="nav nav-pills service-tabs mb-3">
+            <li class="nav-item">
+                <a class="nav-link {{ $currentTab == 'active' ? 'active' : '' }}"
+                    href="{{ route('tasks.index', ['tab' => 'active'] + request()->except('tab') + (isset($project) ? ['project_id' => $project->id] : [])) }}">
+                    Active
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $currentTab == 'to_do' ? 'active' : '' }}"
+                    href="{{ route('tasks.index', ['tab' => 'to_do'] + request()->except('tab') + (isset($project) ? ['project_id' => $project->id] : [])) }}">
+                    To Do
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $currentTab == 'in_progress' ? 'active' : '' }}"
+                    href="{{ route('tasks.index', ['tab' => 'in_progress'] + request()->except('tab') + (isset($project) ? ['project_id' => $project->id] : [])) }}">
+                    In Progress
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $currentTab == 'in_review' ? 'active' : '' }}"
+                    href="{{ route('tasks.index', ['tab' => 'in_review'] + request()->except('tab') + (isset($project) ? ['project_id' => $project->id] : [])) }}">
+                    In Review
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $currentTab == 'blocked' ? 'active' : '' }}"
+                    href="{{ route('tasks.index', ['tab' => 'blocked'] + request()->except('tab') + (isset($project) ? ['project_id' => $project->id] : [])) }}">
+                    Blocked
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $currentTab == 'completed' ? 'active' : '' }}"
+                    href="{{ route('tasks.index', ['tab' => 'completed'] + request()->except('tab') + (isset($project) ? ['project_id' => $project->id] : [])) }}">
+                    Completed
+                </a>
+            </li>
+        </ul>
+
         <table class="table table-bordered">
             <tr>
                 @can('mark-task-complete')
@@ -122,16 +168,19 @@
 
                                 <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                                     @foreach (config('site.tasks.status') as $key => $value)
-                                        {{-- @unless (in_array($key, $hiddenStatuses)) --}}
+                                        @if ($key != 'closed')
+                                            {{-- @unless (in_array($key, $hiddenStatuses)) --}}
                                             <li>
                                                 <form action="{{ route('task.updateStatus', $task->id) }}" method="POST"
                                                     style="display:inline;">
                                                     @csrf
                                                     <input type="hidden" name="status" value="{{ $key }}">
-                                                    <button type="submit" class="dropdown-item">{{ $value }}</button>
+                                                    <button type="submit"
+                                                        class="dropdown-item">{{ $value }}</button>
                                                 </form>
                                             </li>
-                                        {{-- @endunless --}}
+                                            {{-- @endunless --}}
+                                        @endif
                                     @endforeach
 
                                 </ul>
@@ -153,8 +202,8 @@
                 <form action="{{ route('tasks.export') }}" method="POST">
                     @csrf
                     @if ($project)
-                    <input type="hidden" value="{{ $project->id }}" name="project_id">
-                @endif
+                        <input type="hidden" value="{{ $project->id }}" name="project_id">
+                    @endif
                     <div class="modal-header">
                         <h5 class="modal-title" id="exportModalLabel">Export Tasks</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
