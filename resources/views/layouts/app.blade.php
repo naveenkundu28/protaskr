@@ -20,7 +20,7 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
 
-    
+
     <link rel="stylesheet" href="{{ asset('richtexteditor/rte_theme_default.css') }}">
     <script src="{{ asset('richtexteditor/rte.js') }}"></script>
     <script src="{{ asset('richtexteditor/plugins/all_plugins.js') }}"></script>
@@ -167,9 +167,9 @@
                                                 <hr class="dropdown-divider">
                                             </li>
                                             <li>
-                                                <a class="dropdown-item d-flex justify-content-between align-items-center {{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') }}"
+                                                <a class="dropdown-item d-flex justify-content-between align-items-center {{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
                                                     href="#mastersMenu" data-bs-toggle="collapse"
-                                                    aria-expanded="{{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') }}"
+                                                    aria-expanded="{{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
                                                     aria-controls="mastersMenu">
                                                     <span>
                                                         <i class="bi bi-folder me-2"></i> Masters
@@ -178,7 +178,7 @@
                                                 </a>
                                             </li>
                                             <li>
-                                                <ul class="collapse list-unstyled mb-0 {{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') }}"
+                                                <ul class="collapse list-unstyled mb-0 {{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
                                                     id="mastersMenu">
                                                     @can('user-show')
                                                         <li>
@@ -205,6 +205,14 @@
                                                                 <i class="bi bi-list-task me-2"></i> Requirements
                                                             </a>
                                                         </li>
+                                                        @if (auth()->user()->show_leads)
+                                                            <li>
+                                                                <a class="dropdown-item ps-4 {{ request()->is('lead-statuses*') ? 'active' : '' }}"
+                                                                    href="{{ route('lead-statuses.index') }}">
+                                                                    <i class="bi bi-info-circle me-2"></i> Lead Status
+                                                                </a>
+                                                            </li>
+                                                        @endif
                                                     @endcan
                                                 </ul>
                                             </li>

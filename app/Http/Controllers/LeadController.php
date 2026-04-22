@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lead;
+use App\Models\LeadStatus;
 use App\Models\NotesHistory;
 use App\Models\Requirement;
 use App\Models\Skill;
@@ -17,28 +18,55 @@ class LeadController extends Controller
         $this->authorize('user-show');
 
         $search = trim((string) $request->input('search'));
+        $dateFilter = $request->input('date_filter', 'today');
 
-        $leads = Lead::with(['requirement', 'tlUser', 'teamUser', 'latestNotesHistory', 'skills'])
+        $leads = Lead::with(['requirement', 'tlUser', 'teamUser', 'latestNotesHistory.leadStatus', 'skills'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where('lead', 'like', "%{$search}%");
+            })
+            ->when($dateFilter, function ($query) use ($dateFilter) {
+                $now = now();
+                switch ($dateFilter) {
+                    case 'all':
+                        // No filter
+                        break;
+                    case 'today':
+                        $query->whereDate('date', $now->toDateString());
+                        break;
+                    case 'yesterday':
+                        $query->whereDate('date', $now->subDay()->toDateString());
+                        break;
+                    case 'last_week':
+                        $query->where('date', '>=', $now->subDays(7)->toDateString());
+                        break;
+                    case 'last_15_days':
+                        $query->where('date', '>=', $now->subDays(15)->toDateString());
+                        break;
+                    case 'last_month':
+                        $query->where('date', '>=', $now->subDays(30)->toDateString());
+                        break;
+                    // default: no filter
+                }
             })
             ->latest()
             ->paginate(50)
             ->withQueryString();
 
         return view('leads.index', compact('leads'))
-            ->with('i', ($request->input('page', 1) - 1) * 5);
+            ->with('i', ($request->input('page', 1) - 1) * 50)
+            ->with('current_filter', $dateFilter);
     }
     public function create()
     {
         $this->authorize('user-create');
         $requirements = Requirement::all();
         $skills = Skill::all();
+        $leadStatuses = LeadStatus::all();
 
         // Only users who can be TL (example filter)
         $users = User::where('show_leads', true)->get();
 
-        return view('leads.create', compact('requirements', 'users', 'skills'));
+        return view('leads.create', compact('requirements', 'users', 'skills', 'leadStatuses'));
     }
 
     public function store(Request $request)
@@ -46,7 +74,7 @@ class LeadController extends Controller
         $this->authorize('user-create');
         $request->validate([
             'lead'      => 'required|string|max:255',
-            'status'         => 'required',
+            'lead_status_id' => 'required|exists:lead_statuses,id',
             'tl'             => 'required|exists:users,id',
             'team'           => 'required|exists:users,id',
             'requirement_id' => 'required|exists:requirements,id',
@@ -77,11 +105,11 @@ class LeadController extends Controller
             $lead->skills()->sync($this->resolveSkillIds($request->input('skills', [])));
 
             // 2. Insert Notes History
-            if ($request->notes || $request->status) {
+            if ($request->notes || $request->lead_status_id) {
                 NotesHistory::create([
                     'lead_id' => $lead->id,
                     'notes'   => $request->notes ?? 'Status updated',
-                    'status'  => $request->status,
+                    'lead_status_id'  => $request->lead_status_id,
                     'actions' => null
                 ]);
             }
@@ -130,11 +158,12 @@ class LeadController extends Controller
 
         $users = User::where('show_leads', true)->get();
         $requirements = Requirement::all();
+        $leadStatuses = LeadStatus::all();
 
         // Latest status from notes_history
-        $latestStatus = optional(
+        $latestStatusId = optional(
             $lead->notesHistories()->latest()->first()
-        )->status;
+        )->lead_status_id;
 
         $skills = Skill::all();
 
@@ -142,9 +171,10 @@ class LeadController extends Controller
             'lead',
             'users',
             'requirements',
-            'latestStatus',
+            'latestStatusId',
             'latestNote',
-            'skills'
+            'skills',
+            'leadStatuses'
         ));
     }
 
@@ -155,7 +185,7 @@ class LeadController extends Controller
 
         $request->validate([
             'lead'      => 'required|string|max:255',
-            'status'         => 'required|in:email_inputs_shared,in_call_discussion',
+            'lead_status_id' => 'required|exists:lead_statuses,id',
             'tl'             => 'required|exists:users,id',
             'team'           => 'required|exists:users,id',
             'requirement_id' => 'required|exists:requirements,id',
@@ -186,17 +216,11 @@ class LeadController extends Controller
             $lead->skills()->sync($this->resolveSkillIds($request->input('skills', [])));
 
             // 2. ALWAYS insert new note (history tracking)
-            // NotesHistory::update([
-            //     'lead_id' => $lead->id,
-            //     'notes'   => $request->notes,
-            //     'status'  => $request->status,
-            //     'actions' => null
-            // ]);
-            if ($request->filled('notes') || $request->filled('status')) {
+            if ($request->filled('notes') || $request->filled('lead_status_id')) {
                 NotesHistory::create([
                     'lead_id' => $lead->id,
                     'notes' => $request->notes ?? 'Status updated',
-                    'status' => $request->status,
+                    'lead_status_id' => $request->lead_status_id,
                     'actions' => null,
                 ]);
             }

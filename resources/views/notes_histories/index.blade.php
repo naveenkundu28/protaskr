@@ -9,7 +9,8 @@
                         <h2 class="mb-0">Notes Histories</h2>
                         <span class="text-muted">{{ $lead->lead }}</span>
 
-                        <form method="GET" action="{{ route('leads.notes-histories.index', $lead->id) }}" class="d-flex gap-2 auto-search-form">
+                        <form method="GET" action="{{ route('leads.notes-histories.index', $lead->id) }}"
+                            class="d-flex gap-2 auto-search-form">
                             <input type="text" name="search" value="{{ request('search') }}" class="form-control"
                                 placeholder="Search notes">
                         </form>
@@ -19,7 +20,8 @@
                         <a href="{{ route('leads.index') }}" class="btn btn-primary btn-sm">
                             <i class="fa fa-arrow-left"></i> Back
                         </a>
-                        <a href="{{ route('leads.notes-histories.create', $lead->id) }}" class="btn btn-primary">Create New Notes</a>
+                        <a href="{{ route('leads.notes-histories.create', $lead->id) }}" class="btn btn-primary">Create New
+                            Notes</a>
                     </div>
                 </div>
             </div>
@@ -43,7 +45,11 @@
                 @forelse ($notesHistories as $notesHistory)
                     <tr>
                         <td>{{ ++$i }}</td>
-                        <td>{{ ucwords(str_replace('_', ' ', $notesHistory->status)) }}</td>
+                        <td>
+                            {{ optional($notesHistory->leadStatus)->name
+                                ? ucwords($notesHistory->leadStatus->name)
+                                : '-' }}
+                        </td>
                         <td class="jd-column">{{ $notesHistory->notes }}</td>
                         <td>{{ $notesHistory->actions }}</td>
                         <td>{{ $notesHistory->created_at ? $notesHistory->created_at->format('d-m-Y h:i A') : '' }}</td>
@@ -59,7 +65,8 @@
                                     </li>
 
                                     <li>
-                                        <form method="POST" action="{{ route('leads.notes-histories.destroy', [$lead->id, $notesHistory->id]) }}">
+                                        <form method="POST"
+                                            action="{{ route('leads.notes-histories.destroy', [$lead->id, $notesHistory->id]) }}">
                                             @csrf
                                             @method('DELETE')
                                             <button class="dropdown-item text-danger"

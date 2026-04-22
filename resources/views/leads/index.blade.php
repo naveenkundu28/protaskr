@@ -11,6 +11,8 @@
                         <form method="GET" action="{{ route('leads.index') }}" class="d-flex gap-2 auto-search-form">
                             <input type="text" name="search" value="{{ request('search') }}" class="form-control"
                                 placeholder="Search leads">
+
+                            {{-- <button type="submit" class="btn btn-primary">Search</button> --}}
                         </form>
                     </div>
 
@@ -22,6 +24,28 @@
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
+
+        <!-- Date Filter Tabs -->
+        <ul class="nav nav-pills mb-3">
+            <li class="nav-item">
+                <a class="nav-link {{ $current_filter == 'today' ? 'active' : '' }}" href="{{ route('leads.index', ['date_filter' => 'today', 'search' => request('search')]) }}">Today</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $current_filter == 'yesterday' ? 'active' : '' }}" href="{{ route('leads.index', ['date_filter' => 'yesterday', 'search' => request('search')]) }}">Yesterday</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $current_filter == 'last_week' ? 'active' : '' }}" href="{{ route('leads.index', ['date_filter' => 'last_week', 'search' => request('search')]) }}">Last Week</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $current_filter == 'last_15_days' ? 'active' : '' }}" href="{{ route('leads.index', ['date_filter' => 'last_15_days', 'search' => request('search')]) }}">Last 15 Days</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $current_filter == 'last_month' ? 'active' : '' }}" href="{{ route('leads.index', ['date_filter' => 'last_month', 'search' => request('search')]) }}">Last Month</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $current_filter == 'all' ? 'active' : '' }}" href="{{ route('leads.index', ['date_filter' => 'all', 'search' => request('search')]) }}">All Leads</a>
+            </li>
+        </ul>
 
         <div class="table-responsive">
             <table class="table table-bordered table-sm text-nowrap">
@@ -47,8 +71,8 @@
                         <td>{{ $lead->lead }}</td>
                         {{-- Latest Status --}}
                         <td>
-                            {{ optional($lead->latestNotesHistory)->status
-                                ? ucwords(str_replace('_', ' ', optional($lead->latestNotesHistory)->status))
+                            {{ optional(optional($lead->latestNotesHistory)->leadStatus)->name
+                                ? ucwords(str_replace('_', ' ', optional(optional($lead->latestNotesHistory)->leadStatus)->name))
                                 : '' }}
                         </td>
                         <td>{{ $lead->tlUser->name ?? '' }}</td>
@@ -132,7 +156,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-4">
+                        <td colspan="12" class="text-center text-muted py-4">
                             No Leads Found
                         </td>
                     </tr>

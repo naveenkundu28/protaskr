@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Lead;
 use App\Models\NotesHistory;
 use Illuminate\Http\Request;
+use App\Models\LeadStatus;
 
 class NotesHistoryController extends Controller
 {
@@ -14,12 +15,15 @@ class NotesHistoryController extends Controller
 
         $search = trim((string) $request->input('search'));
 
-        $notesHistories = $lead->notesHistories()
+        $notesHistories = $lead->notesHistories()->with('leadStatus')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
                     $query->where('notes', 'like', "%{$search}%")
-                        ->orWhere('status', 'like', "%{$search}%")
-                        ->orWhere('actions', 'like', "%{$search}%");
+
+                        ->orWhere('actions', 'like', "%{$search}%")
+                        ->orWhereHas('leadStatus', function ($q) use ($search) {
+                            $q->where('name', 'like', "%{$search}%");
+                        });
                 });
             })
             ->latest()
@@ -33,8 +37,8 @@ class NotesHistoryController extends Controller
     public function create(Lead $lead)
     {
         $this->authorize('user-create');
-
-        return view('notes_histories.create', compact('lead'));
+        $leadStatuses = LeadStatus::all();
+        return view('notes_histories.create', compact('lead', 'leadStatuses'));
     }
 
     public function store(Request $request, Lead $lead)
@@ -43,11 +47,15 @@ class NotesHistoryController extends Controller
 
         $request->validate([
             'notes' => 'required|string',
-            'status' => 'required|in:email_inputs_shared,in_call_discussion',
+            'lead_status_id' => 'required|exists:lead_statuses,id',
             'actions' => 'nullable|string|max:255',
         ]);
 
-        $lead->notesHistories()->create($request->only('notes', 'status', 'actions'));
+        $lead->notesHistories()->create([
+            'notes' => $request->notes,
+            'lead_status_id' => $request->lead_status_id,
+            'actions' => $request->actions,
+        ]);
 
         return redirect()->route('leads.notes-histories.index', $lead->id)
             ->with('success', 'Notes history created successfully');
@@ -58,7 +66,9 @@ class NotesHistoryController extends Controller
         $this->authorize('user-edit');
         $this->ensureNoteBelongsToLead($lead, $notesHistory);
 
-        return view('notes_histories.edit', compact('lead', 'notesHistory'));
+        $leadStatuses = LeadStatus::all();
+
+        return view('notes_histories.edit', compact('lead', 'notesHistory', 'leadStatuses'));
     }
 
     public function update(Request $request, Lead $lead, NotesHistory $notesHistory)
@@ -68,11 +78,15 @@ class NotesHistoryController extends Controller
 
         $request->validate([
             'notes' => 'required|string',
-            'status' => 'required|in:email_inputs_shared,in_call_discussion',
+            'lead_status_id' => 'required|exists:lead_statuses,id',
             'actions' => 'nullable|string|max:255',
         ]);
 
-        $notesHistory->update($request->only('notes', 'status', 'actions'));
+        $notesHistory->update([
+            'notes' => $request->notes,
+            'lead_status_id' => $request->lead_status_id,
+            'actions' => $request->actions,
+        ]);
 
         return redirect()->route('leads.notes-histories.index', $lead->id)
             ->with('success', 'Notes history updated successfully');

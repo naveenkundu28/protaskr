@@ -36,16 +36,20 @@
                     <!-- Lead -->
                     <div class="col-md-4 mb-3">
                         <label>Lead</label>
-                        <input type="text" name="lead" class="form-control"
-                            value="{{ old('lead', $lead->lead) }}">
+                        <input type="text" name="lead" class="form-control" value="{{ old('lead', $lead->lead) }}">
                     </div>
 
                     <!-- Status -->
                     <div class="col-md-4 mb-3">
                         <label>Status</label>
-                        <select name="status" class="form-control">
-                            <option value="email_inputs_shared" {{ old('status', $latestStatus) == 'email_inputs_shared' ? 'selected' : '' }}>Email inputs shared</option>
-                            <option value="in_call_discussion" {{ old('status', $latestStatus) == 'in_call_discussion' ? 'selected' : '' }}>In call discussion</option>
+                        <select name="lead_status_id" class="form-control">
+                            <option value="">Select Status</option>
+                            @foreach ($leadStatuses as $status)
+                                <option value="{{ $status->id }}"
+                                    {{ old('lead_status_id', $latestStatusId) == $status->id ? 'selected' : '' }}>
+                                    {{ ucfirst($status->name) }}
+                                </option>
+                            @endforeach
                         </select>
                     </div>
 
