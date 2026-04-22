@@ -24,6 +24,18 @@ class TaskController extends Controller
     {
         $this->authorize('task-show');
         $user = Auth::user();
+
+        $tabStatuses = [
+            'active' => ['to_do', 'in_progress', 'in_review'],
+            'to_do' => ['to_do'],
+            'in_progress' => ['in_progress'],
+            'in_review' => ['in_review'],
+            'blocked' => ['blocked'],
+            'completed' => ['completed'],
+        ];
+
+        $tab = $request->get('status') ?: $request->get('tab', 'active');
+
         $tasks = Task::query()
             // ->with('project', 'user')
             ->with([
@@ -47,8 +59,9 @@ class TaskController extends Controller
             ->when($request->get('status') != '', function ($query) {
                 $query->where('status', request('status'));
             })
-            ->when(!$request->get('status'), function ($query) {
-                $query->where('status', '!=', 'completed');
+            ->when(!$request->get('status'), function ($query) use ($tabStatuses, $tab) {
+                $statuses = $tabStatuses[$tab] ?? $tabStatuses['active'];
+                $query->whereIn('status', $statuses);
             })
             ->when($request->get('user'), function ($query) {
                 $query->where('user_id', request('user'));
@@ -76,7 +89,8 @@ class TaskController extends Controller
         return view('tasks.index')->with([
             'project' => $project,
             'tasks' => $tasks,
-            'users' => $users
+            'users' => $users,
+            'currentTab' => $tab
         ]);
     }
 
