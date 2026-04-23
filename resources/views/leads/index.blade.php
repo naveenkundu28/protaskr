@@ -11,6 +11,7 @@
                         <form method="GET"
                             action="{{ route('leads.index') }}"
                             class="d-flex gap-2 auto-search-form" data-search-target="#tableSearchResults">
+                            <input type="hidden" name="date_filter" value="{{ $current_filter }}">
                             <input type="text" name="search" value="{{ request('search') }}" class="form-control"
                                 placeholder="Search leads">
 
