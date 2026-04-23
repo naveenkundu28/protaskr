@@ -39,6 +39,10 @@
                     href="{{ route('leads.index', ['date_filter' => 'yesterday', 'search' => request('search')]) }}">Yesterday</a>
             </li>
             <li class="nav-item">
+                <a class="nav-link {{ $current_filter == 'current_week' ? 'active' : '' }}"
+                    href="{{ route('leads.index', ['date_filter' => 'current_week', 'search' => request('search')]) }}">Current Week</a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {{ $current_filter == 'last_week' ? 'active' : '' }}"
                     href="{{ route('leads.index', ['date_filter' => 'last_week', 'search' => request('search')]) }}">Last
                     Week</a>
