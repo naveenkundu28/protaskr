@@ -79,7 +79,7 @@
                         <th>Claimed Group</th>
                         <th>Is Call Done</th>
                         <th>CAM Member</th>
-                        <th>Date</th>
+                        <th>Lead Date</th>
                         {{-- <th width="250px">JD</th> --}}
                         <th>Action</th>
                     </tr>
