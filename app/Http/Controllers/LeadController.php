@@ -31,19 +31,19 @@ class LeadController extends Controller
                         // No filter
                         break;
                     case 'today':
-                        $query->whereDate('date', $now->toDateString());
+                        $query->whereDate('created_at', $now->toDateString());
                         break;
                     case 'yesterday':
-                        $query->whereDate('date', $now->subDay()->toDateString());
+                        $query->whereDate('created_at', $now->subDay()->toDateString());
                         break;
                     case 'last_week':
-                        $query->where('date', '>=', $now->subDays(7)->toDateString());
+                        $query->where('created_at', '>=', $now->subDays(7)->toDateString());
                         break;
                     case 'last_15_days':
-                        $query->where('date', '>=', $now->subDays(15)->toDateString());
+                        $query->where('created_at', '>=', $now->subDays(15)->toDateString());
                         break;
                     case 'last_month':
-                        $query->where('date', '>=', $now->subDays(30)->toDateString());
+                        $query->where('created_at', '>=', $now->subDays(30)->toDateString());
                         break;
                     // default: no filter
                 }
