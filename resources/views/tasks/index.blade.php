@@ -99,31 +99,31 @@
             <li class="nav-item">
                 <a class="nav-link {{ $currentTab == 'active' ? 'active' : '' }}"
                     href="{{ route('tasks.index', ['tab' => 'active'] + request()->except('tab') + (isset($project) ? ['project_id' => $project->id] : [])) }}">
-                    Active
+                    Active @if(isset($tabCounts['active'])) ({{ $tabCounts['active'] }}) @endif
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $currentTab == 'to_do' ? 'active' : '' }}"
                     href="{{ route('tasks.index', ['tab' => 'to_do'] + request()->except('tab') + (isset($project) ? ['project_id' => $project->id] : [])) }}">
-                    To Do
+                    To Do @if(isset($tabCounts['to_do'])) ({{ $tabCounts['to_do'] }}) @endif
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $currentTab == 'in_progress' ? 'active' : '' }}"
                     href="{{ route('tasks.index', ['tab' => 'in_progress'] + request()->except('tab') + (isset($project) ? ['project_id' => $project->id] : [])) }}">
-                    In Progress
+                    In Progress @if(isset($tabCounts['in_progress'])) ({{ $tabCounts['in_progress'] }}) @endif
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $currentTab == 'in_review' ? 'active' : '' }}"
                     href="{{ route('tasks.index', ['tab' => 'in_review'] + request()->except('tab') + (isset($project) ? ['project_id' => $project->id] : [])) }}">
-                    In Review
+                    In Review @if(isset($tabCounts['in_review'])) ({{ $tabCounts['in_review'] }}) @endif
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link {{ $currentTab == 'blocked' ? 'active' : '' }}"
                     href="{{ route('tasks.index', ['tab' => 'blocked'] + request()->except('tab') + (isset($project) ? ['project_id' => $project->id] : [])) }}">
-                    Blocked
+                    Blocked @if(isset($tabCounts['blocked'])) ({{ $tabCounts['blocked'] }}) @endif
                 </a>
             </li>
             <li class="nav-item">

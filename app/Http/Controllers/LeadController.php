@@ -31,28 +31,59 @@ class LeadController extends Controller
                         // No filter
                         break;
                     case 'today':
-                        $query->whereDate('created_at', $now->toDateString());
+                        $query->where(function ($query) use ($now) {
+                            $query->whereDate('leads.updated_at', $now->toDateString())
+                                ->orWhereHas('notesHistories', function ($query) use ($now) {
+                                    $query->whereDate('updated_at', $now->toDateString());
+                                });
+                        });
                         break;
                     case 'yesterday':
-                        $query->whereDate('created_at', $now->subDay()->toDateString());
+                        $date = $now->copy()->subDay()->toDateString();
+                        $query->where(function ($query) use ($date) {
+                            $query->whereDate('leads.updated_at', $date)
+                                ->orWhereHas('notesHistories', function ($query) use ($date) {
+                                    $query->whereDate('updated_at', $date);
+                                });
+                        });
                         break;
                     case 'current_week':
                         $start = $now->copy()->startOfWeek();
                         $end = $now->copy()->endOfWeek();
-
-                        $query->whereBetween('created_at', [$start, $end]);
+                        $query->where(function ($query) use ($start, $end) {
+                            $query->whereBetween('leads.updated_at', [$start, $end])
+                                ->orWhereHas('notesHistories', function ($query) use ($start, $end) {
+                                    $query->whereBetween('updated_at', [$start, $end]);
+                                });
+                        });
                         break;
                     case 'last_week':
                         $start = $now->copy()->subWeek()->startOfWeek();
                         $end = $now->copy()->subWeek()->endOfWeek();
-
-                        $query->whereBetween('created_at', [$start, $end]);
+                        $query->where(function ($query) use ($start, $end) {
+                            $query->whereBetween('leads.updated_at', [$start, $end])
+                                ->orWhereHas('notesHistories', function ($query) use ($start, $end) {
+                                    $query->whereBetween('updated_at', [$start, $end]);
+                                });
+                        });
                         break;
                     case 'last_15_days':
-                        $query->where('created_at', '>=', $now->subDays(15)->toDateString());
+                        $date = $now->copy()->subDays(15)->toDateString();
+                        $query->where(function ($query) use ($date) {
+                            $query->where('leads.updated_at', '>=', $date)
+                                ->orWhereHas('notesHistories', function ($query) use ($date) {
+                                    $query->where('updated_at', '>=', $date);
+                                });
+                        });
                         break;
                     case 'last_month':
-                        $query->where('created_at', '>=', $now->subDays(30)->toDateString());
+                        $date = $now->copy()->subDays(30);
+                        $query->where(function ($query) use ($date) {
+                            $query->where('leads.updated_at', '>=', $date)
+                                ->orWhereHas('notesHistories', function ($query) use ($date) {
+                                    $query->where('updated_at', '>=', $date);
+                                });
+                        });
                         break;
                         // default: no filter
                 }
