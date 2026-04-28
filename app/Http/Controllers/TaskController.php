@@ -36,14 +36,7 @@ class TaskController extends Controller
 
         $tab = $request->get('status') ?: $request->get('tab', 'active');
 
-        $tasks = Task::query()
-            // ->with('project', 'user')
-            ->with([
-                'project',
-                'user' => function ($query) {
-                    $query->withTrashed();
-                }
-            ])
+        $baseQuery = Task::query()
             ->whereHas('project', function ($query) {
                 $query->whereNull('deleted_at');
             })
@@ -56,13 +49,6 @@ class TaskController extends Controller
             ->when($request->get('search') != '', function ($query) {
                 $query->where('title', 'like', '%' . request('search') . '%');
             })
-            ->when($request->get('status') != '', function ($query) {
-                $query->where('status', request('status'));
-            })
-            ->when(!$request->get('status'), function ($query) use ($tabStatuses, $tab) {
-                $statuses = $tabStatuses[$tab] ?? $tabStatuses['active'];
-                $query->whereIn('status', $statuses);
-            })
             ->when($request->get('user'), function ($query) {
                 $query->where('user_id', request('user'));
             })
@@ -71,6 +57,29 @@ class TaskController extends Controller
             })
             ->when($request->get('duedate'), function ($query) {
                 $query->whereDate('due_date', request('duedate'));
+            });
+
+        $tabCounts = [
+            'active' => (clone $baseQuery)->whereIn('status', $tabStatuses['active'])->count(),
+            'to_do' => (clone $baseQuery)->where('status', 'to_do')->count(),
+            'in_progress' => (clone $baseQuery)->where('status', 'in_progress')->count(),
+            'in_review' => (clone $baseQuery)->where('status', 'in_review')->count(),
+            'blocked' => (clone $baseQuery)->where('status', 'blocked')->count(),
+        ];
+
+        $tasks = (clone $baseQuery)
+            ->with([
+                'project',
+                'user' => function ($query) {
+                    $query->withTrashed();
+                }
+            ])
+            ->when($request->get('status') != '', function ($query) {
+                $query->where('status', request('status'));
+            })
+            ->when(!$request->get('status'), function ($query) use ($tabStatuses, $tab) {
+                $statuses = $tabStatuses[$tab] ?? $tabStatuses['active'];
+                $query->whereIn('status', $statuses);
             })
             ->latest()
             ->paginate(50)
@@ -90,7 +99,8 @@ class TaskController extends Controller
             'project' => $project,
             'tasks' => $tasks,
             'users' => $users,
-            'currentTab' => $tab
+            'currentTab' => $tab,
+            'tabCounts' => $tabCounts,
         ]);
     }
 
