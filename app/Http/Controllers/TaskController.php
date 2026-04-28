@@ -26,7 +26,7 @@ class TaskController extends Controller
         $user = Auth::user();
 
         $tabStatuses = [
-            'active' => ['to_do', 'in_progress', 'in_review'],
+            'active' => ['to_do', 'in_progress'],
             'to_do' => ['to_do'],
             'in_progress' => ['in_progress'],
             'in_review' => ['in_review'],
