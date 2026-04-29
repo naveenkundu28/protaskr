@@ -72,8 +72,19 @@
                             @php
                                 $name = explode(' ', $user->name);
                                 $initials = strtoupper(substr($name[0], 0, 1) . '_' . substr(end($name), 0, 1));
+
+                                $tagColor = $user->color ?: '#6c757d';
+                                $hex = ltrim($tagColor, '#');
+                                if (strlen($hex) === 3) {
+                                    $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+                                }
+                                $r = hexdec(substr($hex, 0, 2));
+                                $g = hexdec(substr($hex, 2, 2));
+                                $b = hexdec(substr($hex, 4, 2));
+                                $brightness = ($r * 299 + $g * 587 + $b * 114) / 1000;
+                                $textColor = $brightness > 159 ? '#111111' : '#ffffff';
                             @endphp
-                            <th class="px-4" data-user="{{ $user->id }}" title="{{ $user->name }}">
+                            <th class="px-4" data-user="{{ $user->id }}" title="{{ $user->name }}" style="font-weight: 600; background-color: {{ $tagColor }}; color: {{ $textColor }};">
                                 {{ $initials }}
                             </th>
                         @endforeach
@@ -144,7 +155,27 @@
                 </div>
             @endforeach
         </div>
-
+        <h5 class="mt-4">Tags Legend</h5>
+        <div class="d-flex flex-wrap gap-3 pb-4">
+            @foreach ($tags as $p)
+                @php
+                    $tagColor = $p->color ?: '#6c757d';
+                    $hex = ltrim($tagColor, '#');
+                    if (strlen($hex) === 3) {
+                        $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+                    }
+                    $r = hexdec(substr($hex, 0, 2));
+                    $g = hexdec(substr($hex, 2, 2));
+                    $b = hexdec(substr($hex, 4, 2));
+                    $brightness = ($r * 299 + $g * 587 + $b * 114) / 1000;
+                    $textColor = $brightness > 159 ? '#111111' : '#ffffff';
+                @endphp
+                <div
+                    style="background: {{ $tagColor }}; color: {{ $textColor }}; padding:6px 12px; border-radius:4px; font-weight:600;">
+                    {{ $p->name }}
+                </div>
+            @endforeach
+        </div>
     </div>
 
     @if (auth()->user()?->hasRole('Admin'))

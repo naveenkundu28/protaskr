@@ -49,7 +49,7 @@
                                                 $g = hexdec(substr($hex, 2, 2));
                                                 $b = hexdec(substr($hex, 4, 2));
                                                 $brightness = ($r * 299 + $g * 587 + $b * 114) / 1000;
-                                                $textColor = $brightness > 140 ? '#111111' : '#ffffff';
+                                                $textColor = $brightness > 159 ? '#111111' : '#ffffff';
                                             @endphp
                                             <tr>
                                                 <td

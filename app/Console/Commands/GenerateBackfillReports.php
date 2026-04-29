@@ -51,7 +51,7 @@ class GenerateBackfillReports extends Command
                 ->where('max','>=',$hours)
                 ->first();
 
-            DailyReport::updateOrCreate(
+            DailyReport::upsert(
                 [
                     'user_id' => $row->user_id,
                     'date' => $row->work_date

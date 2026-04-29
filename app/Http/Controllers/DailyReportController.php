@@ -28,10 +28,23 @@ class DailyReportController extends Controller
             $year = date('Y');
         }
 
-        $users = User::whereDoesntHave('roles', function ($q) {
-            $q->where('name', 'Admin');
-        })->where('is_show_report', true)->orderBy('created_at')->get();
+        // $users = User::whereDoesntHave('roles', function ($q) {
+        //     $q->where('name', 'Admin');
+        // })->where('is_show_report', true)->orderBy('created_at')->get();
+
+        $users = User::select('users.*','tags.color')
+            ->leftJoin('user_tag', 'users.id', '=', 'user_tag.user_id')
+            ->leftJoin('tags', 'tags.id', '=', 'user_tag.tag_id')
+            ->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'Admin');
+            })
+            ->where('users.is_show_report', true)
+            ->orderBy('tags.id')   // sort by tag
+            ->orderBy('users.id')    // then by user_id
+            ->get();
+        
         $performances = DailyPerformance::all();
+        $tags = Tag::all();
 
         $reports = DailyReport::with(['performance', 'user'])
             ->whereHas('user', function ($q) {
@@ -60,7 +73,7 @@ class DailyReportController extends Controller
             $dates[] = date('Y-m-d', strtotime("$year-$month-$i"));
         }
 
-        return view('reports.hourly-task', compact('users', 'reports', 'dates', 'month', 'year', 'performances', 'totals'));
+        return view('reports.hourly-task', compact('users', 'reports', 'dates', 'month', 'year', 'performances', 'totals', 'tags'));
     }
 
     public function update(Request $request)

@@ -58,7 +58,7 @@ class GenerateDailyReports extends Command
 
             DailyReport::where('user_id', '!=', $row->user_id)
                 ->where('date', '!=', $row->work_date)
-                ->updateOrCreate(
+                ->upsert(
                     [
                         'user_id' => $row->user_id,
                         'date' => $row->work_date

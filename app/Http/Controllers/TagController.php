@@ -20,7 +20,7 @@ class TagController extends Controller
         $tags = Tag::when($search !== '', function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%");
             })
-            ->latest()
+            ->orderBy('id', 'asc')
             ->paginate(50)
             ->withQueryString();
 
