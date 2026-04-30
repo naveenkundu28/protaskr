@@ -56,18 +56,18 @@ class GenerateDailyReports extends Command
                 ->where('max', '>=', $hours)
                 ->first();
 
-            DailyReport::where('user_id', '!=', $row->user_id)
-                ->where('date', '!=', $row->work_date)
-                ->upsert(
-                    [
-                        'user_id' => $row->user_id,
-                        'date' => $row->work_date
-                    ],
-                    [
-                        'time' => $minutes,
-                        'daily_performance_id' => $performance?->id
-                    ]
-                );
+            DailyReport::upsert(
+                [
+                    'user_id' => $row->user_id,
+                    'date' => $row->work_date,
+                    'time' => $minutes,
+                    'daily_performance_id' => $performance?->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                ['user_id', 'date'],
+                ['time', 'daily_performance_id', 'updated_at']
+            );
         }
 
         $this->info('Daily reports generated successfully');
@@ -84,7 +84,7 @@ class GenerateDailyReports extends Command
         }
 
         $dateFrom = $this->parseDateFromOption($dateFromInput)->startOfDay();
-        $dateTo = Carbon::today()->endOfDay();
+        $dateTo = Carbon::yesterday()->endOfDay();
 
         if ($dateFrom->gt($dateTo)) {
             $this->error('The dateFrom option must be earlier than or equal to today.');

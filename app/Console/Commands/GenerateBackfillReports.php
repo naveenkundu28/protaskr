@@ -54,12 +54,14 @@ class GenerateBackfillReports extends Command
             DailyReport::upsert(
                 [
                     'user_id' => $row->user_id,
-                    'date' => $row->work_date
-                ],
-                [
+                    'date' => $row->work_date,
                     'time' => $minutes,
-                    'daily_performance_id' => $performance?->id
-                ]
+                    'daily_performance_id' => $performance?->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                ['user_id', 'date'], // unique columns
+                ['time', 'daily_performance_id', 'updated_at']
             );
         }
 

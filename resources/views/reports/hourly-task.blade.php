@@ -38,8 +38,8 @@
 
                         @csrf
 
-                        <input type="date" name="report_date" class="form-control" max="{{ now()->format('Y-m-d') }}"
-                            value="{{ now()->format('Y-m-d') }}">
+                        <input type="date" name="report_date" class="form-control" max="{{ now()->subDay()->format('Y-m-d') }}"
+                            value="{{ now()->subDay()->format('Y-m-d') }}">
 
                         <button type="submit" class="btn btn-info text-white">
                             <i class="bi bi-arrow-repeat me-1"></i> Fetch
