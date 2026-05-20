@@ -383,6 +383,23 @@
                                                         Edit
                                                     </a>
                                                 </li>
+
+                                                @if ($project->status !== 'completed')
+                                                    <li>
+                                                        <hr class="my-1" />
+                                                    </li>
+                                                    <li class="px-2 py-2">
+                                                        <button type="button"
+                                                            class="border-0 text-start w-100 bg-white text-success"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#completeClientModal"
+                                                            data-client-id="{{ $project->id }}"
+                                                            data-client-name="{{ $project->name }}"
+                                                            data-start-date="{{ $project->start_date }}">
+                                                            Mark Completed
+                                                        </button>
+                                                    </li>
+                                                @endif
                                             @endif
                                             {{-- @endcan --}}
 
@@ -415,7 +432,31 @@
                 {!! $projects->links('pagination::bootstrap-5') !!}
             </div>
         </div>
-        
+
+        <div class="modal fade" id="completeClientModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form method="POST" id="completeClientForm" class="modal-content">
+                    @csrf
+                    <div class="modal-header">
+                        <h5 class="modal-title">Complete Client</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-2">Set end date for <strong id="completeClientName"></strong>.</p>
+                        <div class="mb-0">
+                            <label for="complete_end_date" class="form-label">End Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="end_date" id="complete_end_date" required>
+                            <small class="text-muted" id="completeDateHint"></small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Save & Complete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <h5 class="mt-4">Client Legend</h5>
         <div class="d-flex flex-wrap gap-3 pb-4">
             <div style="background: #f1f3f5; color: #495057; padding:6px 12px; border-radius:4px; border: 1px solid #000;">Internal Team</div>
@@ -427,6 +468,35 @@
 
     </div>
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('completeClientModal');
+            if (modal) {
+                modal.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const clientId = button.getAttribute('data-client-id');
+                    const clientName = button.getAttribute('data-client-name');
+                    const startDate = button.getAttribute('data-start-date');
+
+                    const form = document.getElementById('completeClientForm');
+                    const nameEl = document.getElementById('completeClientName');
+                    const endDateEl = document.getElementById('complete_end_date');
+                    const hintEl = document.getElementById('completeDateHint');
+
+                    form.action = "{{ route('clients.complete', ':id') }}".replace(':id', clientId);
+                    nameEl.textContent = clientName || 'this client';
+                    endDateEl.value = '';
+
+                    if (startDate) {
+                        endDateEl.min = startDate;
+                        hintEl.textContent = "End date must be on or after " + startDate + ".";
+                    } else {
+                        endDateEl.removeAttribute('min');
+                        hintEl.textContent = '';
+                    }
+                });
+            }
+        });
+
         function changeView(type) {
             if (type == 'table') {
                 $('#table').show();

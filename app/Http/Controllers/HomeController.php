@@ -30,13 +30,19 @@ class HomeController extends Controller
         
         $tagSummary = Tag::withCount([
                 'users' => function ($query) {
-                    $query->where('user_type', 'internal');
+                    $query->where('user_type', 'Internal')
+                    ->whereDoesntHave('roles', function ($q) {
+                        $q->where('name', 'Admin');
+                    });
                 }
             ])
             ->orderBy('name')
             ->get();
 
-        $totalResources = User::where('user_type', 'Internal')->count();
+        $totalResources = User::where('user_type', 'Internal')
+                        ->whereDoesntHave('roles', function ($q) {
+                            $q->where('name', 'Admin');
+                        })->count();
         
         $masterHours = Hour::where('year', $now->year)
             ->where('month', $now->format('F'))
@@ -97,9 +103,12 @@ class HomeController extends Controller
 
         $halfHours = $masterHours / 2;
         $employees = User::role('Employee')->get(['id']);
-        $internalUsers = User::where('user_type', 'Internal')->get(['id']);
-        $services = Service::whereYear('created_at', $now->year)
-            ->whereMonth('created_at', $now->month)
+        $internalUsers = User::where('user_type', 'Internal')
+            ->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'Admin');
+            })->get(['id']);
+        $services = Service::where('year', $now->year)
+            ->where('month', $now->month)
             ->where('service_type', '!=' ,'external')
             ->get(['hours', 'front_resource', 'working_resource']);
 
@@ -114,7 +123,7 @@ class HomeController extends Controller
                 $hoursByUser[$assignedUserId] = ($hoursByUser[$assignedUserId] ?? 0) + (float) $service->hours;
             }
         }
-
+        
         foreach ($internalUsers as $employee) {
             $assignedHours = $hoursByUser[$employee->id] ?? 0;
             $freeHours = max($masterHours - $assignedHours, 0);

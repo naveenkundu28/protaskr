@@ -278,6 +278,30 @@ class ProjectController extends Controller
         return redirect()->back()->with('success', 'Client restored successfully.');
     }
 
+    public function markCompleted(Request $request, Client $client)
+    {
+        if (!auth()->user()->can('project-edit') && !auth()->user()->hasRole('Employee')) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'end_date' => 'required|date',
+        ]);
+
+        if (!empty($client->start_date) && Carbon::parse($validated['end_date'])->lt(Carbon::parse($client->start_date))) {
+            return back()->withErrors([
+                'end_date' => 'End date must be after or equal to start date.',
+            ])->withInput();
+        }
+
+        $client->update([
+            'status' => 'completed',
+            'end_date' => $validated['end_date'],
+        ]);
+
+        return redirect()->route('clients.index')->with('success', 'Client marked as completed successfully.');
+    }
+
 
     public function services(Client $client)
     {

@@ -155,6 +155,9 @@ class DailyReportController extends Controller
         $performances = DailyPerformance::orderBy('min', 'desc')->get();
 
         $users = User::where('user_type', 'Internal')->where('is_show_report', true)
+			->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'Admin');
+            })
             ->when($tagId, function ($q) use ($tagId) {
                 $q->whereHas('tags', function ($q2) use ($tagId) {
                     $q2->where('tags.id', $tagId);

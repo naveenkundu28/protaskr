@@ -31,6 +31,9 @@ class UserController extends Controller
         $search = trim((string) $request->input('search'));
 
         $data = User::with(['primarySkills', 'secondarySkills', 'tags'])
+            ->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'Admin');
+            })
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($subQuery) use ($search) {
                     $subQuery->where('name', 'like', "%{$search}%")
@@ -83,8 +86,8 @@ class UserController extends Controller
             if ($masterHours) {
                 $halfHours = $masterHours / 2;
                 $internalUsers = User::where('user_type', 'Internal')->get(['id']);
-                $services = Service::whereYear('created_at', $now->year)
-                    ->whereMonth('created_at', $now->month)
+                $services = Service::where('year', $now->year)
+                    ->where('month', $now->month)
                     ->where('service_type', '!=', 'external')
                     ->get(['hours', 'working_resource']);
 
@@ -116,6 +119,9 @@ class UserController extends Controller
         }
 
         $data = User::with(['primarySkills', 'secondarySkills', 'tags'])
+            ->whereDoesntHave('roles', function ($q) {
+                $q->where('name', 'Admin');
+            })
             ->when(!empty($tagId), function ($query) use ($tagId) {
                 $query->whereHas('tags', function ($tagQuery) use ($tagId) {
                     $tagQuery->where('tags.id', $tagId);
@@ -325,11 +331,13 @@ class UserController extends Controller
     {
         $this->authorize('user-delete');
         $request->validate([
-            'comment' => 'required|string'
+            'comment' => 'required|string',
+            'last_working_date' => 'required|date',
         ]);
         $user = User::findOrFail($id);
 
         $user->comment = $request->comment;
+        $user->last_working_date = $request->last_working_date;
         $user->save();
         $user->delete();
         return redirect()->route('users.index')

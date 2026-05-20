@@ -135,11 +135,11 @@
                             @endif
                         </td>
                         <td>{{ $service->service_id }}</td>
-                        <td>{{ $service->created_at ? $service->created_at->format('F') : '' }}</td>
+                        <td>{{ $service->month ? \Carbon\Carbon::create()->month($service->month)->format('F') : $service->created_at->format('F') }}</td>
 
                         @php
-                            $year = $service->created_at->format('Y');
-                            $month = $service->created_at->format('F');
+                            $year = $service->year ?? $service->created_at->format('Y');
+                            $month = $service->month ?? $service->created_at->format('F');
 
                             $key = $year . '-' . $month;
 

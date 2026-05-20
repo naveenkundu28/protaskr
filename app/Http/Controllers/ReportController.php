@@ -41,7 +41,7 @@ class ReportController extends Controller
             ->with(['users' => function ($query) {
                 $query->withTrashed();
             }])
-            ->whereBetween('created_at', [$fromDate, $toDate])
+            ->whereBetween('start_date', [$fromDate, $toDate])
             ->orderByDesc('created_at')
             ->get();
 
@@ -51,7 +51,8 @@ class ReportController extends Controller
             }])
             ->whereNull('deleted_at')
             ->where('status', '!=', 'completed')
-            ->whereBetween('start_date', [$fromDate->toDateString(), $toDate->toDateString()])
+            ->where('type', 'client')
+            // ->whereBetween('start_date', [$fromDate->toDateString(), $toDate->toDateString()])
             
             // ->where(function ($query) use ($fromDate, $toDate) {
             //     $query->whereNull('start_date')
@@ -67,9 +68,22 @@ class ReportController extends Controller
         $newServices = Service::with(['client', 'frontResource', 'workingResource'])
             ->where('service_status', 'new')
             ->where('service_type', 'direct')
-            // ->whereBetween('created_at', [$fromDate, $toDate])
-            ->whereBetween('start_date', [$fromDate->toDateString(), $toDate->toDateString()])
-            ->orderByDesc('start_date')
+            ->whereNotNull('month')
+            ->whereNotNull('year')
+            // Filter by service month/year by converting them into a comparable date.
+            ->whereRaw(
+                "COALESCE(
+                    STR_TO_DATE(CONCAT('1 ', month, ' ', year), '%e %M %Y'),
+                    STR_TO_DATE(CONCAT('1 ', month, ' ', year), '%e %b %Y'),
+                    STR_TO_DATE(CONCAT(year, '-', month, '-01'), '%Y-%c-%d')
+                ) BETWEEN ? AND ?",
+                [$fromDate->toDateString(), $toDate->toDateString()]
+            )
+            ->orderByRaw("COALESCE(
+                STR_TO_DATE(CONCAT('1 ', month, ' ', year), '%e %M %Y'),
+                STR_TO_DATE(CONCAT('1 ', month, ' ', year), '%e %b %Y'),
+                STR_TO_DATE(CONCAT(year, '-', month, '-01'), '%Y-%c-%d')
+            ) DESC")
             ->get();
 
         $completedServices = Service::with(['client', 'frontResource', 'workingResource'])
@@ -102,7 +116,7 @@ class ReportController extends Controller
 
         // dd($newServices);
 
-        $newServices = $this->appendServiceWorkType($newServices, 'created_at');
+        $newServices = $this->appendServiceWorkType($newServices, 'service_month_year');
         $completedServices = $this->appendServiceWorkType($completedServices, 'end_date');
         $cancelledServices = $this->appendServiceWorkType($cancelledServices, 'end_date');
 
@@ -124,22 +138,57 @@ class ReportController extends Controller
     {
         $groupedTotals = [];
 
-        foreach ($services as $service) {
+        return $services->map(function ($service) use ($groupedTotals, $dateField) {
             $referenceDate = $this->resolveServiceReferenceDate($service, $dateField);
+            $service->service_total_hours = (float) $service->hours;
+            $service->service_work_type = 'ADHOC';
+            $service->service_other_resources = [];
+
 
             if (!$referenceDate) {
-                continue;
+                return $service;
             }
 
-            // $groupKey = $service->service_id.'|'.$referenceDate->format('Y-m');
-            // $groupedTotals[$groupKey] = ($groupedTotals[$groupKey] ?? 0) + (float) $service->hours;
+            $groupKey = $service->service_id.'|'.$referenceDate->format('Y-m');
+            if (!array_key_exists($groupKey, $groupedTotals)) {
+                $groupedTotals[$groupKey] = (float) Service::query()
+                    ->where('service_id', $service->service_id)
+                    ->where(function ($query) use ($referenceDate) {
+                        $query->where(function ($q) use ($referenceDate) {
+                            $q->where('month', $referenceDate->format('n'))
+                                ->where('year', $referenceDate->year);
+                        })->orWhere(function ($q) use ($referenceDate) {
+                            $q->where('month', $referenceDate->format('m'))
+                                ->where('year', $referenceDate->year);
+                        })->orWhere(function ($q) use ($referenceDate) {
+                            $q->whereRaw('LOWER(month) = ?', [strtolower($referenceDate->format('F'))])
+                                ->where('year', $referenceDate->year);
+                        })->orWhere(function ($q) use ($referenceDate) {
+                            $q->whereRaw('LOWER(month) = ?', [strtolower($referenceDate->format('M'))])
+                                ->where('year', $referenceDate->year);
+                        });
+                    })
+                    ->sum('hours');
+            }
 
-        }
-
-        return $services->map(function ($service) use ($groupedTotals, $dateField) {
             $resources = Service::with(['workingResource'])
                 ->where('service_id', $service->service_id)
                 ->where('service_type', '!=', 'direct')
+                ->where(function ($query) use ($referenceDate) {
+                    $query->where(function ($q) use ($referenceDate) {
+                        $q->where('month', $referenceDate->format('n'))
+                            ->where('year', $referenceDate->year);
+                    })->orWhere(function ($q) use ($referenceDate) {
+                        $q->where('month', $referenceDate->format('m'))
+                            ->where('year', $referenceDate->year);
+                    })->orWhere(function ($q) use ($referenceDate) {
+                        $q->whereRaw('LOWER(month) = ?', [strtolower($referenceDate->format('F'))])
+                            ->where('year', $referenceDate->year);
+                    })->orWhere(function ($q) use ($referenceDate) {
+                        $q->whereRaw('LOWER(month) = ?', [strtolower($referenceDate->format('M'))])
+                            ->where('year', $referenceDate->year);
+                    });
+                })
                 ->get()
                 ->groupBy('working_resource')
                 ->map(function ($items) {
@@ -147,29 +196,19 @@ class ReportController extends Controller
 
                     return [
                         'resource_name' => $resource ? $resource->name : null,
-                        'total_hours'   => $items->sum('hours'),
+                        'total_hours'   => (float) $items->sum('hours'),
                     ];
                 })
                 ->values()
                 ->toArray();
-
-            $referenceDate = $this->resolveServiceReferenceDate($service, $dateField);
-            $service->service_total_hours = (float) $service->hours;
-            $service->service_work_type = 'ADHOC';
             $service->service_other_resources = $resources;
 
-
-            if (!$referenceDate) {
-                return $service;
-            }
-
-            // $groupKey = $service->service_id.'|'.$referenceDate->format('Y-m');
-            // $totalHours = (float) ($groupedTotals[$groupKey] ?? 0);
+            $totalHours = (float) ($groupedTotals[$groupKey] ?? 0);
             $masterHours = Hour::where('year', $referenceDate->year)
                 ->where('month', $referenceDate->format('F'))
                 ->value('hours');
 
-            // $service->service_total_hours = $totalHours;
+            $service->service_total_hours = $totalHours;
             $service->service_work_type = $this->resolveWorkType($service->service_total_hours, $masterHours);
             return $service;
         });
@@ -177,6 +216,16 @@ class ReportController extends Controller
 
     private function resolveServiceReferenceDate(Service $service, string $dateField): ?Carbon
     {
+        if ($dateField === 'service_month_year') {
+            if (!empty($service->month) && !empty($service->year)) {
+                $month = trim((string) $service->month);
+                $year = trim((string) $service->year);
+
+                $monthValue = ctype_digit($month) ? (int) $month : Carbon::parse("1 {$month}")->month;
+                return Carbon::createFromDate((int) $year, $monthValue, 1)->startOfDay();
+            }
+        }
+
         $value = $service->{$dateField} ?: $service->created_at;
 
         return $value ? Carbon::parse($value) : null;

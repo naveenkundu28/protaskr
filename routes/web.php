@@ -62,6 +62,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/lead-statuses/{id}', [LeadStatusController::class, 'destroy'])->name('lead-statuses.destroy');
 
     Route::resource('clients', ProjectController::class);
+    Route::post('clients/{client}/complete', [ProjectController::class, 'markCompleted'])->name('clients.complete');
     Route::get('/service-listing', [ProjectController::class, 'serviceListing'])->name('services.listing');
     Route::post('/service-listing/import', [ProjectController::class, 'importServices'])->name('services.import');
     Route::post('clients/{clientId}/restore', [ProjectController::class, 'restore'])->name('clients.restore');

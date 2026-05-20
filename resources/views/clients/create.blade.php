@@ -86,7 +86,7 @@
 
 
                         <div class="mb-3 col-sm-12 col-md-6 col-lg-4" id="end_date_div">
-                            <label for="end_date" class="form-label">End Date</label>
+                            <label for="end_date" class="form-label">End Date<span class="text-danger">*</span></label>
                             <input type="date" name="end_date" id="end_date" class="form-control">
                             @error('end_date')
                                 <span class="text-danger">{{ $message }}</span>

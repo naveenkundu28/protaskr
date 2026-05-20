@@ -147,7 +147,7 @@
 
                                         <li >
                                             <button class="px-2 py-2 border-0 px-0 text-danger text-start w-100 bg-white resignBtn"
-                                                data-id="{{ $user->id }}" data-bs-toggle="modal"
+                                                data-id="{{ $user->id }}" data-user-type="{{ strtolower($user->user_type) }}" data-bs-toggle="modal"
                                                 data-bs-target="#resignModal">
                                                 Resign
                                             </button>
@@ -188,23 +188,30 @@
 
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title">Resign Employee</h5>
+                            <h5 class="modal-title" id="resignModalTitle">Resign Employee</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
                         <div class="modal-body">
                             <label class="form-label">Comment <span class="text-danger">*</span></label>
                             <textarea name="comment" class="form-control" required></textarea>
+                            <div class="mt-3">
+                                <label class="form-label">Last Working Date <span class="text-danger">*</span></label>
+                                <input type="date" name="last_working_date" class="form-control" value="{{ old('last_working_date') }}" required>
+                            </div>
 
                             <input type="hidden" name="user_id" id="resignUserId" value="{{ old('user_id') }}">
 
                             @error('comment')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
+                            @error('last_working_date')
+                                <span class="text-danger d-block">{{ $message }}</span>
+                            @enderror
                         </div>
 
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-danger">Confirm Resign</button>
+                            <button type="submit" id="resignModalButton" class="btn btn-danger">Confirm Resign</button>
                         </div>
                     </div>
                 </form>
@@ -220,8 +227,14 @@
             $('.resignBtn').click(function() {
 
                 let userId = $(this).data('id');
+                let userType = ($(this).data('user-type') || '').toString().toLowerCase();
+                let modalTitle = userType === 'external' ? 'Unassigned Employee' : 'Resign Employee';
+                let modalButton = userType === 'external' ? 'Confirm Unassigned' : 'Confirm Resign';
 
                 $('#resignUserId').val(userId);
+                $('#resignModalTitle').text(modalTitle);
+                $('#resignModalButton').text(modalButton);
+
                 let url = "{{ route('users.destroy', ':id') }}";
                 url = url.replace(':id', userId);
 
@@ -229,7 +242,7 @@
 
             });
 
-            @if ($errors->has('comment'))
+            @if ($errors->has('comment') || $errors->has('last_working_date'))
                 let userId = "{{ old('user_id') }}";
 
                 let url = "{{ route('users.destroy', ':id') }}";

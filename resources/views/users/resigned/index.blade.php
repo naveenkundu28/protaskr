@@ -19,7 +19,7 @@
 
         <div id="tableSearchResults">
             <div class="table-responsive pb-4 service-table-responsive">
-                <table class="table table-bordered table-sm text-nowrap">
+                <table class="table table-bordered table-sm text-nowrap" style="font-size: 14px">
                 <tr>
                     <th>No</th>
                     <th>User Type</th>
@@ -34,6 +34,7 @@
                     <th>Tags</th>
                     <th>Roles</th>
                     <th>Resign Reason</th>
+                    <th>Last Working Date</th>
                     <th>Action</th>
                 </tr>
                 @foreach ($data as $key => $user)
@@ -93,6 +94,9 @@
                         </td>
                         <td>
                             {{ $user->comment }}
+                        </td>
+                        <td>
+                            {{ $user->last_working_date }}
                         </td>
                         <td>
                             <div class="dropdown service-action-dropdown">
