@@ -163,12 +163,27 @@ class TaskController extends Controller
         $this->authorize('task-edit');
 
         $request->validate([
-            'elapsed_time' => 'required|integer|min:0'
+            'elapsed_time' => 'required|integer|min:0',
+            'start_time' => 'nullable|date',
+            'end_time' => 'nullable|date|after_or_equal:start_time',
         ]);
 
         $history = TrackerHistory::findOrFail($trackerId);
 
-        $history->elapsed_time = $request->elapsed_time;
+        if ($request->filled('start_time')) {
+            $history->start_time = Carbon::parse($request->start_time);
+        }
+
+        if ($request->filled('end_time')) {
+            $history->end_time = Carbon::parse($request->end_time);
+        }
+
+        if ($request->filled('start_time') && $request->filled('end_time')) {
+            $history->elapsed_time = Carbon::parse($request->end_time)
+                ->diffInSeconds(Carbon::parse($request->start_time));
+        } else {
+            $history->elapsed_time = $request->elapsed_time;
+        }
         $history->save();
 
         return response()->json([

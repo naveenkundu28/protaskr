@@ -156,32 +156,49 @@
                     </div>
                 </div>
                 <table class="table table-bordered">
-                    <tr>
-                        <th>No</th>
-                        <th>Start time</th>
-                        <th>End Time</th>
-                        <th>Total Time</th>
+                <tr>
+                    <th>No</th>
+                    <th>Start time</th>
+                    <th>End Time</th>
+                    <th>Total Time</th>
                     </tr>
                     @foreach ($taskHistories as $key => $taskHistory)
                         <tr>
                             <td data-id="{{ $taskHistory->id }}">{{ $loop->iteration }}</td>
-                            <td> {{ $taskHistory->start_time }} </td>
-                            <td>{{ $taskHistory->end_time }}</td>
-                            {{-- <td>{{ $taskHistory->elapsed_time_formatted }}</td> --}}
                             <td data-id="{{ $taskHistory->id }}">
-
-                                {{-- Display Mode --}}
+                                <span class="start-time-text">
+                                    {{ $taskHistory->start_time }}
+                                </span>
+                                @if (Auth::user()->hasRole('Admin'))
+                                    <div class="align-items-center d-flex gap-2 mt-1 time-edit d-none">
+                                        <div>
+                                            <input type="datetime-local" class="form-control form-control-sm start-time-input"
+                                                value="{{ \Carbon\Carbon::parse($taskHistory->start_time)->format('Y-m-d\TH:i') }}">
+                                        </div>
+                                    </div>
+                                @endif
+                            </td>
+                            <td data-id="{{ $taskHistory->id }}">
+                                <span class="end-time-text">
+                                    {{ $taskHistory->end_time }}
+                                </span>
+                                @if (Auth::user()->hasRole('Admin'))
+                                    <div class="align-items-center d-flex gap-2 mt-1 time-edit d-none">
+                                        <div>
+                                            <input type="datetime-local" class="form-control form-control-sm end-time-input"
+                                                value="{{ $taskHistory->end_time ? \Carbon\Carbon::parse($taskHistory->end_time)->format('Y-m-d\TH:i') : '' }}">
+                                        </div>
+                                    </div>
+                                @endif
+                            </td>
+                            <td data-id="{{ $taskHistory->id }}">
                                 <span class="time-text">
                                     {{ $taskHistory->elapsed_time_formatted }}
                                 </span>
-
                                 @if (Auth::user()->hasRole('Admin'))
                                     <button class="btn btn-sm btn-primary edit-time ms-2">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-
-
-                                    {{-- Edit Mode --}}
                                     <div class="align-items-center d-flex gap-2 mt-1 time-edit d-none">
                                         <div>
                                             <input type="text" class="form-control form-control-sm time-input"
@@ -560,24 +577,29 @@
             // Edit Click
             $(document).on('click', '.edit-time', function() {
                 let td = $(this).closest('td');
+                let row = td.closest('tr');
 
-                td.find('.time-text, .edit-time').hide();
-                td.find('.time-edit').removeClass('d-none');
+                row.find('.time-text, .start-time-text, .end-time-text, .edit-time').hide();
+                row.find('.time-edit').removeClass('d-none');
             });
 
             // Cancel Click
             $(document).on('click', '.cancel-time', function() {
                 let td = $(this).closest('td');
+                let row = td.closest('tr');
 
-                td.find('.time-edit').addClass('d-none');
-                td.find('.time-text, .edit-time').show();
+                row.find('.time-edit').addClass('d-none');
+                row.find('.time-text, .start-time-text, .end-time-text, .edit-time').show();
             });
 
             // Save Click
             $(document).on('click', '.save-time', function() {
                 let td = $(this).closest('td');
+                let row = td.closest('tr');
                 let id = td.data('id');
                 let inputVal = td.find('.time-input').val();
+                let startVal = row.find('.start-time-input').val();
+                let endVal = row.find('.end-time-input').val();
 
                 let tracker_seconds = timeToSeconds(inputVal);
 
@@ -589,17 +611,19 @@
                     method: 'POST',
                     data: {
                         elapsed_time: tracker_seconds,
+                        start_time: startVal,
+                        end_time: endVal,
                         _token: '{{ csrf_token() }}',
                         _method: 'PUT'
                     },
                     success: function(res) {
                         if (res.success) {
-                            console.log('res', res.success);
-
                             td.find('.time-text').text(secondsToTime(tracker_seconds));
+                            row.find('.start-time-text').text(startVal ? startVal.replace('T', ' ') : '');
+                            row.find('.end-time-text').text(endVal ? endVal.replace('T', ' ') : '');
 
-                            td.find('.time-edit').addClass('d-none');
-                            td.find('.time-text, .edit-time').show();
+                            row.find('.time-edit').addClass('d-none');
+                            row.find('.time-text, .start-time-text, .end-time-text, .edit-time').show();
                         }
                     },
                     error: function(error) {

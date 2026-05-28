@@ -39,7 +39,13 @@ class DailyReportController extends Controller
                 $q->where('name', 'Admin');
             })
             ->where('users.is_show_report', true)
-            ->orderBy('tags.id')   // sort by tag
+            ->orderByRaw("
+                CASE 
+                    WHEN tags.id = 4 THEN 3
+                    WHEN tags.id = 3 THEN 4
+                    ELSE tags.id
+                END
+            ")   // sort by tag
             ->orderBy('users.id')    // then by user_id
             ->get();
         
