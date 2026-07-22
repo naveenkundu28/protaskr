@@ -29,6 +29,11 @@
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
                         <textarea name="description" id="summernote" class="form-control"></textarea>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            {{-- <small id="titleCharHint" class="text-muted">Title: 0/250</small> --}}
+                            <small id="descriptionCharHint" class="text-muted">Min Characters: 0/250</small>
+                        </div>
+                        <small id="taskCharWarning" class="text-danger d-none d-block mt-1">Please enter at least 250 characters in either the title or the description.</small>
                         @error('description')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -81,7 +86,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Create Task</button>
+                    <button type="submit" class="btn btn-primary" id="createTaskBtn" disabled>Create Task</button>
                 </div>
             </form>
         </div>
@@ -110,10 +115,66 @@
         $(document).ready(function() {
             // const taskStatusInput = document.getElementById('task_status');
             const createTaskModal = document.getElementById('createTaskModal');
+            const titleInput = document.getElementById('title');
+            const createTaskBtn = document.getElementById('createTaskBtn');
+            const titleCharHint = document.getElementById('titleCharHint');
+            const descriptionCharHint = document.getElementById('descriptionCharHint');
+            const taskCharWarning = document.getElementById('taskCharWarning');
+            const minTaskChars = 250;
+
+            function getSummernoteTextLength() {
+                const html = $('#summernote').summernote('code') || '';
+                const text = $('<div>').html(html).text().trim();
+                return text.length;
+            }
+
+            function updateTaskCharacterCount() {
+                const titleLength = (titleInput?.value || '').trim().length;
+                const descriptionLength = getSummernoteTextLength();
+                const isValid = titleLength >= minTaskChars || descriptionLength >= minTaskChars;
+
+                if (titleCharHint) {
+                    titleCharHint.textContent = `Title: ${Math.min(titleLength, minTaskChars)}/${minTaskChars}`;
+                    titleCharHint.classList.toggle('text-success', titleLength >= minTaskChars);
+                    titleCharHint.classList.toggle('text-muted', titleLength < minTaskChars);
+                }
+
+                if (descriptionCharHint) {
+                    descriptionCharHint.textContent = `Min Characters: ${Math.min(descriptionLength, minTaskChars)}/${minTaskChars}`;
+                    descriptionCharHint.classList.toggle('text-success', descriptionLength >= minTaskChars);
+                    descriptionCharHint.classList.toggle('text-muted', descriptionLength < minTaskChars);
+                }
+
+                if (taskCharWarning) {
+                    taskCharWarning.classList.toggle('d-none', isValid);
+                }
+
+                if (createTaskBtn) {
+                    createTaskBtn.disabled = !isValid;
+                }
+
+                return isValid;
+            }
+
             createTaskModal.addEventListener('show.bs.modal', function(event) {
                 var button = event.relatedTarget;
                 var status = button.getAttribute('data-status');
                 // taskStatusInput.value = status;
+                updateTaskCharacterCount();
+            });
+
+            if (titleInput) {
+                titleInput.addEventListener('input', updateTaskCharacterCount);
+            }
+
+            $('#summernote').on('summernote.change keyup paste', updateTaskCharacterCount);
+            updateTaskCharacterCount();
+
+            $(createTaskModal).find('form').on('submit', function(event) {
+                if (!updateTaskCharacterCount()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
             });
 
             $('#project').change(function() {
