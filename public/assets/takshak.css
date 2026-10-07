@@ -1,0 +1,98 @@
+/* Services Bulk Creation / Edit Table Styles */
+#servicesTable {
+    font-size: 0.8125rem;
+}
+#servicesTable th {
+    font-size: 0.77rem;
+    font-weight: 600;
+    vertical-align: middle;
+    padding: 5px 6px;
+    white-space: nowrap;
+    background-color: #f8f9fa;
+    letter-spacing: 0.2px;
+}
+#servicesTable td {
+    padding: 3px 4px;
+    vertical-align: middle;
+}
+#servicesTable tbody tr:hover td {
+    background-color: #f8fafc;
+}
+#servicesTable .form-control,
+#servicesTable .form-select {
+    font-size: 0.79rem;
+    border-radius: 4px;
+    padding: 2px 6px;
+    height: 29px;
+    min-height: 29px;
+    line-height: 1.25;
+}
+#servicesTable input:disabled,
+#servicesTable select:disabled,
+.working-resource-select.bg-light {
+    background-color: #e9ecef !important;
+    cursor: not-allowed;
+    color: #6c757d;
+}
+.row-index-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 4px;
+    border-radius: 6px;
+    background-color: #f1f3f5;
+    color: #495057;
+    font-weight: 600;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    border: 1px solid #ced4da;
+}
+.row-select-cell {
+    cursor: pointer;
+    user-select: none;
+}
+.row-select-cell:hover .row-index-badge {
+    background-color: #e2e6ea;
+    border-color: #adb5bd;
+}
+.service-row.row-selected {
+    background-color: #f1f7ff !important;
+}
+.service-row.row-selected td {
+    background-color: #f1f7ff !important;
+}
+.service-row.row-selected .row-index-badge {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(13, 110, 253, 0.35);
+}
+.header-index-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 4px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    color: #6c757d;
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    border: 1px solid #ced4da;
+    transition: all 0.15s ease-in-out;
+    user-select: none;
+}
+.header-index-badge:hover {
+    background-color: #e9ecef;
+    color: #212529;
+}
+.header-index-badge.all-selected {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+}

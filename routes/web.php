@@ -22,12 +22,28 @@ use App\Http\Controllers\LeadStatusController;
 use App\Http\Controllers\NotesHistoryController;
 use App\Http\Controllers\RequirementController;
 use App\Http\Controllers\TagController;
+use App\Http\Controllers\ProjectModuleController;
+use App\Http\Controllers\StoryController;
 
 Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('login', [LoginController::class, 'login']);
 Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
+    /* Project management module.  These routes intentionally sit apart from the
+       legacy client routes below: clients remain the CRM entity while projects
+       are now deliverables owned by a client. */
+    Route::get('projects', [ProjectModuleController::class, 'index'])->name('projects.index');
+    Route::get('projects/create', [ProjectModuleController::class, 'create'])->name('projects.create');
+    Route::post('projects', [ProjectModuleController::class, 'store'])->name('projects.store');
+    Route::get('projects/{project}', [ProjectModuleController::class, 'show'])->name('projects.show');
+    Route::get('projects/{project}/edit', [ProjectModuleController::class, 'edit'])->name('projects.edit');
+    Route::put('projects/{project}', [ProjectModuleController::class, 'update'])->name('projects.update');
+    Route::get('projects/{project}/stories', [ProjectModuleController::class, 'stories'])->name('projects.stories');
+    Route::get('stories/create', [StoryController::class, 'create'])->name('stories.create');
+    Route::post('stories', [StoryController::class, 'store'])->name('stories.store');
+    Route::get('stories/{story}', [StoryController::class, 'show'])->name('stories.show');
+    Route::post('stories/{story}/tasks', [StoryController::class, 'storeTask'])->name('stories.tasks.store');
     Route::resource('roles', RoleController::class);
     Route::get('/users/resigned', [UserController::class, 'resignedUsers'])->name('resign.users.index');
     Route::get('/users/listing', [UserController::class, 'listing'])->name('users.listing');
@@ -65,6 +81,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('clients/{client}/complete', [ProjectController::class, 'markCompleted'])->name('clients.complete');
     Route::get('/service-listing', [ProjectController::class, 'serviceListing'])->name('services.listing');
     Route::post('/service-listing/import', [ProjectController::class, 'importServices'])->name('services.import');
+    Route::get('/services/add', [ProjectController::class, 'addServicesTable'])->name('services.add');
+    Route::post('/services/add', [ProjectController::class, 'saveServicesTable'])->name('services.save');
+    Route::post('/services/copy-previous', [ProjectController::class, 'copyPreviousMonthServices'])->name('services.copyPrevious');
     Route::post('clients/{clientId}/restore', [ProjectController::class, 'restore'])->name('clients.restore');
     Route::post('client/team', [ProjectController::class, 'addMember'])->name('clients.addMember');
     Route::post('/clients/remove-member', [ProjectController::class, 'removeMember'])->name('clients.removeMember');

@@ -15,7 +15,7 @@
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.1/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" />
-    <link rel="stylesheet" href="{{ asset('assets/style.css') }}?v=1.1" />
+    <link rel="stylesheet" href="{{ asset('assets/style.css') }}?v=1.3" />
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
@@ -32,29 +32,39 @@
         <header class="topnav mb-4">
             <nav class="navbar navbar-expand-lg task-navbar">
                 <div class="container-fluid">
-                    <a class="navbar-brand task-logo" href="{{ route('dashboard') }}">
-                        <img src="{{ asset('assets/img/logo-circle-horizontal.png') }}" class="img-fluid"
-                            alt="task manager">
-                    </a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false"
-                        aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
+                    <div class="top_logo_btn">
+                        <a class="navbar-brand task-logo" href="{{ route('dashboard') }}">
+                            <img src="{{ asset('assets/img/new_logo.png') }}" class="img-fluid full_logo"
+                                alt="task manager">
+                            <img src="{{ asset('assets/img/compress_logo.png') }}" class="img-fluid compress_logo"
+                                alt="task manager">
+                        </a>
+                        <button class="menu_compress_btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+                            </svg>
+                        </button>
+                    </div>
                     <div class="collapse navbar-collapse" id="navbarNavDropdown">
                         <ul class="navbar-nav align-items-lg-center gap-lg-1">
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('/') ? 'active' : '' }}"
                                     href="{{ route('dashboard') }}">
-                                    <i class="bi bi-house-door"></i> Dashboard
+                                    <i class="bi bi-house-door-fill"></i> Dashboard
                                 </a>
                             </li>
                             @can('project-show')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('projects*') || request()->is('stories*') ? 'active' : '' }}"
+                                        href="{{ route('projects.index') }}">
+                                        <i class="bi bi-kanban"></i> Projects
+                                    </a>
+                                </li>
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle {{ request()->is('clients*') ? 'active' : '' }}"
                                         href="{{ route('clients.index') }}" role="button" data-bs-toggle="dropdown"
                                         aria-expanded="false">
-                                        <i class="bi bi-folder"></i> Clients
+                                        <i class="bi bi-building"></i> Clients
                                     </a>
                                     <ul class="dropdown-menu">
                                         <li>
@@ -85,7 +95,7 @@
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('leads*') ? 'active' : '' }}"
                                         href="{{ route('leads.index') }}">
-                                        <i class="bi bi-person-lines-fill"></i> My Leads
+                                        <i class="bi bi-people"></i> My Leads
                                     </a>
                                 </li>
                             @endif
@@ -124,7 +134,7 @@
                                 <li class="nav-item dropdown">
                                     <a class="nav-link dropdown-toggle {{ request()->is('hourly-report*') || request()->is('daily-task-report*') ? 'active' : '' }}"
                                         href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-bar-chart"></i> Daily Report
+                                        <i class="bi bi-bar-chart-line"></i> Daily Report
                                     </a>
                                     <ul class="dropdown-menu">
                                         <li>
@@ -145,103 +155,17 @@
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('reports*') ? 'active' : '' }}"
                                         href="{{ route('reports.index') }}">
-                                        <i class="bi bi-file-earmark-bar-graph"></i> Reports
+                                        <i class="bi bi-file-earmark-ppt"></i> Reports
                                     </a>
                                 </li>
                             @endcan
                         </ul>
-                        <div
-                            class="task-navbar-meta ms-lg-auto d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3">
-                            <ul class="navbar-nav">
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown"
-                                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        {{ Auth::user()->name }}
-                                    </a>
-                                    <ul class="dropdown-menu dropdown-menu-profile dropdown-menu-end"
-                                        aria-labelledby="userDropdown">
-                                        <li><a class="dropdown-item" href="{{ route('profile.edit') }}">Update
-                                                Profile</a></li>
-                                        @if (auth()->user()->can('user-show') || auth()->user()->can('role-show'))
-                                            <li>
-                                                <hr class="dropdown-divider">
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item d-flex justify-content-between align-items-center {{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
-                                                    href="#mastersMenu" data-bs-toggle="collapse"
-                                                    aria-expanded="{{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
-                                                    aria-controls="mastersMenu">
-                                                    <span>
-                                                        <i class="bi bi-folder me-2"></i> Masters
-                                                    </span>
-                                                    <i class="bi bi-chevron-down small"></i>
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <ul class="collapse list-unstyled mb-0 {{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
-                                                    id="mastersMenu">
-                                                    @can('user-show')
-                                                        <li>
-                                                            <a class="dropdown-item ps-4 {{ request()->is('skills*') ? 'active' : '' }}"
-                                                                href="{{ route('skills.index') }}">
-                                                                <i class="bi bi-lightbulb me-2"></i> Skills
-                                                            </a>
-                                                        </li>
-                                                        <li>
-                                                            <a class="dropdown-item ps-4 {{ request()->is('tags*') ? 'active' : '' }}"
-                                                                href="{{ route('tags.index') }}">
-                                                                <i class="bi bi-tags me-2"></i> Tags
-                                                            </a>
-                                                        </li>
-                                                        <li>
-                                                            <a class="dropdown-item ps-4 {{ request()->is('year*') ? 'active' : '' }}"
-                                                                href="{{ route('master.hours.create') }}">
-                                                                <i class="bi bi-clock me-2"></i> Hours
-                                                            </a>
-                                                        </li>
-                                                        <li>
-                                                            <a class="dropdown-item ps-4 {{ request()->is('requirements*') ? 'active' : '' }}"
-                                                                href="{{ route('requirements.index') }}">
-                                                                <i class="bi bi-list-task me-2"></i> Requirements
-                                                            </a>
-                                                        </li>
-                                                        @if (auth()->user()->show_leads)
-                                                            <li>
-                                                                <a class="dropdown-item ps-4 {{ request()->is('lead-statuses*') ? 'active' : '' }}"
-                                                                    href="{{ route('lead-statuses.index') }}">
-                                                                    <i class="bi bi-info-circle me-2"></i> Lead Status
-                                                                </a>
-                                                            </li>
-                                                        @endif
-                                                    @endcan
-                                                </ul>
-                                            </li>
-                                        @endif
-                                        <li>
-                                            <hr class="dropdown-divider">
-                                        </li>
-                                        @can('role-show')
-                                            <li>
-                                                <a class="dropdown-item ps-4 {{ request()->is('roles*') ? 'active' : '' }}"
-                                                    href="{{ route('roles.index') }}">
-                                                    <i class="bi bi-sticky me-2"></i> Roles
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <hr class="dropdown-divider">
-                                            </li>
-                                        @endcan
-
-                                        <li>
-                                            <form method="POST" action="{{ route('logout') }}" id="logout-form">
-                                                @csrf
-                                                <button type="submit" class="dropdown-item">Logout</button>
-                                            </form>
-                                        </li>
-                                    </ul>
-                                </li>
-                            </ul>
-                            {{-- <span class="current-datetime" id="currentDateTime"></span> --}}
+                        <div class="ve_tracker_version">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M372.2 116C372.2 136.9 359.8 155 342 163.2L448 256L552.4 235.1C547.1 227.4 544 218 544 208C544 181.5 565.5 160 592 160C618.5 160 640 181.5 640 208C640 234 619.4 255.1 593.6 256L481 506.3C470.7 529.3 447.8 544 422.6 544L217.4 544C192.2 544 169.4 529.2 159 506.3L46.4 256C20.6 255.1 0 234 0 208C0 181.5 21.5 160 48 160C74.5 160 96 181.5 96 208C96 218.1 92.9 227.4 87.6 235.1L192 256L298.1 163.1C280.4 154.8 268.1 136.8 268.1 116C268.1 87.3 291.4 64 320.1 64C348.8 64 372.1 87.3 372.1 116z"/></svg>
+                            <span>
+                                <h3>Pro Taskr Tracker</h3>
+                                <p>v1.0.0</p>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -249,13 +173,14 @@
         </header>
         <main>
             @yield('content')
-        </main>
-        <footer class="mt-auto py-3 text-center">
+            <footer class="mt-auto py-3 text-center">
             <div class="container">
                 <span class="text-muted">&copy; {{ date('Y') }} Task Manager | Developed by <a href="#"
                         target="_blank">VE</a> </span>
             </div>
         </footer>
+        </main>
+        
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

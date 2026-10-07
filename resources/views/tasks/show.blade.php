@@ -3,6 +3,14 @@
     {{ $task->title }} - Task Details
 @endsection
 @section('content')
+    @if($task->deliveryProject || $task->story)
+        <div class="container-fluid mb-3">
+            <div class="small text-muted">
+                @if($task->deliveryProject)<a href="{{ route('projects.show', $task->deliveryProject) }}">{{ $task->deliveryProject->name }}</a>@endif
+                @if($task->story) <span class="mx-1">/</span><a href="{{ route('stories.show', $task->story) }}">{{ $task->story->title }}</a>@endif
+            </div>
+        </div>
+    @endif
     <div class="container-fluid">
         <div class="row">
             <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">

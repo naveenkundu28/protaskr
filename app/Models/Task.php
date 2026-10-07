@@ -23,6 +23,9 @@ class Task extends Model
         return $this->belongsTo(Client::class, 'client_id');
     }
 
+    public function deliveryProject() { return $this->belongsTo(Project::class, 'project_id'); }
+    public function story() { return $this->belongsTo(Story::class); }
+
     public function getStatusBadgeAttribute()
     {
         $statusBadges = [

@@ -1082,4 +1082,190 @@ class ProjectController extends Controller
 
         abort_unless($isAssignedToClient, 403);
     }
+
+    public function addServicesTable(Request $request)
+    {
+        $this->authorize('project-show');
+
+        $clients = Client::orderBy('name')->get(['id', 'name']);
+        $employees = User::role('Employee')->orderBy('name')->get(['id', 'name', 'employee_id']);
+        if ($employees->isEmpty()) {
+            $employees = User::orderBy('name')->get(['id', 'name', 'employee_id']);
+        }
+
+        $selectedMonthStr = $request->get('month', now()->format('Y-m'));
+        $parts = explode('-', $selectedMonthStr);
+        $currentYear = isset($parts[0]) && is_numeric($parts[0]) ? (int)$parts[0] : now()->year;
+        $currentMonth = isset($parts[1]) && is_numeric($parts[1]) ? (int)$parts[1] : now()->month;
+
+        $selectedMonthStr = sprintf('%04d-%02d', $currentYear, $currentMonth);
+
+        $services = Service::where('year', $currentYear)
+            ->where('month', $currentMonth)
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return view('services.index', compact(
+            'clients',
+            'employees',
+            'currentMonth',
+            'currentYear',
+            'selectedMonthStr',
+            'services'
+        ));
+    }
+
+    public function saveServicesTable(Request $request)
+    {
+        $this->authorize('project-show');
+
+        $selectedMonthStr = $request->input('selected_month', now()->format('Y-m'));
+        $parts = explode('-', $selectedMonthStr);
+        $selectedYear = isset($parts[0]) && is_numeric($parts[0]) ? (int)$parts[0] : now()->year;
+        $selectedMonth = isset($parts[1]) && is_numeric($parts[1]) ? (int)$parts[1] : now()->month;
+
+        $servicesData = $request->input('services', []);
+
+        $savedCount = 0;
+        DB::transaction(function () use ($servicesData, $selectedYear, $selectedMonth, &$savedCount, $request) {
+            if ($request->has('deleted_service_ids')) {
+                Service::whereIn('id', (array)$request->input('deleted_service_ids'))->delete();
+            }
+
+            foreach ($servicesData as $data) {
+                if (empty($data['client_id']) && empty($data['service_id'])) {
+                    continue;
+                }
+
+                $frontResource = !empty($data['front_resource']) ? $data['front_resource'] : null;
+                $workingResource = ($data['service_type'] ?? '') === 'proxy'
+                    ? (!empty($data['working_resource']) ? $data['working_resource'] : null)
+                    : $frontResource;
+
+                $status = $data['service_status'] ?? 'new';
+                $comment = $data['comment'] ?? ($data['reason'] ?? null);
+                $month = $selectedMonth;
+                $year = $selectedYear;
+
+                $servicePayload = [
+                    'client_id' => $data['client_id'],
+                    'service_type' => in_array($data['service_type'] ?? '', ['direct', 'proxy', 'external']) ? $data['service_type'] : 'direct',
+                    'service_id' => $data['service_id'],
+                    'hours' => !empty($data['hours']) ? $data['hours'] : 0,
+                    'month' => $month,
+                    'year' => $year,
+                    'service_status' => in_array($status, ['new', 'in_progress', 'completed', 'replacement', 'canceled']) ? $status : 'new',
+                    'front_resource' => $frontResource,
+                    'working_resource' => $workingResource,
+                    'start_date' => !empty($data['start_date']) ? $data['start_date'] : null,
+                    'end_date' => in_array($status, ['completed', 'canceled']) && !empty($data['end_date']) ? $data['end_date'] : null,
+                    'cancel_reason' => !empty($comment) ? $comment : null,
+                    'replacement_reason' => null,
+                ];
+
+                if (!empty($data['id'])) {
+                    $service = Service::find($data['id']);
+                    if ($service) {
+                        $service->update($servicePayload);
+                        $savedCount++;
+                    } else {
+                        Service::create($servicePayload);
+                        $savedCount++;
+                    }
+                } else {
+                    Service::create($servicePayload);
+                    $savedCount++;
+                }
+
+                $memberIds = collect([$frontResource, $workingResource])->filter()->unique()->all();
+                if (!empty($memberIds) && !empty($data['client_id'])) {
+                    Client::find($data['client_id'])?->teamProjects()->syncWithoutDetaching($memberIds);
+                }
+            }
+        });
+
+        $monthParam = sprintf('%04d-%02d', $selectedYear, $selectedMonth);
+        return redirect()->route('services.add', ['month' => $monthParam])
+            ->with('success', "Services saved successfully! ({$savedCount} record(s) processed)");
+    }
+
+    public function copyPreviousMonthServices(Request $request)
+    {
+        $this->authorize('project-show');
+
+        // Target month (to_month or fallback to month)
+        $targetMonthStr = $request->input('to_month', $request->input('month', now()->format('Y-m')));
+        $toParts = explode('-', $targetMonthStr);
+        $targetYear = isset($toParts[0]) && is_numeric($toParts[0]) ? (int)$toParts[0] : now()->year;
+        $targetMonth = isset($toParts[1]) && is_numeric($toParts[1]) ? (int)$toParts[1] : now()->month;
+        $targetDate = \Carbon\Carbon::createFromDate($targetYear, $targetMonth, 1);
+
+        // Source month (from_month or fallback to previous month of target)
+        if ($request->filled('from_month')) {
+            $fromParts = explode('-', $request->input('from_month'));
+            $fromYear = isset($fromParts[0]) && is_numeric($fromParts[0]) ? (int)$fromParts[0] : $targetYear;
+            $fromMonth = isset($fromParts[1]) && is_numeric($fromParts[1]) ? (int)$fromParts[1] : $targetMonth;
+            $fromDate = \Carbon\Carbon::createFromDate($fromYear, $fromMonth, 1);
+        } else {
+            $fromDate = (clone $targetDate)->subMonth();
+            $fromYear = $fromDate->year;
+            $fromMonth = $fromDate->month;
+        }
+
+        $targetMonthParam = sprintf('%04d-%02d', $targetYear, $targetMonth);
+
+        // Check if source and target are the same month
+        if ($fromYear === $targetYear && $fromMonth === $targetMonth) {
+            return redirect()
+                ->route('services.add', ['month' => $targetMonthParam])
+                ->with('error', "Source month (" . $fromDate->format('F Y') . ") and target month cannot be the same.");
+        }
+
+        $sourceServices = Service::where('year', $fromYear)
+            ->where('month', $fromMonth)
+            ->get();
+
+        if ($sourceServices->isEmpty()) {
+            return redirect()
+                ->route('services.add', ['month' => $targetMonthParam])
+                ->with('warning', "No services found in source month (" . $fromDate->format('F Y') . ") to copy.");
+        }
+
+        $copiedCount = 0;
+        DB::transaction(function () use ($sourceServices, $targetYear, $targetMonth, &$copiedCount) {
+            foreach ($sourceServices as $s) {
+                Service::updateOrCreate(
+                    [
+                        'client_id' => $s->client_id,
+                        'service_id' => $s->service_id,
+                        'month' => $targetMonth,
+                        'year' => $targetYear,
+                    ],
+                    [
+                        'service_type' => $s->service_type,
+                        'hours' => $s->hours,
+                        'service_status' => $s->service_status,
+                        'front_resource' => $s->front_resource,
+                        'working_resource' => $s->working_resource,
+                        'start_date' => $s->start_date,
+                        'end_date' => $s->end_date,
+                        'cancel_reason' => $s->cancel_reason,
+                        'replacement_reason' => $s->replacement_reason,
+                    ]
+                );
+
+                $memberIds = collect([$s->front_resource, $s->working_resource])->filter()->unique()->all();
+                if (!empty($memberIds) && !empty($s->client_id)) {
+                    Client::find($s->client_id)?->teamProjects()->syncWithoutDetaching($memberIds);
+                }
+
+                $copiedCount++;
+            }
+        });
+
+        return redirect()
+            ->route('services.add', ['month' => $targetMonthParam])
+            ->with('success', "Successfully copied {$copiedCount} service(s) from " . $fromDate->format('F Y') . " to " . $targetDate->format('F Y') . "!");
+    }
 }
+
