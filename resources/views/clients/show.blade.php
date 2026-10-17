@@ -3,7 +3,7 @@
     {{ $client->name }} - Client Details
 @endsection
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
         <h2 class="mb-4 shadow-sm p-3 rounded bg-white text-center"> {{ $client->name }}</h2>
 
         @if (session('success'))
@@ -55,7 +55,7 @@
                             $progress = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
                         @endphp
                         <div class="progress mb-4">
-                            <div class="progress-bar" role="progressbar" style="width: {{ $progress }}%;"
+                            <div class="progress-bar {{ \App\Models\Project::progressColorClass($progress) }}" role="progressbar" style="width: {{ $progress }}%;"
                                 aria-valuenow="{{ $progress }}" aria-valuemin="0" aria-valuemax="100">
                                 {{ round($progress) }}%</div>
                         </div>
@@ -69,7 +69,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <h5 class="card-title"> Team Members </h5>
-                            @can('project-edit')
+                            @can('clients-update')
                                 <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                     data-bs-target="#addMemberModal"> <i class="bi bi-plus-circle"></i> </button>
                             @endcan
@@ -86,9 +86,9 @@
                                                         <p class="card-title fw-bolder">{{ $user->name }}</p>
                                                         <p class="card-text">{{ $user->email }}</p>
                                                     </div>
-                                                    @can('project-edit')
+                                                    @can('clients-update')
                                                         <div>
-                                                            <form action="{{ route('clients.removeMember') }}" method="POST"
+                                                            <form action="{{ route('clients.members.destroy') }}" method="POST"
                                                                 style="display:inline;">
                                                                 @csrf
                                                                 <input type="hidden" name="project_id"
@@ -115,7 +115,7 @@
             </div>
         </div>
     </div>
-    @can('project-edit')
+    @can('clients-update')
         <div class="modal fade" id="addMemberModal" tabindex="-1" aria-labelledby="addMemberModalLabel" aria-hidden="true">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -124,7 +124,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form action="{{ route('clients.addMember') }}" method="POST">
+                        <form action="{{ route('clients.members.store') }}" method="POST">
                             @csrf
                             <input type="hidden" name="project_id" value="{{ $client->id }}">
                             <div class="mb-3">

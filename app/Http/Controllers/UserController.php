@@ -9,7 +9,7 @@ use App\Models\Tag;
 use App\Models\User;
 use App\Models\Hour;
 use App\Models\Service;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 use Illuminate\Support\Arr;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -26,13 +26,13 @@ class UserController extends Controller
      */
     public function index(Request $request): View
     {
-        $this->authorize('user-show');
+        $this->authorize('users-access');
 
         $search = trim((string) $request->input('search'));
 
         $data = User::with(['primarySkills', 'secondarySkills', 'tags'])
-            ->whereDoesntHave('roles', function ($q) {
-                $q->where('name', 'Admin');
+            ->whereDoesntHave('role', function ($q) {
+                $q->where('name', \App\Support\Roles::ADMIN);
             })
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($subQuery) use ($search) {
@@ -49,7 +49,7 @@ class UserController extends Controller
                         ->orWhereHas('tags', function ($skillQuery) use ($search) {
                             $skillQuery->where('name', 'like', "%{$search}%");
                         })
-                        ->orWhereHas('roles', function ($skillQuery) use ($search) {
+                        ->orWhereHas('role', function ($skillQuery) use ($search) {
                             $skillQuery->where('name', 'like', "%{$search}%");
                         })
                         ->orWhere('email', 'like', "%{$search}%")
@@ -68,7 +68,7 @@ class UserController extends Controller
 
     public function listing(Request $request): View
     {
-        $this->authorize('user-show');
+        $this->authorize('users-access');
 
         $search = trim((string) $request->input('search'));
         $tagId = $request->input('tag_id');
@@ -89,11 +89,11 @@ class UserController extends Controller
                 $services = Service::where('year', $now->year)
                     ->where('month', $now->month)
                     ->where('service_type', '!=', 'external')
-                    ->get(['hours', 'working_resource']);
+                    ->get(['id', 'hours', 'working_resource']);
 
                 foreach ($services as $service) {
-                    if (!empty($service->working_resource)) {
-                        $hoursByUser[$service->working_resource] = ($hoursByUser[$service->working_resource] ?? 0) + (float) $service->hours;
+                    foreach ($service->working_resource_ids as $userId) {
+                        $hoursByUser[$userId] = ($hoursByUser[$userId] ?? 0) + (float) $service->hours;
                     }
                 }
 
@@ -119,8 +119,8 @@ class UserController extends Controller
         }
 
         $data = User::with(['primarySkills', 'secondarySkills', 'tags'])
-            ->whereDoesntHave('roles', function ($q) {
-                $q->where('name', 'Admin');
+            ->whereDoesntHave('role', function ($q) {
+                $q->where('name', \App\Support\Roles::ADMIN);
             })
             ->when(!empty($tagId), function ($query) use ($tagId) {
                 $query->whereHas('tags', function ($tagQuery) use ($tagId) {
@@ -153,7 +153,7 @@ class UserController extends Controller
                         ->orWhereHas('tags', function ($skillQuery) use ($search) {
                             $skillQuery->where('name', 'like', "%{$search}%");
                         })
-                        ->orWhereHas('roles', function ($skillQuery) use ($search) {
+                        ->orWhereHas('role', function ($skillQuery) use ($search) {
                             $skillQuery->where('name', 'like', "%{$search}%");
                         })
                         ->orWhere('email', 'like', "%{$search}%")
@@ -177,9 +177,9 @@ class UserController extends Controller
      */
     public function create(): View
     {
-        $this->authorize('user-create');
+        $this->authorize('users-create');
 
-        $roles = Role::pluck('name', 'name')->all();
+        $roles = Role::pluck('name', 'id')->all();
         $skills = Skill::all();
         $tags = Tag::all();
 
@@ -194,14 +194,14 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        $this->authorize('user-create');
+        $this->authorize('users-create');
 
         $this->validate($request, [
             'name' => 'required',
             'email' => 'required|email|unique:users,email',
             'employee_id' => 'required|unique:users,employee_id',
             'password' => 'required|same:confirm-password',
-            'roles' => 'required'
+            'role_id' => 'required|exists:roles,id'
         ]);
 
         $input = $request->only([
@@ -215,14 +215,14 @@ class UserController extends Controller
             'alt_phone_no',
             'experience',
             'is_show_report',
-            'show_leads'
+            'role_id',
         ]);
 
         $input['password'] = Hash::make($input['password']);
         $input['is_show_report'] = $request->input('is_show_report', true);
 
         $user = User::create($input);
-        $user->assignRole($request->input('roles'));
+        $user->assignDefaultPermissions();
 
         if ($request->has('primary_skills')) {
             $user->primarySkills()->sync($request->primary_skills);
@@ -247,7 +247,7 @@ class UserController extends Controller
      */
     public function show($id): View
     {
-        $this->authorize('user-show');
+        $this->authorize('users-show');
 
         $user = User::with(['primarySkills', 'secondarySkills', 'tags'])->withTrashed()->findOrFail($id);
 
@@ -262,11 +262,10 @@ class UserController extends Controller
      */
     public function edit($id): View
     {
-        $this->authorize('user-edit');
+        $this->authorize('users-update');
 
         $user = User::with(['primarySkills', 'secondarySkills', 'tags'])->findOrFail($id);
-        $roles = Role::pluck('name', 'name')->all();
-        $userRole = $user->roles->pluck('name', 'name')->all();
+        $roles = Role::pluck('name', 'id')->all();
 
         $skills = Skill::all();
         $tags = Tag::all();
@@ -275,7 +274,7 @@ class UserController extends Controller
         $userSecondarySkills = $user->secondarySkills->pluck('id')->toArray();
         $userTags = $user->tags->pluck('id')->toArray();
 
-        return view('users.edit', compact('user', 'roles', 'userRole', 'skills', 'tags', 'userPrimarySkills', 'userSecondarySkills', 'userTags'));
+        return view('users.edit', compact('user', 'roles', 'skills', 'tags', 'userPrimarySkills', 'userSecondarySkills', 'userTags'));
     }
 
     /**
@@ -287,14 +286,14 @@ class UserController extends Controller
      */
     public function update(Request $request, $id): RedirectResponse
     {
-        $this->authorize('user-edit');
+        $this->authorize('users-update');
 
         $this->validate($request, [
             'name' => 'required',
             'email' => 'required|email|unique:users,email,' . $id,
             'employee_id' => 'required|unique:users,employee_id,'. $id,
             'password' => 'same:confirm-password',
-            'roles' => 'required'
+            'role_id' => 'required|exists:roles,id'
         ]);
 
         $input = $request->all();
@@ -306,10 +305,13 @@ class UserController extends Controller
         $input['is_show_report'] = $request->input('is_show_report', true);
 
         $user = User::find($id);
+        $roleChanged = (int) $user->role_id !== (int) $request->role_id;
         $user->update($input);
-        DB::table('model_has_roles')->where('model_id', $id)->delete();
 
-        $user->assignRole($request->input('roles'));
+        if ($roleChanged) {
+            $user->unsetRelation('role');
+            $user->assignDefaultPermissions();
+        }
 
         $user->primarySkills()->sync($request->primary_skills ?? []);
 
@@ -329,7 +331,7 @@ class UserController extends Controller
      */
     public function destroy(Request $request, $id): RedirectResponse
     {
-        $this->authorize('user-delete');
+        $this->authorize('users-resign');
         $request->validate([
             'comment' => 'required|string',
             'last_working_date' => 'required|date',
@@ -346,7 +348,7 @@ class UserController extends Controller
 
     public function resignedUsers(Request $request): View
     {
-        $this->authorize('user-show');
+        $this->authorize('users-access');
 
         $search = trim((string) $request->input('search'));
 
@@ -367,7 +369,7 @@ class UserController extends Controller
                         ->orWhereHas('tags', function ($skillQuery) use ($search) {
                             $skillQuery->where('name', 'like', "%{$search}%");
                         })
-                        ->orWhereHas('roles', function ($skillQuery) use ($search) {
+                        ->orWhereHas('role', function ($skillQuery) use ($search) {
                             $skillQuery->where('name', 'like', "%{$search}%");
                         })
                         ->orWhere('email', 'like', "%{$search}%")
@@ -380,13 +382,13 @@ class UserController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        return view('users.resigned.index', compact('data'))
+        return view('users.resigned', compact('data'))
             ->with('i', ($request->input('page', 1) - 1) * 5);
     }
 
     public function restore($id)
     {
-        $this->authorize('user-edit');
+        $this->authorize('users-resign-restore');
 
         $user = User::onlyTrashed()->findOrFail($id);
 
@@ -397,7 +399,7 @@ class UserController extends Controller
         $user->restore();
 
         return redirect()
-            ->route('resign.users.index')
+            ->route('users.resigned')
             ->with('success', 'User restored successfully');
     }
 }

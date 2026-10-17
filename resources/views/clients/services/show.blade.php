@@ -1,7 +1,6 @@
 @extends('layouts.app')
-
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
 
         <div class="card border-0 p-4 mb-4 shadow-sm m-auto">
             <div class="row">
@@ -36,7 +35,7 @@
     
                 <div class="col-md-6 mb-3">
                     <strong>Working Resource:</strong><br>
-                    {{ $service->workingResource->name ?? '-' }}
+                    @include('services.partials.working-resources', ['service' => $service, 'empty' => '-'])
                 </div>
     
                 <div class="col-md-6 mb-3">

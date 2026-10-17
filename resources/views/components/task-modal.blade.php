@@ -182,7 +182,7 @@
 
                 if (projectId) {
                     $.ajax({
-                        url: '{{ route('clients.getUsers', ':id') }}'.replace(':id', projectId),
+                        url: '{{ route('clients.users.index', ':id') }}'.replace(':id', projectId),
                         type: 'GET',
                         success: function(data) {
                             $('#user_id').empty();

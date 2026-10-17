@@ -1,7 +1,6 @@
 @extends('layouts.app')
-
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
         <div class="row">
             <div class="col-lg-12 mb-4 margin-tb">
                 <div class="d-flex align-items-center justify-content-between shadow-sm p-3 rounded bg-white">
@@ -149,27 +148,13 @@
                         </div>
                     </div>
 
-                    <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
-                        <div class="form-group">
-                            <strong>Allow Manual Tracking:</strong>
-                            <select name="manual" class="form-control mt-2 select2 select2-mandatory">
-                                <option value="1" {{ old('manual', $user->manual) ? 'selected' : '' }}>
-                                    Yes
-                                </option>
-                                <option value="0" {{ !old('manual', $user->manual) ? 'selected' : '' }}>
-                                    No
-                                </option>
-
-                            </select>
-                        </div>
-                    </div>
                     <div class="col-xs-12 col-sm-12 col-md-6 mb-4">
                         <div class="form-group">
                             <strong>Role:</strong>
-                            <select name="roles[]" class="form-control mt-2 select2 select2-mandatory">
+                            <select name="role_id" class="form-control mt-2 select2 select2-mandatory">
                                 @foreach ($roles as $value => $label)
                                     <option value="{{ $value }}"
-                                        {{ in_array($value, old('roles', $userRole)) ? 'selected' : '' }}>
+                                        {{ old('role_id', $user->role_id) == $value ? 'selected' : '' }}>
                                         {{ $label }}
                                     </option>
                                 @endforeach
@@ -186,19 +171,6 @@
                                 </option>
                                 <option value="0"
                                     {{ old('is_show_report', $user->is_show_report) == 0 ? 'selected' : '' }}>
-                                    No
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xs-12 col-sm-12 col-md-6 mb-4">
-                        <div class="form-group">
-                            <strong>Show Leads:</strong>
-                            <select name="show_leads" class="form-control select2 mt-2">
-                                <option value="1" {{ old('show_leads', $user->show_leads) == 1 ? 'selected' : '' }}>
-                                    Yes
-                                </option>
-                                <option value="0" {{ old('show_leads', $user->show_leads) == 0 ? 'selected' : '' }}>
                                     No
                                 </option>
                             </select>

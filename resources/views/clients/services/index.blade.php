@@ -5,7 +5,7 @@
 @endsection
 
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
 
         <div class="d-flex justify-content-between align-items-center bg-white mb-4 shadow-sm p-3 rounded">
             <div class="d-flex align-items-center gap-3 flex-wrap">
@@ -169,18 +169,21 @@
 
                         <div class="col-md-4 mb-3">
                             <label>Working Resource <span class="text-danger">*</span></label>
-                            <select name="working_resource" id="working_resource" class="form-select" required>
+                            <select name="working_resource[]" id="working_resource" class="form-select" required>
                                 <option value="">Select</option>
 
                                 @foreach ($employees as $employee)
                                     <option value="{{ $employee->id }}"
-                                        {{ old('working_resource') == $employee->id ? 'selected' : '' }}>
+                                        {{ in_array($employee->id, (array) old('working_resource', [])) ? 'selected' : '' }}>
                                         {{ $employee->name }}{{ $employee->employee_id ? ' - ' . $employee->employee_id : '' }}
                                     </option>
                                 @endforeach
 
                             </select>
                             @error('working_resource')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                            @error('working_resource.*')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
@@ -299,11 +302,7 @@
                             </td>
                             <td>
 
-                                @if ($service->workingResource)
-                                    <span class="{{ $service->workingResource->trashed() ? 'text-danger' : '' }}">
-                                        {{ $service->workingResource->name }}
-                                    </span>
-                                @endif
+                                @include('services.partials.working-resources', ['service' => $service])
 
                             </td>
 
@@ -370,7 +369,7 @@
                                             </li>
                                         @endcan
 
-                                        @can('service-edit')
+                                        @can('service-update')
                                             <li>
                                                 <hr class="my-1" />
                                             </li>
@@ -475,6 +474,7 @@
                 let serviceType = $('#service_type').val();
 
                 if (serviceType !== 'proxy') {
+                    $('#working_resource').prop('multiple', false);
                     $('#working_resource').val($('#front_resource').val());
                     $('#working_resource')
                         .addClass('bg-light')
@@ -482,6 +482,7 @@
                     // $('#working_resource').prop('disabled', true);
                 } else {
                     // $('#working_resource').prop('disabled', false);
+                    $('#working_resource').prop('multiple', true);
                     $('#working_resource')
                         .removeClass('bg-light')
                         .css('pointer-events', 'auto');
@@ -549,7 +550,8 @@
                 $('#year').val(service.year)
                 $('#service_status').val(service.service_status)
                 $('#front_resource').val(service.front_resource?.id)
-                $('#working_resource').val(service.working_resource?.id)
+                handleResource() // sets single/multiple mode for the selected service type
+                $('#working_resource').val(String(service.working_resource || '').split(',').filter(Boolean))
                 $('#start_date').val(service.start_date)
                 $('#end_date').val(service.end_date)
                 $('#reason').val(service.cancel_reason)

@@ -9,7 +9,7 @@ class RequirementController extends Controller
 {
     public function index(Request $request)
     {
-        $this->authorize('user-show');
+        $this->authorize('requirements-access');
         $search = trim((string) $request->input('search'));
         $requirements = Requirement::when($search !== '', function ($query) use ($search) {
                 $query->where('requirement', 'like', "%{$search}%");
@@ -17,21 +17,21 @@ class RequirementController extends Controller
             ->latest()
             ->paginate(50)
             ->withQueryString();
-        return view('requirement.index', compact('requirements'));
+        return view('requirements.index', compact('requirements'));
     }
 
     // Show create form
     public function create()
     {
-        $this->authorize('user-create');
-        return view('requirement.create');
+        $this->authorize('requirements-create');
+        return view('requirements.create');
     }
 
 
     // Store
     public function store(Request $request)
     {
-        $this->authorize('user-create');
+        $this->authorize('requirements-create');
         $request->validate([
             'requirement' => 'required|string|max:255'
         ]);
@@ -54,15 +54,15 @@ class RequirementController extends Controller
     // Show edit form
     public function edit($id)
     {
-        $this->authorize('user-edit');
+        $this->authorize('requirements-update');
         $requirement = Requirement::findOrFail($id);
-        return view('requirement.edit', compact('requirement'));
+        return view('requirements.edit', compact('requirement'));
     }
 
     // Update
     public function update(Request $request, $id)
     {
-        $this->authorize('user-edit');
+        $this->authorize('requirements-update');
         $requirement = Requirement::findOrFail($id);
 
         $request->validate([
@@ -80,7 +80,7 @@ class RequirementController extends Controller
     // Delete
     public function destroy($id)
     {
-        $this->authorize('user-delete');
+        $this->authorize('requirements-delete');
         $requirement = Requirement::findOrFail($id);
         $requirement->delete();
 

@@ -13,4 +13,20 @@ class Project extends Model {
     public function stories(){ return $this->hasMany(Story::class); }
     public function tasks(){ return $this->hasMany(Task::class); }
     public function getProgressAttribute(){ $total=$this->tasks()->count(); return $total ? round($this->tasks()->where('status','completed')->count()*100/$total) : 0; }
+    public function getProgressColorClassAttribute(): string { return static::progressColorClass($this->progress); }
+    public function getProgressColorHexAttribute(): string { return static::progressColorHex($this->progress); }
+    public static function progressColorClass($progress): string {
+        $p = (float) $progress;
+        if ($p <= 20) return 'progress-danger';
+        if ($p <= 40) return 'progress-purple';
+        if ($p <= 60) return 'progress-success';
+        return 'progress-primary';
+    }
+    public static function progressColorHex($progress): string {
+        $p = (float) $progress;
+        if ($p <= 20) return '#dc2626';
+        if ($p <= 40) return '#9333ea';
+        if ($p <= 60) return '#16a34a';
+        return '#1469e8';
+    }
 }

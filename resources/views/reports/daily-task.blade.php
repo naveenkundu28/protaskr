@@ -2,13 +2,13 @@
 @section('title', 'Daily Task Reports')
 
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
         <div class="bg-white shadow-sm p-3 rounded mb-4">
             <div class="row">
                 <h2 class="col-md-12 mb-0">Daily Task Reports</h2>
 
                 <div class="col-md-6 mt-3">
-                    {{-- <form method="GET" action="{{ route('daily.task.report') }}"> --}}
+                    {{-- <form method="GET" action="{{ route('reports.daily-task.index') }}"> --}}
                     <div class="row g-2 align-items-end">
                         <div class="col-md-5">
                             <input type="date" class="form-control" id="tasksDate" name="tasksDate" max="{{ now()->format('Y-m-d') }}" value="{{ now()->subDay()->format('Y-m-d') }}">
@@ -23,7 +23,6 @@
             </div>
         </div>
 
-        @if (Auth::user()->hasRole('Admin'))
             <div class="row mb-4">
                 <div class="col-12 mb-4">
                     <div class="card shadow-sm h-100">
@@ -91,7 +90,6 @@
             </div>
 
 
-        @endif
 
 
     </div>
@@ -108,7 +106,7 @@
                 let date = $('#tasksDate').val();
 
                 $.ajax({
-                    url: "{{ route('daily.task.report.users') }}",
+                    url: "{{ route('reports.daily-task.users') }}",
                     type: "GET",
                     data: {
                         tasksDate: date,

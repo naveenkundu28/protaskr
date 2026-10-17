@@ -13,7 +13,7 @@ class ReportController extends Controller
 {
     public function index(Request $request)
     {
-        $this->authorize('user-show');
+        $this->authorize('reports-access');
 
         // $fromDate = $request->filled('from')
         //     ? Carbon::parse($request->input('from'))->startOfDay()
@@ -65,7 +65,7 @@ class ReportController extends Controller
             ->orderBy('name')
             ->get();
 
-        $newServices = Service::with(['client', 'frontResource', 'workingResource'])
+        $newServices = Service::with(['client', 'frontResource'])
             ->where('service_status', 'new')
             ->where('service_type', 'direct')
             ->whereNotNull('month')
@@ -86,7 +86,7 @@ class ReportController extends Controller
             ) DESC")
             ->get();
 
-        $completedServices = Service::with(['client', 'frontResource', 'workingResource'])
+        $completedServices = Service::with(['client', 'frontResource'])
             ->where('service_status', 'completed')
             ->where('service_type', 'direct')
             ->whereBetween('end_date', [$fromDate->toDateString(), $toDate->toDateString()])
@@ -94,7 +94,7 @@ class ReportController extends Controller
             ->get();
             
 
-        $cancelledServices = Service::with(['client', 'frontResource', 'workingResource'])
+        $cancelledServices = Service::with(['client', 'frontResource'])
             ->where(function ($query) {
                 $query->where('service_status', 'canceled')
                     ->orWhere('service_status', 'replacement');
@@ -137,6 +137,7 @@ class ReportController extends Controller
     private function appendServiceWorkType($services, string $dateField)
     {
         $groupedTotals = [];
+        Service::loadWorkingUsers($services);
 
         return $services->map(function ($service) use ($groupedTotals, $dateField) {
             $referenceDate = $this->resolveServiceReferenceDate($service, $dateField);
@@ -171,7 +172,7 @@ class ReportController extends Controller
                     ->sum('hours');
             }
 
-            $resources = Service::with(['workingResource'])
+            $resources = Service::query()
                 ->where('service_id', $service->service_id)
                 ->where('service_type', '!=', 'direct')
                 ->where(function ($query) use ($referenceDate) {
@@ -190,15 +191,22 @@ class ReportController extends Controller
                     });
                 })
                 ->get()
-                ->groupBy('working_resource')
-                ->map(function ($items) {
-                    $resource = $items->first()->workingResource;
+                ->tap(fn ($items) => Service::loadWorkingUsers($items))
+                ->flatMap(function ($item) {
+                    // One entry per assigned resource; a service without resources keeps a single blank entry.
+                    $users = $item->working_users;
 
-                    return [
-                        'resource_name' => $resource ? $resource->name : null,
-                        'total_hours'   => (float) $items->sum('hours'),
-                    ];
+                    return ($users->isEmpty() ? collect([null]) : $users)->map(fn ($user) => [
+                        'key' => $user?->id,
+                        'resource_name' => $user?->name,
+                        'hours' => (float) $item->hours,
+                    ]);
                 })
+                ->groupBy('key')
+                ->map(fn ($entries) => [
+                    'resource_name' => $entries->first()['resource_name'],
+                    'total_hours'   => (float) $entries->sum('hours'),
+                ])
                 ->values()
                 ->toArray();
             $service->service_other_resources = $resources;

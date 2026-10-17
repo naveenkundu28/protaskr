@@ -1,7 +1,6 @@
 @extends('layouts.app')
-
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid mt-80">
     <div style="padding: 0px 12px;">
         <div class="row">
             <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
@@ -48,13 +47,13 @@
                         <i class="bi bi-list-task"></i>
                     </button>
                     <ul class="dropdown-menu py-0">
-                        @can('user-show')
+                        @can('tags-access')
                             <li>
                                 <a class="px-2 py-2 d-block text-decoration-none text-info" href="{{ route('tags.show',$tag->id) }}"><i
                                         class="fa-solid fa-list"></i> Show</a>
                             </li>
                         @endcan
-                        @can('user-edit')
+                        @can('tags-update')
                             <li>
                                 <hr class="my-1" />
                             </li>
@@ -63,7 +62,7 @@
                                         class="fa-solid fa-pen-to-square"></i> Edit</a>
                             </li>
                         @endcan
-                        @can('user-delete')
+                        @can('tags-delete')
                             <li>
                                 <hr class="my-1" />
                             </li>

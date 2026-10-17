@@ -1,0 +1,1 @@
+@forelse ($service->working_users as $workingUser)<span class="{{ $workingUser->trashed() ? 'text-danger' : '' }}">{{ $workingUser->name }}</span>{{ $loop->last ? '' : ', ' }}@empty{{ $empty ?? '' }}@endforelse

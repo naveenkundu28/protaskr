@@ -41,12 +41,12 @@
                                 aria-labelledby="userDropdown">
                                 <li><a class="dropdown-item" href="{{ route('profile.edit') }}"><i class="bi bi-person"></i> Update
                                         Profile</a></li>
-                                @if (auth()->user()->can('user-show') || auth()->user()->can('role-show'))
+                                @canany(['skills-access', 'tags-access', 'hours-access', 'requirements-access', 'leads-status-access'])
                                     
                                     <li>
-                                        <a class="dropdown-item d-flex justify-content-between align-items-center {{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
+                                        <a class="dropdown-item d-flex justify-content-between align-items-center {{ request()->is('skills*') || request()->is('tags*') || request()->is('hours*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
                                             href="#mastersMenu" data-bs-toggle="collapse"
-                                            aria-expanded="{{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
+                                            aria-expanded="{{ request()->is('skills*') || request()->is('tags*') || request()->is('hours*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
                                             aria-controls="mastersMenu">
                                             <span>
                                                 <i class="bi bi-folder me-2"></i> Masters
@@ -55,53 +55,51 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <ul class="collapse list-unstyled mb-0 {{ request()->is('skills*') || request()->is('tags*') || request()->is('year*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
+                                        <ul class="collapse list-unstyled mb-0 {{ request()->is('skills*') || request()->is('tags*') || request()->is('hours*') || request()->is('requirements*') || request()->is('lead-statuses*') }}"
                                             id="mastersMenu">
-                                            @can('user-show')
+                                            @can('skills-access')
                                                 <li>
                                                     <a class="dropdown-item ps-4 {{ request()->is('skills*') ? 'active' : '' }}"
                                                         href="{{ route('skills.index') }}">
                                                         <i class="bi bi-lightbulb me-2"></i> Skills
                                                     </a>
                                                 </li>
+                                            @endcan
+                                            @can('tags-access')
                                                 <li>
                                                     <a class="dropdown-item ps-4 {{ request()->is('tags*') ? 'active' : '' }}"
                                                         href="{{ route('tags.index') }}">
                                                         <i class="bi bi-tags me-2"></i> Tags
                                                     </a>
                                                 </li>
+                                            @endcan
+                                            @can('hours-access')
                                                 <li>
-                                                    <a class="dropdown-item ps-4 {{ request()->is('year*') ? 'active' : '' }}"
-                                                        href="{{ route('master.hours.create') }}">
+                                                    <a class="dropdown-item ps-4 {{ request()->is('hours*') ? 'active' : '' }}"
+                                                        href="{{ route('hours.index') }}">
                                                         <i class="bi bi-clock me-2"></i> Hours
                                                     </a>
                                                 </li>
+                                            @endcan
+                                            @can('requirements-access')
                                                 <li>
                                                     <a class="dropdown-item ps-4 {{ request()->is('requirements*') ? 'active' : '' }}"
                                                         href="{{ route('requirements.index') }}">
                                                         <i class="bi bi-list-task me-2"></i> Requirements
                                                     </a>
                                                 </li>
-                                                @if (auth()->user()->show_leads)
+                                            @endcan
+                                            @can('leads-status-access')
                                                     <li>
                                                         <a class="dropdown-item ps-4 {{ request()->is('lead-statuses*') ? 'active' : '' }}"
                                                             href="{{ route('lead-statuses.index') }}">
                                                             <i class="bi bi-info-circle me-2"></i> Lead Status
                                                         </a>
                                                     </li>
-                                                @endif
                                             @endcan
                                         </ul>
                                     </li>
-                                @endif
-                                @can('role-show')
-                                    <li>
-                                        <a class="dropdown-item ps-4 {{ request()->is('roles*') ? 'active' : '' }}"
-                                            href="{{ route('roles.index') }}">
-                                            <i class="bi bi-sticky me-2"></i> Roles
-                                        </a>
-                                    </li>
-                                @endcan
+                                @endcanany
 
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}" id="logout-form">

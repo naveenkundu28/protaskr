@@ -18,7 +18,7 @@ class DailyReportController extends Controller
     use TrackerTrait;
     public function index(Request $request)
     {
-        $this->authorize('role-show');
+        $this->authorize('reports-hourly');
         if ($request->month) {
             [$year, $month] = explode('-', $request->month);
             // $month = $request->month ?? date('m');
@@ -28,15 +28,15 @@ class DailyReportController extends Controller
             $year = date('Y');
         }
 
-        // $users = User::whereDoesntHave('roles', function ($q) {
-        //     $q->where('name', 'Admin');
+        // $users = User::whereDoesntHave('role', function ($q) {
+        //     $q->where('name', \App\Support\Roles::ADMIN);
         // })->where('is_show_report', true)->orderBy('created_at')->get();
 
         $users = User::select('users.*','tags.color')
             ->leftJoin('user_tag', 'users.id', '=', 'user_tag.user_id')
             ->leftJoin('tags', 'tags.id', '=', 'user_tag.tag_id')
-            ->whereDoesntHave('roles', function ($q) {
-                $q->where('name', 'Admin');
+            ->whereDoesntHave('role', function ($q) {
+                $q->where('name', \App\Support\Roles::ADMIN);
             })
             ->where('users.is_show_report', true)
             ->orderByRaw("
@@ -79,13 +79,13 @@ class DailyReportController extends Controller
             $dates[] = date('Y-m-d', strtotime("$year-$month-$i"));
         }
 
-        return view('reports.hourly-task', compact('users', 'reports', 'dates', 'month', 'year', 'performances', 'totals', 'tags'));
+        return view('reports.hourly', compact('users', 'reports', 'dates', 'month', 'year', 'performances', 'totals', 'tags'));
     }
 
     public function update(Request $request)
     {
-        $this->authorize('role-show');
-        abort_unless(Auth::user()?->hasRole('Admin'), 403);
+        $this->authorize('reports-hourly');
+        $this->authorize('reports-hourly-update');
 
         $data = $request->validate([
             'user_id' => 'required|exists:users,id',
@@ -113,14 +113,14 @@ class DailyReportController extends Controller
         );
 
         return redirect()
-            ->route('daily.report', ['month' => date('Y-m', strtotime($data['date']))])
+            ->route('reports.hourly.index', ['month' => date('Y-m', strtotime($data['date']))])
             ->with('success', 'Daily report updated successfully.');
     }
 
     public function generateWeekly(Request $request)
     {
-        $this->authorize('role-show');
-        abort_unless(Auth::user()?->hasRole('Admin'), 403);
+        $this->authorize('reports-hourly');
+        $this->authorize('reports-hourly-update');
 
         $dateFrom = $request->report_date ?: 'week';
 
@@ -141,28 +141,30 @@ class DailyReportController extends Controller
         }
 
         return redirect()
-            ->route('daily.report', ['month' => now()->format('Y-m')])
+            ->route('reports.hourly.index', ['month' => now()->format('Y-m')])
             ->with('success', $message);
     }
 
 
     public function getDailyTaskReports()
     {
-        $this->authorize('role-show');
+        $this->authorize('reports-daily-task');
         $tags = Tag::all();
         return view('reports.daily-task', compact('tags'));
     }
 
     public function getUserTasks(Request $request)
     {
+        $this->authorize('reports-daily-task');
+
         $date = $request->tasksDate ?? now()->subDay()->format('Y-m-d');
         $tagId = $request->tag_id;
 
         $performances = DailyPerformance::orderBy('min', 'desc')->get();
 
         $users = User::where('user_type', 'Internal')->where('is_show_report', true)
-			->whereDoesntHave('roles', function ($q) {
-                $q->where('name', 'Admin');
+			->whereDoesntHave('role', function ($q) {
+                $q->where('name', \App\Support\Roles::ADMIN);
             })
             ->when($tagId, function ($q) use ($tagId) {
                 $q->whereHas('tags', function ($q2) use ($tagId) {

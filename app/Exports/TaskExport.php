@@ -31,9 +31,6 @@ class TaskExport implements FromCollection, WithHeadings
             ->whereHas('project', function ($query) {
                 $query->whereNull('deleted_at');
             })
-            ->when(!$user->hasRole('Admin'), function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
             ->when($this->projectid != null, function ($query) {
                 $query->where('client_id', $this->projectid);
             })

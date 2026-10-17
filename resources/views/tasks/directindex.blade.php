@@ -1,9 +1,10 @@
 @extends('layouts.app')
+@extends('layouts.header')
 @section('title')
     {{-- {{ $project->name }} --}}
 @endsection
 @section('content')
-    <div class="container">
+    <div class="container mt-80">
         <div class="row">
             <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
                 <h2>My Tasks</h2>

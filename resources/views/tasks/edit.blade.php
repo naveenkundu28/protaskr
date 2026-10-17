@@ -1,7 +1,7 @@
 @extends('layouts.app')
-
+@extends('layouts.header')
 @section('content')
-    <div class="container">
+    <div class="container mt-80">
         <h2 class="mb-4">Edit Task</h2>
 
         <form action="{{ route('tasks.update', $task->id) }}" method="POST">

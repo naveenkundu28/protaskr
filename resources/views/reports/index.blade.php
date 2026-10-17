@@ -2,7 +2,7 @@
 @section('title', 'Reports')
 
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
         <div class="bg-white shadow-sm p-3 rounded mb-4">
             <div class="row">
                 <h2 class="col-md-3 mb-0">Reports</h2>
@@ -258,8 +258,8 @@
                                         <tr>
                                             <td>{{ $index + 1 }}</td>
                                             <td>{{ $service->service_id }}</td>
-                                            <td>{{ $service->workingResource?->employee_id ?? '-' }}</td>
-                                            <td>{{ $service->workingResource?->name ?? '-' }}</td>
+                                            <td>{{ $service->working_users->pluck('employee_id')->filter()->implode(', ') ?: '-' }}</td>
+                                            <td>{{ $service->working_users->pluck('name')->implode(', ') ?: '-' }}</td>
                                             <td>{{ $service->service_work_type }}</td>
 
                                             <td class="p-0">
@@ -337,8 +337,8 @@
                                         <tr>
                                             <td>{{ $index + 1 }}</td>
                                             <td>{{ $service->service_id }}</td>
-                                            <td>{{ $service->workingResource?->employee_id ?? '-' }}</td>
-                                            <td>{{ $service->workingResource?->name ?? '-' }}</td>
+                                            <td>{{ $service->working_users->pluck('employee_id')->filter()->implode(', ') ?: '-' }}</td>
+                                            <td>{{ $service->working_users->pluck('name')->implode(', ') ?: '-' }}</td>
                                             <td>{{ $service->service_work_type }}</td>
                                             <td class="p-0">
                                                 @if (!empty($service->service_other_resources))
@@ -416,8 +416,8 @@
                                         <tr>
                                             <td>{{ $index + 1 }}</td>
                                             <td>{{ $service->service_id }}</td>
-                                            <td>{{ $service->workingResource?->employee_id ?? '-' }}</td>
-                                            <td>{{ $service->workingResource?->name ?? '-' }}</td>
+                                            <td>{{ $service->working_users->pluck('employee_id')->filter()->implode(', ') ?: '-' }}</td>
+                                            <td>{{ $service->working_users->pluck('name')->implode(', ') ?: '-' }}</td>
                                             <td>{{ $service->service_work_type }}</td>
                                             <td class="p-0">
                                                 @if (!empty($service->service_other_resources))

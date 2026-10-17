@@ -20,11 +20,12 @@ class Task extends Model
 
     public function project()
     {
-        return $this->belongsTo(Client::class, 'client_id');
+        return $this->belongsTo(Client::class, 'client_id')->withTrashed();
     }
 
     public function deliveryProject() { return $this->belongsTo(Project::class, 'project_id'); }
     public function story() { return $this->belongsTo(Story::class); }
+    public function dueDateHistories() { return $this->hasMany(TaskDueDateHistory::class)->orderBy('id'); }
 
     public function getStatusBadgeAttribute()
     {
@@ -33,7 +34,7 @@ class Task extends Model
             'in_progress' => ['label' => 'In Progress', 'class' => 'bg-danger'],
             'pending' => ['label' => 'Pending', 'class' => 'bg-info'],
             'in_review' => ['label' => 'In Review', 'class' => 'bg-warning'],
-            'blocked' => ['label' => 'Blocked', 'class' => 'bg-danger'],
+            'on_hold' => ['label' => 'On Hold', 'class' => 'bg-danger'],
             'closed' => ['label' => 'Closed', 'class' => 'bg-secondary'],
             'completed' => ['label' => 'Completed', 'class' => 'bg-success'],
         ];
@@ -42,8 +43,9 @@ class Task extends Model
 
         if (isset($statusBadges[$status])) {
             return sprintf(
-                '<span class="badge %s">%s</span>',
+                '<span class="badge %s task-status task-status-%s">%s</span>',
                 $statusBadges[$status]['class'],
+                $status,
                 $statusBadges[$status]['label']
             );
         }

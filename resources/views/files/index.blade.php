@@ -1,7 +1,8 @@
 @extends('layouts.app')
+@extends('layouts.header')
 
 @section('content')
-<div class="container">
+<div class="container mt-80">
     <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
         <h2>Uploaded Files</h2>
         <a href="{{ route('task.files.create', $task->id) }}" class="btn btn-primary">Upload File</a>

@@ -1,7 +1,6 @@
 @extends('layouts.app')
-
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
         <div style="padding: 0px 12px">
             <div class="row">
                 <div class="d-flex justify-content-between align-items-center bg-white shadow-sm p-3 rounded mb-4">
@@ -22,8 +21,10 @@
                         </form>
                     </div>
                     <div>
-                        <a href="{{ route('resign.users.index') }}" class="btn btn-warning">Resigned Users</a>
+                        <a href="{{ route('users.resigned') }}" class="btn btn-warning">Resigned Users</a>
+                        @can('users-create')
                         <a href="{{ route('users.create') }}" class="btn btn-primary">Create New User</a>
+                        @endcan
                     </div>
                 </div>
             </div>
@@ -100,14 +101,8 @@
                             @endif
                         </td>
                         <td>
-                            @if (!empty($user->getRoleNames()))
-                                @foreach ($user->getRoleNames() as $v)
-                                    @if ($v == 'Admin')
-                                        <label class="skill-item admin-bg">{{ $v }}</label>
-                                    @else
-                                        <label class="">{{ $v }}</label>
-                                    @endif
-                                @endforeach
+                            @if ($user->role)
+                                <label class="{{ $user->isAdmin() ? 'skill-item admin-bg' : '' }}">{{ $user->role->name }}</label>
                             @endif
                         </td>
                         @if(request('work_type'))
@@ -120,7 +115,7 @@
                                 </button>
                                 <ul class="dropdown-menu py-0">
 
-                                    @can('user-show')
+                                    @can('users-show')
                                         <li>
                                             <a class="px-2 py-2 d-block text-decoration-none text-info" href="{{ route('users.show', $user->id) }}"><i
                                                     class="fa-solid fa-list"></i> Show</a>
@@ -128,7 +123,7 @@
                                     @endcan
 
 
-                                    @can('user-edit')
+                                    @can('users-update')
                                         <li>
                                             <hr class="my-1" />
                                         </li>
@@ -138,9 +133,19 @@
                                         </li>
                                     @endcan
 
+                                    @can('users-permissions')
+                                        <li>
+                                            <hr class="my-1" />
+                                        </li>
+                                        <li>
+                                            <a class="px-2 py-2 d-block text-decoration-none text-success" href="{{ route('users.permissions.edit', $user->id) }}"><i
+                                                    class="fa-solid fa-key"></i> Permissions</a>
+                                        </li>
+                                    @endcan
 
 
-                                    @can('user-delete')
+
+                                    @can('users-resign')
                                         <li>
                                             <hr class="my-1" />
                                         </li>

@@ -49,7 +49,7 @@ use Carbon\Carbon;
  *
  * Duplicate detection:
  *   clients  → matched by client_name (case-insensitive)
- *   services → matched by (client_id, service_id, working_resource, month, year)
+ *   services → matched by (client_id, service_id, working resource, month, year)
  *
  * Usage:
  *   php artisan clients:migrate-old            # migrate, skip duplicates
@@ -224,9 +224,9 @@ class MigrateClients extends Command
                     ->table('services')
                     ->where('client_id',        $newClientId)
                     ->where('service_id',       $row->service_id)
-                    ->where('working_resource', $newWorkingUserId)
                     ->where('month',            $monthNum)
                     ->where('year',             $row->year ? (int) $row->year : null)
+                    ->whereRaw('FIND_IN_SET(?, working_resource)', [$newWorkingUserId])
                     ->exists();
 
                 if ($exists) {
@@ -246,7 +246,7 @@ class MigrateClients extends Command
                 'end_date'           => $this->parseShortDate($row->end_date),
                 'service_type'       => $serviceType,
                 'service_status'     => $serviceStatus,
-                'working_resource'   => $newWorkingUserId,
+                'working_resource'   => (string) $newWorkingUserId,
                 'front_resource'     => $newFrontUserId,
                 'cancel_reason'      => null,
                 'replacement_reason' => null,

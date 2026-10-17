@@ -15,6 +15,8 @@ use App\Traits\TrackerTrait;
 use Illuminate\Http\Request;
 use App\Models\TrackerHistory;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 
 class TaskController extends Controller
@@ -22,7 +24,7 @@ class TaskController extends Controller
     use TrackerTrait;
     public function index(Request $request)
     {
-        $this->authorize('task-show');
+        $this->authorize('tasks-access');
         $user = Auth::user();
 
         $tabStatuses = [
@@ -30,7 +32,7 @@ class TaskController extends Controller
             'to_do' => ['to_do'],
             'in_progress' => ['in_progress'],
             'in_review' => ['in_review'],
-            'blocked' => ['blocked'],
+            'on_hold' => ['on_hold'],
             'completed' => ['completed'],
         ];
 
@@ -40,9 +42,14 @@ class TaskController extends Controller
             ->whereHas('project', function ($query) {
                 $query->whereNull('deleted_at');
             })
-            ->when(!$request->get('project_id') && !$user->hasRole('Admin'), function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
+            ->when(
+                $user->hasRole(\App\Support\Roles::CLIENT),
+                fn ($query) => $query->where('client_id', $user->client?->id)
+            )
+            ->when(
+                $user->hasRole(\App\Support\Roles::RESOURCE),
+                fn ($query) => $query->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('created_by', $user->id))
+            )
             ->when($request->get('project_id'), function ($query) {
                 $query->where('client_id', request('project_id'));
             })
@@ -64,7 +71,7 @@ class TaskController extends Controller
             'to_do' => (clone $baseQuery)->where('status', 'to_do')->count(),
             'in_progress' => (clone $baseQuery)->where('status', 'in_progress')->count(),
             'in_review' => (clone $baseQuery)->where('status', 'in_review')->count(),
-            'blocked' => (clone $baseQuery)->where('status', 'blocked')->count(),
+            'on_hold' => (clone $baseQuery)->where('status', 'on_hold')->count(),
         ];
 
         $tasks = (clone $baseQuery)
@@ -85,7 +92,7 @@ class TaskController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        $users = User::role('employee')->withTrashed()->get();
+        $users = User::ofRole(\App\Support\Roles::RESOURCE)->withTrashed()->get();
         $project = null;
         if ($request->get('project_id')) {
             // $project = Client::with('users')->find($request->get('project_id'));
@@ -107,7 +114,7 @@ class TaskController extends Controller
 
     public function store(Request $request)
     {
-        $this->authorize('task-create');
+        $this->authorize('tasks-create');
 
         $validated =  $request->validate([
             'client_id' => 'required|numeric',
@@ -116,18 +123,19 @@ class TaskController extends Controller
             'description' => 'nullable|string',
             'due_date' => 'nullable|date',
             'priority' => 'required|in:low,medium,high',
-            'status' => 'required|in:to_do,in_progress,completed,blocked,in_review,pending,closed',
+            'status' => 'required|in:to_do,in_progress,completed,on_hold,in_review,pending,closed',
         ]);
 
-        Task::create($validated);
+        Task::create($validated + ['created_by' => auth()->id()]);
 
         return back()->with('success', 'Task created successfully.');
     }
 
     public function show(Task $task)
     {
-        $this->authorize('task-show');
-        $this->authorizeTaskAccess($task);
+        $this->authorize('tasks-show', $task);
+
+        $task->load('deliveryProject.members', 'story', 'dueDateHistories');
 
         $user_id = $task->user_id;
         $files = File::where('task_id', $task->id)->latest()->get();
@@ -142,25 +150,45 @@ class TaskController extends Controller
 
     public function update(Request $request, Task $task)
     {
-        $this->authorize('task-edit');
-        $this->authorizeTaskAccess($task);
+        $this->authorize('tasks-update', $task);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'due_date' => 'nullable|date',
             'priority' => 'required|in:low,medium,high',
-            'status' => 'required|in:to_do,in_progress,completed,blocked,in_review,pending,closed',
+            'status' => 'required|in:to_do,in_progress,completed,on_hold,in_review,pending,closed',
+            'user_id' => [
+                'required',
+                'exists:users,id',
+                Rule::exists('project_members', 'user_id')
+                    ->where('project_id', $task->project_id),
+            ],
         ]);
 
-        $task->update($validated);
+        $oldDueDate = $task->due_date ? Carbon::parse($task->due_date)->format('Y-m-d') : null;
+        $newDueDate = array_key_exists('due_date', $validated)
+            ? ($validated['due_date'] ?: null)
+            : $oldDueDate;
+
+        DB::transaction(function () use ($task, $validated, $oldDueDate, $newDueDate) {
+            $task->update($validated);
+
+            if ($oldDueDate !== $newDueDate) {
+                $task->dueDateHistories()->create([
+                    'old_due_date' => $oldDueDate,
+                    'new_due_date' => $newDueDate,
+                    'changed_by' => Auth::id(),
+                ]);
+            }
+        });
 
         return back()->with('success', 'Task updated successfully.');
     }
 
     public function updateTime(Request $request, $trackerId)
     {
-        $this->authorize('task-edit');
+        $this->authorize('tasks-time-update');
 
         $request->validate([
             'elapsed_time' => 'required|integer|min:0',
@@ -193,6 +221,10 @@ class TaskController extends Controller
 
     public function updateStatus(Request $request, Task $task)
     {
+        $this->authorize('tasks-update', $task);
+
+        $request->validate(['status' => 'required|in:to_do,in_progress,completed,on_hold,in_review,pending,closed']);
+
         $task->status = $request->input('status');
         $task->is_running = false;
         $task->end_time = Carbon::now();
@@ -217,41 +249,62 @@ class TaskController extends Controller
             }
         }
         $task->save();
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Task status updated successfully.', 'status' => $task->status]);
+        }
         return back()->with('success', 'Task status updated successfully.');
 
         // return response()->json(['message' => 'Task status updated successfully.']);
     }
     public function sendChat(Request $request, $taskid)
     {
-        $this->authorize('task-show');
         $task = Task::findOrFail($taskid);
-        $this->authorizeTaskAccess($task);
+        $this->authorize('tasks-show', $task);
 
         $userId = auth()->id();
 
-        $content = html_entity_decode($request->message);
-        $content = trim(preg_replace('/\s+/u', '', strip_tags($content)));
-        // $content = trim(strip_tags($request->message));
-        if (empty($content)) {
+        $content = trim((string) $request->message);
+
+        if (mb_strlen($content) > 5000) {
+            if ($request->expectsJson()) {
+                return response()->json(['errors' => ['The message is too long. Keep it under 5000 characters.']], 422);
+            }
+
+            return back()
+                ->withErrors(['message' => 'The message is too long. Keep it under 5000 characters.'])
+                ->withInput();
+        }
+
+        if ($content === '') {
+            if ($request->expectsJson()) {
+                return response()->json(['errors' => ['Write a message before sending.']], 422);
+            }
+
             return back()
                 ->withErrors(['message' => 'Message is required'])
                 ->withInput();
         }
-        // $request->validate([
-        //     'message' => 'required'
-        // ]);
         $savechat = new Chat();
         $savechat->user_id = $userId;
         $savechat->task_id = $taskid;
-        $savechat->message = $request->message;
+        // stored as safe HTML: the text is escaped, then the light formatting is applied
+        $savechat->message = \App\Support\ChatMarkdown::toHtml($content);
 
         $savechat->save();
-        return back()->with('success', 'Message Sent');
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => view('tasks.chat-message', ['chat' => $savechat])->render(),
+                'count' => Chat::where('task_id', $taskid)->count(),
+            ]);
+        }
+
+        return redirect()->to(route('tasks.show', $taskid) . '#tab-chat')->with('success', 'Message Sent');
     }
     public function startTimer($taskid)
     {
         $task = Task::findOrFail($taskid);
-        $this->authorizeTaskAccess($task);
+        $this->authorizeTaskTimer($task);
 
         $user_id = $task->user_id;
         $taskcheck = Task::where('user_id', $user_id)->where('is_running', true)->first();
@@ -283,21 +336,25 @@ class TaskController extends Controller
     public function stopTimer($taskid)
     {
         $task = Task::findOrFail($taskid);
-        $this->authorizeTaskAccess($task);
+        $this->authorizeTaskTimer($task);
 
         $user_id = $task->user_id;
         $taskHistory = TrackerHistory::where('user_id', $user_id)->where('task_id', $taskid)
             ->where('is_running', true);
         $taskhistorydata = $taskHistory->first();
-        $startTime = Carbon::parse($taskhistorydata->start_time);
-        $endTime = Carbon::now();
 
-        $timeDifferenceInSeconds = $endTime->diffInSeconds($startTime);
-        $taskHistory->update([
-            'end_time' => Carbon::now(),
-            'is_running' => false,
-            'elapsed_time' => $timeDifferenceInSeconds,
-        ]);
+        // Nothing running (already stopped, or the start never reached the server): just make sure the task is marked stopped.
+        if ($taskhistorydata) {
+            $startTime = Carbon::parse($taskhistorydata->start_time);
+            $endTime = Carbon::now();
+
+            $timeDifferenceInSeconds = $endTime->diffInSeconds($startTime);
+            $taskHistory->update([
+                'end_time' => Carbon::now(),
+                'is_running' => false,
+                'elapsed_time' => $timeDifferenceInSeconds,
+            ]);
+        }
         $task->update([
             'end_time' => Carbon::now(),
             'elapsed_time' => 0,
@@ -310,7 +367,7 @@ class TaskController extends Controller
     public function saveTime(Request $request, $taskid)
     {
         $task = Task::findOrFail($taskid);
-        $this->authorizeTaskAccess($task);
+        $this->authorizeTaskTimer($task);
 
         $taskHistory = TrackerHistory::query()
             ->where('task_id', $taskid)
@@ -334,29 +391,25 @@ class TaskController extends Controller
 
     public function mnanualTrack(Request $request, Task $task)
     {
-        $this->authorizeTaskAccess($task);
-        $task = $task->load('user');
-        if ($task->user->manual == true) {
+        $this->authorize('tasks-track-manually', $task);
+        $this->authorizeTaskTimer($task);
 
-            $request->validate([
-                'start' => 'required',
-                'end' => 'required',
-            ]);
-            $user_id = auth()->id();
-            $startTime = Carbon::parse($request->start);
-            $endTime = Carbon::parse($request->end);
-            $timeDifferenceInSeconds = $endTime->diffInSeconds($startTime);
-            $trackHistory = new TrackerHistory();
-            $trackHistory->user_id = $user_id;
-            $trackHistory->task_id = $task->id;
-            $trackHistory->start_time = $startTime;
-            $trackHistory->end_time = $endTime;
-            $trackHistory->elapsed_time = $timeDifferenceInSeconds;
-            $trackHistory->save();
-            return redirect()->route('tasks.show', $task->id)->with('success', 'Time added successfully.');
-        } else {
-            return redirect()->route('tasks.show', $task->id)->with('success', 'You are not authorized to track time manually.');
-        }
+        $request->validate([
+            'start' => 'required',
+            'end' => 'required',
+        ]);
+        $user_id = auth()->id();
+        $startTime = Carbon::parse($request->start);
+        $endTime = Carbon::parse($request->end);
+        $timeDifferenceInSeconds = $endTime->diffInSeconds($startTime);
+        $trackHistory = new TrackerHistory();
+        $trackHistory->user_id = $user_id;
+        $trackHistory->task_id = $task->id;
+        $trackHistory->start_time = $startTime;
+        $trackHistory->end_time = $endTime;
+        $trackHistory->elapsed_time = $timeDifferenceInSeconds;
+        $trackHistory->save();
+        return redirect()->to(route('tasks.show', $task->id) . '#tab-time-log')->with('success', 'Time added successfully.');
     }
     public function markComplete(Request $request)
     {
@@ -364,7 +417,7 @@ class TaskController extends Controller
             'task_ids' => 'required|array',
             'task_ids.*' => 'exists:tasks,id',
         ]);
-        $this->authorize('mark-task-complete');
+        $this->authorize('tasks-bulk-complete');
         $task = Task::whereIn('id', $validated['task_ids'])
             ->update([
                 'status' => 'completed',
@@ -397,6 +450,8 @@ class TaskController extends Controller
     }
     public function export(Request $request)
     {
+        $this->authorize('tasks-export');
+
         $fromDate = $request->input('from_date');
         $toDate = $request->input('to_date');
         $projectid = $request->input('project_id');
@@ -404,24 +459,20 @@ class TaskController extends Controller
     }
     public function destroy(Task $task)
     {
-        $this->authorizeTaskAccess($task);
+        $this->authorize('tasks-delete', $task);
         $task->delete();
         return redirect()->route('tasks.index')->with('success', 'Task deleted successfully.');
     }
 
-    private function authorizeTaskAccess(Task $task): void
+    /**
+     * Only the assignee may log time against a task. Administrators retain their
+     * existing task-management access.
+     */
+    private function authorizeTaskTimer(Task $task): void
     {
-        $user = Auth::user();
-
-        if ($user->hasRole('Admin')) {
-            return;
-        }
-
-        $task->loadMissing('project');
-
-        $isAssignedToClient = $task->project
-            && $task->project->allUsers()->where('users.id', $user->id)->exists();
-
-        abort_unless($isAssignedToClient, 403);
+        abort_unless(
+            Auth::user()->hasRole(\App\Support\Roles::ADMIN) || $task->user_id === Auth::id(),
+            403
+        );
     }
 }

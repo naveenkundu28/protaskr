@@ -9,7 +9,7 @@ class HourController extends Controller
 {
     public function create()
     {
-        $this->authorize('user-create');
+        $this->authorize('hours-access');
         $currentYear = date('Y');
         $hours = Hour::where('year', $currentYear)->get()->keyBy('month');
         $years = range($currentYear - 5, $currentYear + 5);
@@ -29,12 +29,12 @@ class HourController extends Controller
             'December'
         ];
 
-        return view('hours.create', compact('years', 'months', 'currentYear', 'hours'));
+        return view('hours.index', compact('years', 'months', 'currentYear', 'hours'));
     }
 
     public function store(Request $request)
     {
-        $this->authorize('user-create');
+        $this->authorize('hours-update');
         $months = [
             'January',
             'February',
@@ -95,11 +95,13 @@ class HourController extends Controller
             }
         }
 
-        return redirect()->route('master.hours.create')->with('success', 'Master hours saved successfully');
+        return redirect()->route('hours.index')->with('success', 'Master hours saved successfully');
     }
 
     public function getHoursByYear($year)
     {
+        $this->authorize('hours-access');
+
         $hours = Hour::where('year', $year)->get()->keyBy('month');
 
         return response()->json($hours);

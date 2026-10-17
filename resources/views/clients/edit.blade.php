@@ -3,7 +3,7 @@
     {{ $client->name }} Edit Client
 @endsection
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
         <h2 class="mb-4 shadow-sm p-3 rounded bg-white">Edit Client</h2>
         <div class="card border-0 shadow-sm m-auto">
             <div class="card-body">
@@ -11,22 +11,6 @@
                     @csrf
                     @method('PUT')
                     <div class="row">
-                        @can('project-edit')
-                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
-                                <label for="employee" class="form-label">Employee <span class="text-danger">*</span></label>
-                                <select name="employee[]" id="employee" class="form-select select2" required multiple>
-                                    {{-- <option value="">Select Employee</option> --}}
-                                    @foreach ($employees as $employee)
-                                        <option value="{{ $employee->id }}"
-                                            {{ in_array($employee->id, $client->teamProjects->pluck('id')->toArray()) ? 'selected' : '' }}>
-                                            {{ $employee->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('employee')
-                                    <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
                             <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
                                 <label for="name" class="form-label">Client Name <span class="text-danger">*</span></label>
                                 <input type="text" name="name" id="name" class="form-control"
@@ -35,7 +19,6 @@
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                        @endcan
 
                         <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
                             <label for="email" class="form-label">Client Email <span class="text-danger">*</span></label>
@@ -54,7 +37,6 @@
                             @enderror
                         </div> --}}
 
-                        @can('project-edit')
                             <div class="mb-3 col-sm-12 col-md-4">
                                 <label for="type" class="form-label">
                                     Type <span class="text-danger">*</span>
@@ -78,47 +60,11 @@
                                 @enderror
                             </div>
                             <div class="mb-3 col-sm-12 col-md-4">
-                                <label for="project_name" class="form-label">Project Name <span
+                                <label for="company_name" class="form-label">Company Name <span
                                         class="text-danger">*</span></label>
-                                <input type="text" name="project_name" id="project_name" class="form-control"
-                                    value="{{ $client->project_name }}" required>
-                                @error('project_name')
-                                    <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
-                                <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
-                                <input type="date" name="start_date" id="start_date" class="form-control" required
-                                    value="{{ \Carbon\Carbon::parse($client->start_date)->format('Y-m-d') }}">
-                                @error('start_date')
-                                    <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="description" class="form-label">Description</label>
-                                <textarea name="description" id="summernote" class="form-control">{{ $client->description }}</textarea>
-                                @error('description')
-                                    <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            
-                            {{-- <div class="mb-3">
-                            <label for="end_date" class="form-label">End Date</label>
-                            <input type="date" name="end_date" id="end_date" class="form-control"
-                                value="{{ \Carbon\Carbon::parse($client->end_date)->format('Y-m-d') }}">
-                            @error('end_date')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
-                            </div> --}}
-
-                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4" id="end_date_div">
-                                <label for="end_date" class="form-label">End Date<span class="text-danger">*</span></label>
-                                <input type="date" name="end_date" id="end_date" class="form-control"
-                                    value="{{ \Carbon\Carbon::parse($client->end_date)->format('Y-m-d') }}">
-                                @error('end_date')
+                                <input type="text" name="company_name" id="company_name" class="form-control"
+                                    value="{{ $client->company_name }}" required>
+                                @error('company_name')
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -137,17 +83,8 @@
                                     <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="mb-3 col-sm-12 col-md-6 col-lg-4">
-                                <label for="budget" class="form-label">Budget</label>
-                                <input type="number" name="budget" id="budget" class="form-control" step="0.01"
-                                    value="{{ $client->budget }}">
-                                @error('budget')
-                                    <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        @endcan
 
-                        <div class="{{ auth()->user()->can('project-edit') ? 'text-center' : 'text-start' }}">
+                        <div class="{{ auth()->user()->can('clients-update') ? 'text-center' : 'text-start' }}">
                             <button type="submit" class="btn btn-primary">Update Client</button>
                         </div>
                     </div>

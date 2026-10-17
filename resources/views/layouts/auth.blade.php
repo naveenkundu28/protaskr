@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> @yield('title') | Task Manager </title>
+    <title> @yield('title') | ProTasker </title>
     <link rel="shortcut icon" href="{{ asset('assets/img/logo-circle.png') }}" type="image/x-icon">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,8 +17,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" />
     <link rel="stylesheet" href="{{asset('assets/style.css')}}" />
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -28,8 +27,8 @@
         </main>
         <footer class="mt-auto py-3 text-center">
             <div class="container">
-                <span class="text-muted">&copy; {{ date('Y') }} Task Manager | Developed by <a href="#"
-                        target="_blank">VE</a> </span>
+                <span class="text-muted">&copy; {{ date('Y') }} ProTasker | Developed by <a href="https://www.virtualemployee.com/"
+                        target="_blank" rel="noopener">VE</a> </span>
             </div>
         </footer>
     </div>

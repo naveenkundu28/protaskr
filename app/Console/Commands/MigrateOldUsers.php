@@ -91,7 +91,6 @@ class MigrateOldUsers extends Command
                 'alt_phone_no'      => null,
                 'experience'        => $old->experience ?? null,
                 'email_verified_at' => $old->email_verified_at,
-                'manual'            => 0,
                 'remember_token'    => $old->remember_token,
                 'created_at'        => $old->created_at,
                 'updated_at'        => $old->updated_at,

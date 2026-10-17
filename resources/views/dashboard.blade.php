@@ -238,7 +238,7 @@
                                 </div>
                                 <div class="report_content">
                                     <span class="report_title">Total Resources</span>
-                                    <h4>22</h4>
+                                    <h4>{{ $totalResources }}</h4>
                                     <span class="rating rating-up"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-up-short" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5"/></svg>
                                     10% </span>
                                     <span class="report_time">vs last month</span>
@@ -292,7 +292,7 @@
                                 </div>
                                 <div class="report_content">
                                     <span class="report_title">Total Clients</span>
-                                    <h4>18</h4>
+                                    <h4>{{ $currentClients }}</h4>
                                     <span class="rating rating-down"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down-short" viewBox="0 0 16 16">
                                         <path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4"/>
                                     </svg>
@@ -326,7 +326,7 @@
                                 </div>
                                 <div class="report_content">
                                     <span class="report_title">Total Hours</span>
-                                    <h4>0 Hrs</h4>
+                                    <h4>{{ $totalHours }} Hrs</h4>
                                     <span class="rating rating-up"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-up-short" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5"/></svg>
                                     10% </span>
                                     <span class="report_time">vs last month</span>
@@ -376,7 +376,7 @@
                                 </div>
                                 <div class="report_content">
                                     <span class="report_title">Free Hours</span>
-                                    <h4>0 Hrs</h4>
+                                    <h4>{{ $totalFreeHours }} Hrs</h4>
                                     <span class="rating rating-down"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-down-short" viewBox="0 0 16 16">
                                         <path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4"/>
                                     </svg>
@@ -437,35 +437,33 @@
                                             </div>
                                             
 
+                                            @php
+                                                $tagChartCircumference = 389.56;
+                                                $tagChartTotal = $tagSummary->sum('users_count');
+                                                $tagChartOffset = 0;
+                                            @endphp
                                             <div class="summery-card">
                                                 <!-- Donut Chart -->
                                                 <div class="chart-container">
                                                 <svg viewBox="0 0 160 160">
-                                                    <!-- 
-                                                    Circumference = 2 * PI * r = 2 * 3.14159 * 62 ≈ 389.56
-                                                    NODE  (32%): 389.56 * 0.318 ≈ 124 (offset: 0)
-                                                    PHP   (55%): 389.56 * 0.545 ≈ 212 (offset: -126)
-                                                    UI/UX (14%): 389.56 * 0.136 ≈ 53  (offset: -340)
-                                                    -->
-                                                    <!-- Orange: NODE -->
-                                                    <circle class="node" cx="80" cy="80" r="62"
-                                                    stroke-dasharray="124 390"
-                                                    stroke-dashoffset="0" />
-
-                                                    <!-- Blue: PHP -->
-                                                    <circle class="php" cx="80" cy="80" r="62"
-                                                    stroke-dasharray="212 390"
-                                                    stroke-dashoffset="-126" />
-
-                                                    <!-- Grey: UI/UX -->
-                                                    <circle class="uiux" cx="80" cy="80" r="62"
-                                                    stroke-dasharray="53 390"
-                                                    stroke-dashoffset="-340" />
+                                                    @if ($tagChartTotal > 0)
+                                                        @foreach ($tagSummary as $tag)
+                                                            @php
+                                                                $tagSegment = $tagChartCircumference * $tag->users_count / $tagChartTotal;
+                                                                $tagColor = $tag->color ?: '#6c757d';
+                                                            @endphp
+                                                            <circle cx="80" cy="80" r="62"
+                                                                style="fill: none; stroke: {{ $tagColor }};"
+                                                                stroke-dasharray="{{ $tagSegment }} {{ $tagChartCircumference - $tagSegment }}"
+                                                                stroke-dashoffset="-{{ $tagChartOffset }}" />
+                                                            @php $tagChartOffset += $tagSegment; @endphp
+                                                        @endforeach
+                                                    @endif
                                                 </svg>
 
                                                 <!-- Center Text -->
                                                 <div class="center-text">
-                                                    <div class="total">22</div>
+                                                    <div class="total">{{ $totalResources }}</div>
                                                     <div class="label">Total<br>Resources</div>
                                                 </div>
                                                 </div>
@@ -473,26 +471,26 @@
                                                 <!-- Details List -->
                                                 <div class="list">
                                                     <table class="graph_table">
-                                                        <tr>
-                                                            <td><span class="dot devops"></span><span class="name">DEVOPS</span></td>
-                                                            <td><span class="count">0</span></td>
-                                                            <td><span class="percentage">0%</span></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td><span class="dot node"></span><span class="name">NODE</span></td>
-                                                            <td><span class="count">7</span></td>
-                                                            <td><span class="percentage">32%</span></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td><span class="dot php"></span><span class="name">PHP</span></td>
-                                                            <td><span class="count">12</span></td>
-                                                            <td><span class="percentage">55%</span></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td><span class="dot uiux"></span><span class="name">UI/UX</span></td>
-                                                            <td><span class="count">3</span></td>
-                                                            <td><span class="percentage">14%</span></td>
-                                                        </tr>
+                                                        @forelse ($tagSummary as $tag)
+                                                            @php
+                                                                $tagColor = $tag->color ?: '#6c757d';
+                                                                $tagPercentage = $tagChartTotal > 0 ? ($tag->users_count / $tagChartTotal) * 100 : 0;
+                                                            @endphp
+                                                            <tr>
+                                                                <td><span class="dot" style="background-color: {{ $tagColor }};"></span><span class="name">{{ strtoupper($tag->name) }}</span></td>
+                                                                <td><span class="count">
+                                                                        <a href="{{ route('users.listing', ['tag_id' => $tag->id, 'tag_scope' => 'internal']) }}" class="text-decoration-none">
+                                                                            {{ $tag->users_count }}
+                                                                        </a>
+                                                                    </span>
+                                                                </td>
+                                                                <td><span class="percentage">{{ number_format($tagPercentage, 0) }}%</span></td>
+                                                            </tr>
+                                                        @empty
+                                                            <tr>
+                                                                <td colspan="3" class="text-center text-muted">No tags found</td>
+                                                            </tr>
+                                                        @endforelse
                                                     </table>
                                                 </div>
                                             </div>
@@ -518,74 +516,30 @@
                                                             <th style="width:45%">Percentage</th>
                                                         </tr>
                                                     </thead>
+                                                    @php
+                                                        $workingHoursTotal = collect($workingHoursSummary)->sum();
+                                                    @endphp
                                                     <tbody>
-                                                        <tr>
-                                                            <td class="full_plus">Full +</td>
-                                                            <td>
-                                                                <a href="#">
-                                                                    0
-                                                                </a>
-                                                            </td>
-                                                            <td>
-                                                                <progress id="file" class="fullplus_process_bar" value="36" max="100"> 36% </progress><span>36%</span>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="full">Full</td>
-                                                            <td>
-                                                                <a href="#">
-                                                                    0
-                                                                </a>
-                                                            </td>
-                                                            <td>
-                                                                <progress id="file" class="full_process_bar" value="27" max="100"> 27% </progress><span>27%</span>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="half_plus">Half +</td>
-                                                            <td>
-                                                                <a href="#">
-                                                                    0
-                                                                </a>
-                                                            </td>
-                                                            <td>
-                                                                <progress id="file" class="halfplus_process_bar" value="14" max="100"> 14% </progress><span>14%</span>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="half">Half</td>
-                                                            <td>
-                                                                <a href="#">
-                                                                    0
-                                                                </a>
-                                                            </td>
-                                                            <td>
-                                                                <progress id="file" class="half_process_bar" value="9" max="100"> 9% </progress><span>9%</span>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="adhoc">ADHOC</td>
-                                                            <td>
-                                                                <a href="#">
-                                                                    0
-                                                                </a>
-                                                            </td>
-                                                            <td>
-                                                                <progress id="file" class="adhoc_process_bar" value="9" max="100"> 9% </progress><span>9%</span>
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="bench">Bench</td>
-                                                            <td>
-                                                                <a href="#">
-                                                                    0
-                                                                </a>
-                                                            </td>
-                                                            <td>
-                                                                <progress id="file" class="bench_process_bar" value="5" max="100"> 5% </progress><span>5%</span>
-                                                            </td>
-                                                        </tr>
-                                                        
+                                                        @forelse ($workingHoursSummary as $label => $count)
+                                                            @php
+                                                                $workTypeClass = strtolower(str_replace([' +', ' '], ['_plus', '_'], trim($label)));
+                                                                $workTypePercentage = $workingHoursTotal > 0 ? ($count / $workingHoursTotal) * 100 : 0;
+                                                                $workTypeBarClass = str_replace('_', '', $workTypeClass) . '_process_bar';
+                                                            @endphp
+                                                            <tr>
+                                                                <td class="{{ $workTypeClass }}">{{ $label }}</td>
+                                                                <td>
+                                                                    <a href="{{ route('users.listing', ['work_type' => $label]) }}">{{ $count }}</a>
+                                                                </td>
+                                                                <td class="d-flex align-items-center justify-content-end gap-2">
+                                                                    <progress class="{{ $workTypeBarClass }}" value="{{ $workTypePercentage }}" max="100">{{ number_format($workTypePercentage, 0) }}%</progress><span>{{ number_format($workTypePercentage, 0) }}%</span>
+                                                                </td>
+                                                            </tr>
+                                                        @empty
+                                                            <tr>
+                                                                <td colspan="3" class="text-center text-muted">No work types found</td>
+                                                            </tr>
+                                                        @endforelse
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -799,7 +753,7 @@
 
                                                 <div class="tab-pane fade show active" id="bench-users-pane" role="tabpanel"
                                                     aria-labelledby="bench-users-tab" tabindex="0">
-                                                    <div class="table-responsive" style="max-height: 182px; overflow-y: auto;">
+                                                    <div class="table-responsive">
                                                         <table class="table table-bordered table-sm align-middle f-14 mb-0"
                                                             id="benchUsersTable">
                                                             <thead>
@@ -814,53 +768,49 @@
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                <tr>
-                                                                    <td>1</td>
-                                                                    <td class="emp_skils"><span>Node</span><span>Mango</span><span>Node.js</span></td>
-                                                                    <td>Riken Panchal</td>
-                                                                    <td>120 hrs</td>
-                                                                    <td><span class="available"><i class="bi bi-dot"></i>Available</span></td>
-                                                                    <td class="emp_status"><span class="st_bench">Bench</span>
-                                                                    <!-- <span class="st_full_plus">Full Plus</span><span class="st_full">Full</span><span class="st_half_plus">Half Plus</span><span class="st_half">Half</span><span class="st_adhoc">ADHOC</span> -->
-                                                                </td>
-                                                                    <td class="action">
-                                                                        <button class="emp_status_action">
-                                                                            <i class="bi bi-three-dots"></i>
-                                                                            <ul>
-                                                                                <li><a href="#">Edit</a></li>
-                                                                                <li><a href="#">Delete</a></li>
-                                                                            </ul>
-                                                                        </button>
-                                                                    </td>
-                                                                </tr>
-                                                                @forelse($benchUsersSummary as $index => $benchSkill)
-                                                                    @foreach ($benchSkill['users'] as $userIndex => $benchUser)
-                                                                        <tr class="skill-bench-row"
-                                                                            data-group="bench-{{ $benchSkill['id'] }}"
-                                                                            data-search="{{ strtolower($benchSkill['name'] . ' ' . $benchUser['name']) }}">
-                                                                            @if ($userIndex === 0)
-                                                                                <td data-group-cell="index"
-                                                                                    rowspan="{{ $benchSkill['users']->count() }}">
-                                                                                    {{ $index + 1 }}</td>
-                                                                                <td data-group-cell="skill"
-                                                                                    rowspan="{{ $benchSkill['users']->count() }}">
-                                                                                    {{ $benchSkill['name'] }}</td>
-                                                                            @endif
-                                                                            <td>{{ $benchUser['name'] }} - {{ $benchUser['employee_id'] }}
-                                                                            </td>
-                                                                            @if ($benchUser['free_hours'] < 150)
-                                                                                <td class="text-warning">
-                                                                                    {{ number_format($benchUser['free_hours'], 2) }}</td>
-                                                                            @else
-                                                                                <td class="color-bench">
-                                                                                    {{ number_format($benchUser['free_hours'], 2) }}</td>
-                                                                            @endif
-                                                                            <td></td>
-                                                                            <td></td>
-                                                                            <td></td>
-                                                                            <td></td>
-                                                                        </tr>
-                                                                    @endforeach
+                                                                @php
+                                                                    $benchTableUsers = collect();
+                                                                    foreach ($benchUsersSummary as $benchSkill) {
+                                                                        foreach ($benchSkill['users'] as $benchUser) {
+                                                                            $userKey = $benchUser['employee_id'] ?? $benchUser['id'] ?? $benchUser['name'];
+                                                                            if (!$benchTableUsers->has($userKey)) {
+                                                                                $benchTableUsers->put($userKey, [
+                                                                                    'user' => $benchUser,
+                                                                                    'skills' => collect(),
+                                                                                ]);
+                                                                            }
+                                                                            $benchTableUsers->get($userKey)['skills']->push($benchSkill['name']);
+                                                                        }
+                                                                    }
+                                                                @endphp
+                                                                @forelse($benchTableUsers as $index => $benchRow)
+                                                                    @php($benchUser = $benchRow['user'])
+                                                                    <tr class="skill-bench-row"
+                                                                        data-search="{{ strtolower(collect($benchRow['skills'])->join(' ') . ' ' . $benchUser['name']) }}">
+                                                                        <td>{{ $loop->iteration }}</td>
+                                                                        <td class="emp_skils">
+                                                                            @foreach ($benchRow['skills']->unique() as $skillName)
+                                                                                <span>{{ $skillName }}</span>
+                                                                            @endforeach
+                                                                        </td>
+                                                                        <td>{{ $benchUser['name'] }} - {{ $benchUser['employee_id'] }}</td>
+                                                                        @if ($benchUser['free_hours'] < 150)
+                                                                            <td class="text-warning">{{ number_format($benchUser['free_hours'], 2) }} hrs</td>
+                                                                        @else
+                                                                            <td class="color-bench">{{ number_format($benchUser['free_hours'], 2) }} hrs</td>
+                                                                        @endif
+                                                                        <td><span class="available"><i class="bi bi-dot"></i>Available</span></td>
+                                                                        <td class="emp_status"><span class="st_bench">Bench</span></td>
+                                                                        <td class="action">
+                                                                            <button class="emp_status_action">
+                                                                                <i class="bi bi-three-dots"></i>
+                                                                                <ul>
+                                                                                    <li><a href="#">Edit</a></li>
+                                                                                    <li><a href="#">Delete</a></li>
+                                                                                </ul>
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
                                                                 @empty
                                                                     <tr>
                                                                         <td colspan="7" class="text-center text-muted empty_table">
@@ -1063,15 +1013,6 @@
                         filterGroupedTable(table, searchTerm); // bench stays same
                     }
                 });
-            });
-        });
-    </script>
-
-    <script>
-        $(document).ready(function () {
-            $('.menu_compress_btn').on('click', function () {
-                $(this).closest('.app-shell').toggleClass('collapsed');
-                $('#rightMenu').toggleClass('collapsed');
             });
         });
     </script>

@@ -15,7 +15,7 @@ class LeadController extends Controller
 {
     public function index(Request $request)
     {
-        $this->authorize('user-show');
+        $this->authorize('leads-access');
 
         $search = trim((string) $request->input('search'));
         $dateFilter = $request->input('date_filter', 'today');
@@ -98,20 +98,20 @@ class LeadController extends Controller
     }
     public function create()
     {
-        $this->authorize('user-create');
+        $this->authorize('leads-create');
         $requirements = Requirement::all();
         $skills = Skill::all();
         $leadStatuses = LeadStatus::all();
 
         // Only users who can be TL (example filter)
-        $users = User::where('show_leads', true)->get();
+        $users = User::whereHas('permissions', fn ($q) => $q->where('permission', 'leads-access'))->get();
 
         return view('leads.create', compact('requirements', 'users', 'skills', 'leadStatuses'));
     }
 
     public function store(Request $request)
     {
-        $this->authorize('user-create');
+        $this->authorize('leads-create');
         $request->validate([
             'lead'      => 'required|string|max:255',
             'lead_status_id' => 'required|exists:lead_statuses,id',
@@ -192,11 +192,11 @@ class LeadController extends Controller
 
     public function edit($id)
     {
-        $this->authorize('user-edit');
+        $this->authorize('leads-update');
         $lead = Lead::with('notesHistories')->findOrFail($id);
         $latestNote = $lead->notesHistories()->latest()->first();
 
-        $users = User::where('show_leads', true)->get();
+        $users = User::whereHas('permissions', fn ($q) => $q->where('permission', 'leads-access'))->get();
         $requirements = Requirement::all();
         $leadStatuses = LeadStatus::all();
 
@@ -220,7 +220,7 @@ class LeadController extends Controller
 
     public function update(Request $request, $id)
     {
-        $this->authorize('user-edit');
+        $this->authorize('leads-update');
         $lead = Lead::findOrFail($id);
 
         $request->validate([
@@ -278,7 +278,7 @@ class LeadController extends Controller
 
     public function destroy($id)
     {
-        $this->authorize('user-delete');
+        $this->authorize('leads-delete');
         $lead = Lead::findOrFail($id);
         $lead->delete();
 

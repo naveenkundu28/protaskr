@@ -50,7 +50,7 @@ class DailyTrackerExceptionAlertCommand extends Command
             ->groupBy('user_id')
             ->pluck('total_seconds', 'user_id');
 
-        $users = User::role('Employee')
+        $users = User::ofRole(\App\Support\Roles::RESOURCE)
             ->whereNull('deleted_at')
             ->orderBy('name')
             ->get();

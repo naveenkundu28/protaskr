@@ -1,8 +1,9 @@
 @extends('layouts.app')
+@extends('layouts.header')
 @section('title', 'Hourly Report')
 @section('content')
 
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
         <h2>Hourly Report</h2>
 
         @if (session('success'))

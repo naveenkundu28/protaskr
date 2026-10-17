@@ -1,9 +1,10 @@
 @extends('layouts.app')
+@extends('layouts.header')
 @section('title')
     Create Task
 @endsection
 @section('content')
-    <div class="container">
+    <div class="container mt-80">
         <h2 class="mb-4">Create Task</h2>
 
         <form action="{{ route('tasks.store') }}" method="POST">

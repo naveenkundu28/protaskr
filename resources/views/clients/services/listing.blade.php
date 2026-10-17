@@ -1,11 +1,11 @@
 @extends('layouts.app')
-
+@extends('layouts.header')
 @section('title')
     Service Listing
 @endsection
 
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
         <div class="bg-white mb-4 shadow-sm p-3 rounded">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div class="d-flex align-items-center gap-3 flex-wrap w-100">
@@ -128,11 +128,7 @@
                             @endif
                         </td>
                         <td>
-                            @if ($service->workingResource)
-                                <span class="{{ $service->workingResource->trashed() ? 'text-danger' : '' }}">
-                                    {{ $service->workingResource->name }}
-                                </span>
-                            @endif
+                            @include('services.partials.working-resources', ['service' => $service])
                         </td>
                         <td>{{ $service->service_id }}</td>
                         <td>{{ $service->month ? \Carbon\Carbon::create()->month($service->month)->format('F') : $service->created_at->format('F') }}</td>

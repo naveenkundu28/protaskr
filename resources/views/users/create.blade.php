@@ -1,7 +1,6 @@
 @extends('layouts.app')
-
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
         <div class="row">
             <div class="col-lg-12 mb-4 margin-tb">
                 <div class="d-flex align-items-center justify-content-between shadow-sm p-3 rounded bg-white">
@@ -148,28 +147,13 @@
                         </div>
                     </div>
 
-                    <div class="col-xs-12 col-sm-12 col-md-6 mb-3">
-                        <div class="form-group">
-                            <strong>Allow Manual Tracking:</strong>
-                            <select name="manual" class="form-control select2 select2-mandatory mt-2">
-                                <option selected value="1" {{ old('manual', 1) == 1 ? 'selected' : '' }}>
-                                    Yes
-                                </option>
-                                <option selected value="0" {{ old('manual', 1) == 0 ? 'selected' : '' }}>
-                                    No
-                                </option>
-
-                            </select>
-                        </div>
-                    </div>
                     <div class="col-xs-12 col-sm-12 col-md-6 mb-4">
                         <div class="form-group">
                             <strong>Role:</strong>
-                            <select name="roles[]" class="form-control select2 select2-mandatory mt-2">
+                            <select name="role_id" class="form-control select2 select2-mandatory mt-2">
                                 @foreach ($roles as $value => $label)
                                     <option value="{{ $value }}"
-                                        {{ in_array($value, old('roles', isset($roles) ? $roles : ['Employee'])) ? 'selected' : '' }}
-                                        {{ in_array($value, isset($user) ? $user->roles->pluck('name')->toArray() : ['Employee']) ? 'selected' : '' }}>
+                                        {{ old('role_id', array_search(\App\Support\Roles::RESOURCE, $roles)) == $value ? 'selected' : '' }}>
                                         {{ $label }}
                                     </option>
                                 @endforeach
@@ -184,19 +168,6 @@
                                     Yes
                                 </option>
                                 <option value="0" {{ old('is_show_report', 1) == 0 ? 'selected' : '' }}>
-                                    No
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-xs-12 col-sm-12 col-md-6 mb-4">
-                        <div class="form-group">
-                            <strong>Show Leads:</strong>
-                            <select name="show_leads" class="form-control select2 mt-2">
-                                <option value="1" {{ old('show_leads', 1) == 1 ? 'selected' : '' }}>
-                                    Yes
-                                </option>
-                                <option value="0" {{ old('show_leads', 1) == 0 ? 'selected' : '' }}>
                                     No
                                 </option>
                             </select>

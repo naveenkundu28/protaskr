@@ -10,6 +10,7 @@ use App\Models\Project;
 use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -20,13 +21,17 @@ class ProjectController extends Controller
 {
     public function index(Request $request)
     {
-        $this->authorize('project-show');
+        $this->authorize('clients-access');
         $user = Auth::user();
 
-        $typeFilter = $request->input('type_filter', []);
+        $rawTypeFilter = $request->input('type_filter', []);
+        if (is_string($rawTypeFilter)) {
+            $rawTypeFilter = $rawTypeFilter !== '' ? [$rawTypeFilter] : [];
+        }
+        $typeFilter = array_values(array_filter((array) $rawTypeFilter));
         $search = trim((string) $request->input('search'));
 
-        $projectQuery = $user->hasRole('Admin') ? $user->projects() : $user->projectMembers();
+        $projectQuery = $user->can('clients-access') ? $user->projects() : $user->projectMembers();
 
         $projects = $projectQuery->when($request->type == 'archived', function ($query) {
             return $query->onlyTrashed();
@@ -54,7 +59,6 @@ class ProjectController extends Controller
                     ->orWhere('budget', 'like', "%{$search}%")
                     ->orWhere('status', 'like', "%{$search}%")
                     // ->orWhere('client_code', 'like', "%{$search}%")
-                    ->orWhere('project_name', 'like', "%{$search}%")
                     ->orWhereHas('users', function ($memberQuery) use ($search) {
                         $memberQuery->where('name', 'like', "%{$search}%")
                             ->orWhere('email', 'like', "%{$search}%")
@@ -98,33 +102,47 @@ class ProjectController extends Controller
 
         $performances = DailyPerformance::all();
 
+        $activeProjects = Project::with(['members' => function ($query) {
+            $query->withTrashed();
+        }])
+            ->whereIn('client_id', $projects->getCollection()->pluck('id'))
+            ->where('status', 'active')
+            ->get();
+
+        $assignedResourcesByClient = $activeProjects
+            ->groupBy('client_id')
+            ->map(fn ($clientProjects) => $clientProjects
+                ->flatMap(fn ($activeProject) => $activeProject->members->pluck('name'))
+                ->filter()
+                ->unique()
+                ->values());
+
+        foreach ($projects as $project) {
+            $project->setAttribute('assigned_resource_names', $assignedResourcesByClient->get($project->id, collect()));
+        }
+
         return view('clients.index', compact('projects', 'performances'));
     }
 
     public function create()
     {
-        $this->authorize('project-create');
+        $this->authorize('clients-create');
 
-        $employees = User::role('Employee')->withTrashed()->get();
+        $employees = User::ofRole(\App\Support\Roles::RESOURCE)->withTrashed()->get();
         return view('clients.create', compact('employees'));
     }
 
     public function store(Request $request)
     {
-        $this->authorize('project-create');
+        $this->authorize('clients-create');
 
         $request->validate([
             'name' => 'required|string|max:255',
             'client_email' => 'required|email',
             // 'client_code' => 'required',
-            'project_name' => 'required|string|max:255',
+            'company_name' => 'required|string|max:255',
             'type' => 'required|in:internal_team,external_team,client,project',
-            'description' => 'nullable|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
             'status' => 'required|in:not_started,in_progress,completed',
-            'budget' => 'nullable|numeric',
-            'employee' => 'required|array',
         ]);
 
         $project = Auth::user()->projects()->create($request->all());
@@ -135,20 +153,17 @@ class ProjectController extends Controller
 
     public function show(Client $client)
     {
-        $this->authorize('project-show');
+        $this->authorize('clients-show');
         $this->authorizeClientAccess($client);
 
         $teamMembers = $client->allUsers()->get();
-        $users = User::withTrashed()->role('Employee')->get();
+        $users = User::withTrashed()->ofRole(\App\Support\Roles::RESOURCE)->get();
         return view('clients.show', compact('client', 'teamMembers', 'users'));
     }
     public function edit(Client $client)
     {
-        // $this->authorize('project-edit');
-        if (!auth()->user()->can('project-edit') && !auth()->user()->hasRole('Employee')) {
-            abort(403);
-        }
-        $employees = User::role('Employee')->withTrashed()->get();
+        $this->authorize('clients-update');
+        $employees = User::ofRole(\App\Support\Roles::RESOURCE)->withTrashed()->get();
         $client->load([
             'teamProjects' => function ($query) {
                 $query->withTrashed();
@@ -162,30 +177,16 @@ class ProjectController extends Controller
 
     public function update(Request $request, Client $client)
     {
-        // $this->authorize('project-edit');
-        if (!auth()->user()->can('project-edit') && !auth()->user()->hasRole('Employee')) {
-            abort(403);
-        }
+        $this->authorize('clients-update');
 
-        if (auth()->user()->can('project-edit')) {
-            $request->validate([
-                'name' => 'required|string|max:255',
-                'client_email' => 'required|email',
-                // 'client_code' => 'required',
-                'project_name' => 'required|string|max:255',
-                'type' => 'required|in:internal_team,external_team,client,project',
-                'description' => 'nullable|string',
-                'start_date' => 'nullable|date',
-                'end_date' => 'nullable|date',
-                'status' => 'required|in:not_started,in_progress,completed',
-                'budget' => 'nullable|numeric',
-                'employee' => 'required|array',
-            ]);
-        } else {
-            $request->validate([
-                'client_email' => 'required|email',
-            ]);
-        }
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'client_email' => 'required|email',
+            // 'client_code' => 'required',
+            'company_name' => 'required|string|max:255',
+            'type' => 'required|in:internal_team,external_team,client,project',
+            'status' => 'required|in:not_started,in_progress,completed',
+        ]);
 
 
         // $client->update($request->all());
@@ -194,26 +195,15 @@ class ProjectController extends Controller
         // $client->teamProjects()->sync($request->employee);
 
         $emailChanged = $client->client_email !== $request->client_email;
-        if (auth()->user()->can('project-edit')) {
-            // Admin → update all fields
+        $data = $request->all();
 
-            $data = $request->all();
-
-            if ($emailChanged) {
-                $data['email_updated_by'] = auth()->user()->id;
-                $data['email_updated_at'] = now();
-            }
-            $client->update($data);
-
-            $client->teamProjects()->sync($request->employee);
-        } else {
-            // Employee → update ONLY email
-            $client->update([
-                'client_email' => $request->client_email,
-                'email_updated_by' => auth()->user()->id,
-                'email_updated_at' => now()
-            ]);
+        if ($emailChanged) {
+            $data['email_updated_by'] = auth()->user()->id;
+            $data['email_updated_at'] = now();
         }
+        $client->update($data);
+
+        $client->teamProjects()->sync($request->employee);
 
         return redirect()->route('clients.index')->with('success', 'Client updated successfully.');
     }
@@ -221,7 +211,7 @@ class ProjectController extends Controller
     public function destroy($id)
     {
         // dd($client);
-        $this->authorize('project-delete');
+        $this->authorize('clients-delete');
 
         // DB::table('client_teams')->where('client_id', $id)->delete();
 
@@ -234,7 +224,7 @@ class ProjectController extends Controller
 
     public function addMember(Request $request)
     {
-        $this->authorize('project-edit');
+        $this->authorize('clients-update');
 
         $request->validate([
             'project_id' => 'required|exists:clients,id',
@@ -247,7 +237,7 @@ class ProjectController extends Controller
     }
     public function removeMember(Request $request)
     {
-        $this->authorize('project-edit');
+        $this->authorize('clients-update');
 
         $request->validate([
             'project_id' => 'required|exists:clients,id',
@@ -261,6 +251,8 @@ class ProjectController extends Controller
     }
     public function getProjectUsers($clientId)
     {
+        $this->authorize('tasks-create');
+
         $client = Client::find($clientId);
 
         if (!$client) {
@@ -272,6 +264,8 @@ class ProjectController extends Controller
     }
     public function restore($clientId)
     {
+        $this->authorize('clients-delete');
+
         $record = Client::withTrashed()->findOrFail($clientId);
         $record->restore();
 
@@ -280,9 +274,7 @@ class ProjectController extends Controller
 
     public function markCompleted(Request $request, Client $client)
     {
-        if (!auth()->user()->can('project-edit') && !auth()->user()->hasRole('Employee')) {
-            abort(403);
-        }
+        $this->authorize('clients-update');
 
         $validated = $request->validate([
             'end_date' => 'required|date',
@@ -305,7 +297,7 @@ class ProjectController extends Controller
 
     public function services(Client $client)
     {
-        $this->authorize('service-show');
+        $this->authorize('clients-services');
         $this->authorizeClientAccess($client);
 
         $search = trim((string) request('search'));
@@ -316,7 +308,7 @@ class ProjectController extends Controller
         $statusFilter = $activeTab === 'closed' ? $closedStatuses : $activeStatuses;
 
         $services = $client->services()
-            ->with(['frontResource', 'workingResource'])
+            ->with(['frontResource'])
             ->whereIn('service_status', $statusFilter)
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($subQuery) use ($search) {
@@ -328,10 +320,7 @@ class ProjectController extends Controller
                             $userQuery->where('name', 'like', "%{$search}%")
                                 ->orWhere('employee_id', 'like', "%{$search}%");
                         })
-                        ->orWhereHas('workingResource', function ($userQuery) use ($search) {
-                            $userQuery->where('name', 'like', "%{$search}%")
-                                ->orWhere('employee_id', 'like', "%{$search}%");
-                        });
+                        ->orWhereWorkingResourceMatches($search);
                 });
             })
             ->select('*')
@@ -345,8 +334,9 @@ class ProjectController extends Controller
             ->latest()
             ->paginate(10)
             ->withQueryString();
+        Service::loadWorkingUsers($services);
 
-        $employees = $client->users()->role('Employee')->get();
+        $employees = $client->users()->ofRole(\App\Support\Roles::RESOURCE)->get();
 
         // Fetch all master hours
         $masterHours = Hour::all()->keyBy(function ($item) {
@@ -356,9 +346,9 @@ class ProjectController extends Controller
         return view('clients.services.index', compact('services', 'client', 'employees', 'masterHours', 'activeTab'));
     }
 
-    public function serviceListing()
+    public function serviceListing(Request $request)
     {
-        $this->authorize('service-show');
+        $this->authorize('services-listing');
         $search = trim((string) request('search'));
 
         $tab = request('tab', 'active');
@@ -368,18 +358,21 @@ class ProjectController extends Controller
         $statusFilter = $activeTab === 'closed' ? $closedStatuses : $activeStatuses;
 
         $clientId = request('client_id');
-        $month = request('month');
+        $monthInput = $request->input('month', now()->format('Y-m'));
+        $selectedMonth = preg_match('/^\\d{4}-(0[1-9]|1[0-2])$/', $monthInput)
+            ? $monthInput
+            : now()->format('Y-m');
+        [$selectedYear, $selectedMonthNumber] = array_map('intval', explode('-', $selectedMonth));
         $frontResource = request('front_resource');
         $workResource = request('work_resource');
 
-        $services = Service::with(['client', 'frontResource', 'workingResource'])
+        $services = Service::with(['client', 'frontResource'])
             ->whereIn('service_status', $statusFilter)
             ->when(!empty($clientId), function ($query) use ($clientId) {
                 $query->where('client_id', $clientId);
             })
-            ->when(!empty($month), function ($query) use ($month) {
-                $query->whereMonth('created_at', $month);
-            })
+            ->where('year', $selectedYear)
+            ->where('month', $selectedMonthNumber)
             ->when(!empty($frontResource), function ($query) use ($frontResource) {
                 $query->where('front_resource', $frontResource);
             })
@@ -400,10 +393,7 @@ class ProjectController extends Controller
                             $userQuery->where('name', 'like', "%{$search}%")
                                 ->orWhere('employee_id', 'like', "%{$search}%");
                         })
-                        ->orWhereHas('workingResource', function ($userQuery) use ($search) {
-                            $userQuery->where('name', 'like', "%{$search}%")
-                                ->orWhere('employee_id', 'like', "%{$search}%");
-                        });
+                        ->orWhereWorkingResourceMatches($search);
                 });
             })
             ->select('*')
@@ -417,6 +407,7 @@ class ProjectController extends Controller
             ->latest()
             ->paginate(20)
             ->withQueryString();
+        Service::loadWorkingUsers($services);
 
         // Fetch all master hours
         $masterHours = Hour::all()->keyBy(function ($item) {
@@ -435,27 +426,20 @@ class ProjectController extends Controller
         //     ->orderBy('name')
         //     ->get(['id', 'name', 'employee_id']);
 
-        $monthOptions = collect(range(1, 12))->map(function ($monthNumber) {
-            return [
-                'value' => $monthNumber,
-                'label' => Carbon::create()->month($monthNumber)->format('F'),
-            ];
-        });
-
-        return view('clients.services.listing', compact(
+        return view('services.listing', compact(
             'services',
             'masterHours',
             'clients',
             'frontResources',
             // 'workResources',
-            'monthOptions',
+            'selectedMonth',
             'activeTab'
         ));
     }
 
     public function importServices(Request $request)
     {
-        $this->authorize('service-create');
+        $this->authorize('services-listing-import');
 
         $request->validate([
             'services_file' => 'required|file|mimes:xls,xlsx,csv,txt',
@@ -467,7 +451,7 @@ class ProjectController extends Controller
 
         if (count($sheetRows) < 1) {
             return redirect()
-                ->route('services.listing')
+                ->route('services.listing.index')
                 ->withErrors(['services_file' => 'The uploaded sheet does not contain any service rows.'])
                 ->withInput();
         }
@@ -577,7 +561,7 @@ class ProjectController extends Controller
 
         if (!empty($errors)) {
             return redirect()
-                ->route('services.listing')
+                ->route('services.listing.index')
                 ->withErrors(['services_file' => implode("\n", $errors)]);
         }
 
@@ -586,7 +570,7 @@ class ProjectController extends Controller
             foreach ($servicesToCreate as $serviceData) {
                 Service::create($serviceData);
 
-                $memberIds = collect([$serviceData['front_resource'], $serviceData['working_resource']])
+                $memberIds = collect([$serviceData['front_resource'], ...Arr::wrap($serviceData['working_resource'])])
                     ->filter()
                     ->unique()
                     ->all();
@@ -598,7 +582,7 @@ class ProjectController extends Controller
         });
 
         return redirect()
-            ->route('services.listing')
+            ->route('services.listing.index')
             ->with('success', 'Services imported successfully.');
     }
 
@@ -646,7 +630,8 @@ class ProjectController extends Controller
             'service_status' => 'required|in:new,in_progress,completed,replacement,canceled',
 
             'front_resource' => 'nullable|exists:users,id',
-            'working_resource' => 'nullable|exists:users,id',
+            'working_resource' => 'nullable|array',
+            'working_resource.*' => 'exists:users,id',
 
             'start_date' => [
                 'nullable',
@@ -681,7 +666,6 @@ class ProjectController extends Controller
             'year',
             'service_status',
             'front_resource',
-            'working_resource',
             'start_date',
             'end_date',
             'cancel_reason',
@@ -695,9 +679,11 @@ class ProjectController extends Controller
         $currentMonth = Carbon::now()->month;
         $currentYear = Carbon::now()->year;
 
-        $sameServiceExists = $client->services()
+        $workingResourceIds = $this->workingResourceIds($request);
+
+        $sameServiceExists = !empty($workingResourceIds) && $client->services()
             ->where('service_id', $request->service_id)
-            ->where('working_resource', $request->working_resource)
+            ->whereHasAnyWorkingResource($workingResourceIds)
             // ->whereMonth('created_at', $currentMonth)
             // ->whereYear('created_at', $currentYear)
             ->where('month', $request->month)
@@ -783,7 +769,7 @@ class ProjectController extends Controller
 
         // dd($data);
 
-        $client->services()->create($data);
+        $client->services()->create($data + ['working_resource' => $workingResourceIds]);
 
         return redirect()
             ->route('clients.services.index', $client->id)
@@ -795,13 +781,13 @@ class ProjectController extends Controller
         $this->authorize('service-show');
         $this->authorizeClientAccess($client);
 
-        $service->load(['frontResource', 'workingResource']);
+        $service->load(['frontResource']);
         return view('clients.services.show', compact('client', 'service'));
     }
 
     public function updateService(Request $request, Client $client, Service $service)
     {
-        $this->authorize('service-edit');
+        $this->authorize('service-update');
         $this->authorizeClientAccess($client);
 
         $rules = [
@@ -812,7 +798,8 @@ class ProjectController extends Controller
             'hours'             => 'required|numeric',
             'service_status'    => 'required|in:new,in_progress,completed,replacement,canceled',
             'front_resource'    => 'required|exists:users,id',
-            'working_resource'  => 'required|exists:users,id',
+            'working_resource'  => 'required|array|min:1',
+            'working_resource.*' => 'exists:users,id',
             'start_date' => [
                 'nullable',
                 'date',
@@ -849,7 +836,6 @@ class ProjectController extends Controller
             'year',
             'service_status',
             'front_resource',
-            'working_resource',
             'start_date',
             'end_date',
             'cancel_reason',
@@ -873,10 +859,12 @@ class ProjectController extends Controller
         $serviceMonth = $service->month ?? null;
         $serviceYear  = $service->year ?? null;
 
-        $sameServiceExists = $client->services()
+        $workingResourceIds = $this->workingResourceIds($request);
+
+        $sameServiceExists = !empty($workingResourceIds) && $client->services()
             ->where('service_id', $request->service_id)
             ->where('id', '!=', $service->id)
-            ->where('working_resource', $request->working_resource)
+            ->whereHasAnyWorkingResource($workingResourceIds)
             // ->whereMonth('created_at', $serviceMonth)
             // ->whereYear('created_at', $serviceYear)
             ->where('month', $serviceMonth)
@@ -967,7 +955,7 @@ class ProjectController extends Controller
             $data['replacement_reason'] = null;
         }
 
-        $service->update($data);
+        $service->update($data + ['working_resource' => $workingResourceIds]);
 
         return redirect()
             ->route('clients.services.index', $client->id)
@@ -982,6 +970,15 @@ class ProjectController extends Controller
         $service->delete();
 
         return back()->with('success', 'Service deleted successfully');
+    }
+
+    private function workingResourceIds(Request $request): array
+    {
+        return collect(Arr::wrap($request->input('working_resource')))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function validateMonthlyServiceHours(Client $client, Request $request, ?Service $service = null)
@@ -1033,9 +1030,11 @@ class ProjectController extends Controller
             ]);
         }
 
+        $requestedResourceIds = $this->workingResourceIds($request);
+
         $workingResourceExistsQuery = $client->services()
             ->where('service_id', $request->service_id)
-            ->where('working_resource', $request->working_resource)
+            ->whereHasAnyWorkingResource($requestedResourceIds)
             ->whereMonth('month', $currentMonth)
             ->whereYear('year', $currentYear);
 
@@ -1043,7 +1042,7 @@ class ProjectController extends Controller
             $workingResourceExistsQuery->where('id', '!=', $service->id);
         }
 
-        if (!empty($request->working_resource) && $workingResourceExistsQuery->exists()) {
+        if (!empty($requestedResourceIds) && $workingResourceExistsQuery->exists()) {
             return back()->withInput()->withErrors([
                 'working_resource' => 'This working resource is already assigned to the same service ID in the current month.',
             ]);
@@ -1072,7 +1071,7 @@ class ProjectController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->hasRole('Admin')) {
+        if ($user->can('clients-access')) {
             return;
         }
 
@@ -1085,10 +1084,10 @@ class ProjectController extends Controller
 
     public function addServicesTable(Request $request)
     {
-        $this->authorize('project-show');
+        $this->authorize('services-bulk-access');
 
-        $clients = Client::orderBy('name')->get(['id', 'name']);
-        $employees = User::role('Employee')->orderBy('name')->get(['id', 'name', 'employee_id']);
+        $clients = Client::orderBy('name')->withoutTrashed()->where('status', 'in_progress')->get(['id', 'name']);
+        $employees = User::ofRole(\App\Support\Roles::RESOURCE)->orderBy('name')->get(['id', 'name', 'employee_id']);
         if ($employees->isEmpty()) {
             $employees = User::orderBy('name')->get(['id', 'name', 'employee_id']);
         }
@@ -1105,7 +1104,7 @@ class ProjectController extends Controller
             ->orderBy('id', 'asc')
             ->get();
 
-        return view('services.index', compact(
+        return view('services.bulk', compact(
             'clients',
             'employees',
             'currentMonth',
@@ -1117,7 +1116,7 @@ class ProjectController extends Controller
 
     public function saveServicesTable(Request $request)
     {
-        $this->authorize('project-show');
+        $this->authorize('services-bulk-update');
 
         $selectedMonthStr = $request->input('selected_month', now()->format('Y-m'));
         $parts = explode('-', $selectedMonthStr);
@@ -1138,9 +1137,12 @@ class ProjectController extends Controller
                 }
 
                 $frontResource = !empty($data['front_resource']) ? $data['front_resource'] : null;
-                $workingResource = ($data['service_type'] ?? '') === 'proxy'
-                    ? (!empty($data['working_resource']) ? $data['working_resource'] : null)
-                    : $frontResource;
+                $isProxy = ($data['service_type'] ?? '') === 'proxy';
+                $workingResources = $isProxy
+                    ? collect($data['working_resource'] ?? [])->filter()->unique()->values()->all()
+                    : array_filter([$frontResource]);
+                // Older cached versions of the bulk page post proxy row ids as `ids[]`.
+                $existingServiceId = $data['id'] ?? collect($data['ids'] ?? [])->filter()->first();
 
                 $status = $data['service_status'] ?? 'new';
                 $comment = $data['comment'] ?? ($data['reason'] ?? null);
@@ -1156,28 +1158,22 @@ class ProjectController extends Controller
                     'year' => $year,
                     'service_status' => in_array($status, ['new', 'in_progress', 'completed', 'replacement', 'canceled']) ? $status : 'new',
                     'front_resource' => $frontResource,
-                    'working_resource' => $workingResource,
+                    'working_resource' => $workingResources,
                     'start_date' => !empty($data['start_date']) ? $data['start_date'] : null,
                     'end_date' => in_array($status, ['completed', 'canceled']) && !empty($data['end_date']) ? $data['end_date'] : null,
                     'cancel_reason' => !empty($comment) ? $comment : null,
                     'replacement_reason' => null,
                 ];
 
-                if (!empty($data['id'])) {
-                    $service = Service::find($data['id']);
-                    if ($service) {
-                        $service->update($servicePayload);
-                        $savedCount++;
-                    } else {
-                        Service::create($servicePayload);
-                        $savedCount++;
-                    }
+                if ($existingServiceId && ($service = Service::find($existingServiceId))) {
+                    $service->update($servicePayload);
                 } else {
-                    Service::create($servicePayload);
-                    $savedCount++;
+                    $service = Service::create($servicePayload);
                 }
 
-                $memberIds = collect([$frontResource, $workingResource])->filter()->unique()->all();
+                $savedCount++;
+
+                $memberIds = collect([$frontResource, ...$workingResources])->filter()->unique()->all();
                 if (!empty($memberIds) && !empty($data['client_id'])) {
                     Client::find($data['client_id'])?->teamProjects()->syncWithoutDetaching($memberIds);
                 }
@@ -1185,13 +1181,13 @@ class ProjectController extends Controller
         });
 
         $monthParam = sprintf('%04d-%02d', $selectedYear, $selectedMonth);
-        return redirect()->route('services.add', ['month' => $monthParam])
+        return redirect()->route('services.bulk.edit', ['month' => $monthParam])
             ->with('success', "Services saved successfully! ({$savedCount} record(s) processed)");
     }
 
     public function copyPreviousMonthServices(Request $request)
     {
-        $this->authorize('project-show');
+        $this->authorize('services-bulk-update');
 
         // Target month (to_month or fallback to month)
         $targetMonthStr = $request->input('to_month', $request->input('month', now()->format('Y-m')));
@@ -1217,7 +1213,7 @@ class ProjectController extends Controller
         // Check if source and target are the same month
         if ($fromYear === $targetYear && $fromMonth === $targetMonth) {
             return redirect()
-                ->route('services.add', ['month' => $targetMonthParam])
+                ->route('services.bulk.edit', ['month' => $targetMonthParam])
                 ->with('error', "Source month (" . $fromDate->format('F Y') . ") and target month cannot be the same.");
         }
 
@@ -1227,14 +1223,15 @@ class ProjectController extends Controller
 
         if ($sourceServices->isEmpty()) {
             return redirect()
-                ->route('services.add', ['month' => $targetMonthParam])
+                ->route('services.bulk.edit', ['month' => $targetMonthParam])
                 ->with('warning', "No services found in source month (" . $fromDate->format('F Y') . ") to copy.");
         }
 
         $copiedCount = 0;
-        DB::transaction(function () use ($sourceServices, $targetYear, $targetMonth, &$copiedCount) {
+        $copiedResourceIds = [];
+        DB::transaction(function () use ($sourceServices, $targetYear, $targetMonth, &$copiedCount, &$copiedResourceIds) {
             foreach ($sourceServices as $s) {
-                Service::updateOrCreate(
+                $copy = Service::updateOrCreate(
                     [
                         'client_id' => $s->client_id,
                         'service_id' => $s->service_id,
@@ -1246,7 +1243,6 @@ class ProjectController extends Controller
                         'hours' => $s->hours,
                         'service_status' => $s->service_status,
                         'front_resource' => $s->front_resource,
-                        'working_resource' => $s->working_resource,
                         'start_date' => $s->start_date,
                         'end_date' => $s->end_date,
                         'cancel_reason' => $s->cancel_reason,
@@ -1254,7 +1250,14 @@ class ProjectController extends Controller
                     ]
                 );
 
-                $memberIds = collect([$s->front_resource, $s->working_resource])->filter()->unique()->all();
+                // Old proxy duplicates share one copy key; gather their resources onto the single copy.
+                $resourceIds = $copiedResourceIds[$copy->id] = array_values(array_unique(array_merge(
+                    $copiedResourceIds[$copy->id] ?? [],
+                    $s->working_resource_ids
+                )));
+                $copy->update(['working_resource' => $resourceIds]);
+
+                $memberIds = collect([$s->front_resource, ...$resourceIds])->filter()->unique()->all();
                 if (!empty($memberIds) && !empty($s->client_id)) {
                     Client::find($s->client_id)?->teamProjects()->syncWithoutDetaching($memberIds);
                 }
@@ -1264,8 +1267,7 @@ class ProjectController extends Controller
         });
 
         return redirect()
-            ->route('services.add', ['month' => $targetMonthParam])
+            ->route('services.bulk.edit', ['month' => $targetMonthParam])
             ->with('success', "Successfully copied {$copiedCount} service(s) from " . $fromDate->format('F Y') . " to " . $targetDate->format('F Y') . "!");
     }
 }
-

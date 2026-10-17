@@ -13,6 +13,7 @@ class Client extends Model
 
     protected $fillable = [
         'user_id',
+        'profile_user_id',
         'name',
         'description',
         'start_date',
@@ -22,7 +23,7 @@ class Client extends Model
         'deleted_at',
         'client_email',
         'client_code',
-        'project_name',
+        'company_name',
         'email_updated_by',
         'email_updated_at',
         'type'
@@ -41,6 +42,11 @@ class Client extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function profile()
+    {
+        return $this->belongsTo(User::class, 'profile_user_id');
     }
 
     public function tasks()

@@ -1,7 +1,6 @@
 @extends('layouts.app')
-
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid mt-80">
     <div class="row">
         <div class="col-lg-12 margin-tb mb-4">
             <div class="d-flex align-items-center justify-content-between shadow-sm p-3 rounded bg-white">
@@ -9,7 +8,7 @@
                     <h2> {{ $user->deleted_at == null ? 'Show User' : 'Show Resign User' }}</h2>
                 </div>
                 <div class="pull-right">
-                    <a class="btn btn-primary" href="{{ route($user->deleted_at == null ? 'users.index' : 'resign.users.index') }}"> Back</a>
+                    <a class="btn btn-primary" href="{{ route($user->deleted_at == null ? 'users.index' : 'users.resigned') }}"> Back</a>
                 </div>
             </div>
         </div>
@@ -92,14 +91,8 @@
             <div class="col-xs-12 col-sm-12 col-md-12 mb-3">
                 <div class="form-group">
                     <strong>Roles:</strong>
-                    @if (!empty($user->getRoleNames()))
-                        @foreach ($user->getRoleNames() as $v)
-                            @if ($v == 'Admin')
-                                <label class="skill-item admin-bg">{{ $v }}</label>
-                            @else
-                                <label class="">{{ $v }}</label>
-                            @endif
-                        @endforeach
+                    @if ($user->role)
+                        <label class="{{ $user->isAdmin() ? 'skill-item admin-bg' : '' }}">{{ $user->role->name }}</label>
                     @endif
                 </div>
             </div>

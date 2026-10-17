@@ -1,13 +1,12 @@
 <?php
-  
+
 namespace Database\Seeders;
-  
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+
 use Illuminate\Database\Seeder;
+use App\Models\Role;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-  
+use App\Support\Roles;
+
 class CreateAdminUserSeeder extends Seeder
 {
     /**
@@ -15,13 +14,7 @@ class CreateAdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // $user = User::create([
-        //     'name' => 'Admin', 
-        //     'email' => 'admin@ve.com',
-        //     'password' => bcrypt('123456')
-        // ]);
-        
-        // $role = Role::create(['name' => 'Admin']);
+        $role = Role::firstOrCreate(['name' => Roles::ADMIN]);
 
         $user = User::firstOrCreate(
             ['email' => 'admin@ve.com'],
@@ -31,15 +24,13 @@ class CreateAdminUserSeeder extends Seeder
             ]
         );
 
-        $role = Role::firstOrCreate(['name' => 'Admin']);
-         
-        $permissions = Permission::pluck('id','id')->all();
-       
-        $role->syncPermissions($permissions);
-         
-        // $user->assignRole([$role->id]);
-        if (!$user->hasRole('Admin')) {
-            $user->assignRole($role);
+        if (!$user->isAdmin()) {
+            $user->role()->associate($role)->save();
+        }
+
+        if (!$user->permissions()->exists()) {
+            $user->unsetRelation('role');
+            $user->assignDefaultPermissions();
         }
     }
 }

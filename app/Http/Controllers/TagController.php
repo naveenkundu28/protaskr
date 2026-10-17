@@ -14,7 +14,7 @@ class TagController extends Controller
      */
     public function index(Request $request)
     {
-        $this->authorize('user-show');
+        $this->authorize('tags-access');
         $search = trim((string) $request->input('search'));
 
         $tags = Tag::when($search !== '', function ($query) use ($search) {
@@ -32,7 +32,7 @@ class TagController extends Controller
      */
     public function create()
     {
-        $this->authorize('user-create');
+        $this->authorize('tags-create');
         return view('tags.create');
     }
 
@@ -41,7 +41,7 @@ class TagController extends Controller
      */
     public function store(Request $request) : RedirectResponse
     {
-         $this->authorize('user-create');
+         $this->authorize('tags-create');
 
         $request->validate([
             'name' => 'required|unique:tags,name',
@@ -62,7 +62,7 @@ class TagController extends Controller
      */
     public function show($id): View
     {
-        $this->authorize('user-show');
+        $this->authorize('tags-access');
 
         $tag = Tag::findOrFail($id);
 
@@ -74,7 +74,7 @@ class TagController extends Controller
      */
     public function edit($id): View
     {
-        $this->authorize('user-edit');
+        $this->authorize('tags-update');
         $tag = Tag::findOrFail($id);
 
         return view('tags.edit', compact('tag'));
@@ -85,7 +85,7 @@ class TagController extends Controller
      */
     public function update(Request $request, $id): RedirectResponse
     {
-        $this->authorize('user-edit');
+        $this->authorize('tags-update');
 
         $request->validate([
             'name' => 'required|unique:tags,name,'.$id,
@@ -108,7 +108,7 @@ class TagController extends Controller
      */
     public function destroy($id)
     {
-        $this->authorize('user-delete');
+        $this->authorize('tags-delete');
         $tags = Tag::findOrFail($id);
 
         $tags->delete();

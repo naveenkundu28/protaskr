@@ -1,11 +1,11 @@
 @extends('layouts.app')
-
+@extends('layouts.header')
 @section('title')
     Services
 @endsection
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid mt-80">
 
     {{-- Header Banner --}}
     <div class="d-flex justify-content-between align-items-center bg-white mb-4 shadow-sm p-3 rounded">
@@ -200,10 +200,13 @@
                                             </select>
                                         </td>
                                         <td>
-                                            <select name="services[{{ $index }}][working_resource]" class="form-select working-resource-select" required>
+                                            @php($workingResourceIds = $service->working_resource_ids)
+                                            <select name="services[{{ $index }}][working_resource][]" class="form-select working-resource-select"
+                                                data-saved-working-resources='@json(array_values($workingResourceIds))'
+                                                {{ $service->service_type === 'proxy' ? 'multiple' : '' }} required>
                                                 <option value="">Select Resource</option>
                                                 @foreach ($employees as $employee)
-                                                    <option value="{{ $employee->id }}" {{ $service->working_resource == $employee->id ? 'selected' : '' }}>
+                                                    <option value="{{ $employee->id }}" {{ in_array($employee->id, $workingResourceIds) ? 'selected' : '' }}>
                                                         {{ $employee->name }}{{ $employee->employee_id ? ' (' . $employee->employee_id . ')' : '' }}
                                                     </option>
                                                 @endforeach
@@ -279,7 +282,7 @@
                                             </select>
                                         </td>
                                         <td>
-                                            <select name="services[{{ $index }}][working_resource]" class="form-select working-resource-select" required>
+                                            <select name="services[{{ $index }}][working_resource][]" class="form-select working-resource-select" required>
                                                 <option value="" selected>Select Resource</option>
                                                 @foreach ($employees as $employee)
                                                     <option value="{{ $employee->id }}">
@@ -351,9 +354,16 @@ $(document).ready(function() {
         let firstRow = $('#servicesTableBody tr:first');
         let newRow = firstRow.clone();
 
+        // Do not carry Select2's generated UI into a cloned row.
+        newRow.find('.select2-container').remove();
+        newRow.find('.working-resource-select')
+            .removeClass('select2-hidden-accessible')
+            .removeAttr('data-select2-id aria-hidden tabindex data-saved-working-resources');
         newRow.removeClass('row-selected');
         newRow.find('.row-select-checkbox').prop('checked', false);
         newRow.find('input.service-id-hidden').val('');
+        newRow.find('input.service-id-hidden').not(':first').remove();
+        newRow.find('input.service-id-hidden').first().attr('name', 'services[' + index + '][id]');
         newRow.find('input[type="text"]').val('');
         newRow.find('input[type="number"]').val('');
         newRow.find('input[type="date"]').val('');
@@ -361,6 +371,7 @@ $(document).ready(function() {
         newRow.find('select.service-type-select').val('direct');
         newRow.find('select.status-select').val('new');
         newRow.find('select.front-resource-select').val('');
+        newRow.find('select.working-resource-select').val('');
         newRow.find('input[name*="[comment]"], input[name*="[reason]"]')
             .val('')
             .attr('placeholder', 'Comment')
@@ -439,18 +450,53 @@ $(document).ready(function() {
         let serviceType = tr.find('.service-type-select').val();
         let frontResource = tr.find('.front-resource-select').val();
         let workingSelect = tr.find('.working-resource-select');
+        let isProxy = serviceType === 'proxy';
+        let selectedWorkingResources = workingSelect.val();
+        let savedResources = workingSelect.attr('data-saved-working-resources');
 
-        if (serviceType !== 'proxy') {
+        if (savedResources) {
+            try {
+                selectedWorkingResources = JSON.parse(savedResources).map(String);
+            } catch (error) {
+                // Keep the current native select value if the saved attribute is malformed.
+            }
+            // Use the database values only for the first page-load initialization.
+            workingSelect.removeAttr('data-saved-working-resources');
+        }
+
+        if (workingSelect.hasClass('select2-hidden-accessible')) {
+            workingSelect.select2('destroy');
+        }
+        // Select2 normally removes this container on destroy; remove any leftover
+        // generated UI so Direct/External always show only the native select.
+        workingSelect.next('.select2').remove();
+
+        if (!isProxy) {
+            workingSelect.prop('multiple', false);
             workingSelect.val(frontResource);
             workingSelect
                 .addClass('bg-light')
                 .css('pointer-events', 'none')
                 .attr('tabindex', '-1');
         } else {
+            workingSelect.prop('multiple', true);
+            workingSelect.val(selectedWorkingResources);
             workingSelect
                 .removeClass('bg-light')
                 .css('pointer-events', 'auto')
                 .removeAttr('tabindex');
+
+            if ($.fn.select2) {
+                workingSelect.select2({
+                    placeholder: 'Select Resource',
+                    width: '100%',
+                    allowClear: true,
+                    // The select sits inside a responsive table, whose overflow can
+                    // otherwise clip the Select2 options list.
+                    dropdownParent: $(document.body)
+                });
+                workingSelect.val(selectedWorkingResources).trigger('change');
+            }
         }
     }
 
@@ -577,6 +623,7 @@ $(document).ready(function() {
         let serviceType = tr.find('.service-type-select').val();
         if (serviceType !== 'proxy') {
             tr.find('.working-resource-select').val($(this).val());
+            tr.find('.working-resource-select').trigger('change.select2');
         }
     });
 
@@ -627,6 +674,16 @@ $(document).ready(function() {
     $('#servicesTableBody tr').each(function() {
         handleResourceForRow($(this));
         handleStatusDependencyForRow($(this), false);
+    });
+
+    // Run once more after external scripts have finished loading. This ensures
+    // existing proxy options are enhanced even on a cold CDN load of Select2.
+    $(window).on('load', function() {
+        $('#servicesTableBody tr').each(function() {
+            if ($(this).find('.service-type-select').val() === 'proxy') {
+                handleResourceForRow($(this));
+            }
+        });
     });
 
     updateRowNumbers();

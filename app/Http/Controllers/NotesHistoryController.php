@@ -11,7 +11,7 @@ class NotesHistoryController extends Controller
 {
     public function index(Request $request, Lead $lead)
     {
-        $this->authorize('user-show');
+        $this->authorize('leads-notes-access');
 
         $search = trim((string) $request->input('search'));
 
@@ -30,20 +30,20 @@ class NotesHistoryController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        return view('notes_histories.index', compact('lead', 'notesHistories'))
+        return view('leads.notes.index', compact('lead', 'notesHistories'))
             ->with('i', ($request->input('page', 1) - 1) * 50);
     }
 
     public function create(Lead $lead)
     {
-        $this->authorize('user-create');
+        $this->authorize('leads-notes-create');
         $leadStatuses = LeadStatus::all();
-        return view('notes_histories.create', compact('lead', 'leadStatuses'));
+        return view('leads.notes.create', compact('lead', 'leadStatuses'));
     }
 
     public function store(Request $request, Lead $lead)
     {
-        $this->authorize('user-create');
+        $this->authorize('leads-notes-create');
 
         $request->validate([
             'notes' => 'required|string',
@@ -63,17 +63,17 @@ class NotesHistoryController extends Controller
 
     public function edit(Lead $lead, NotesHistory $notesHistory)
     {
-        $this->authorize('user-edit');
+        $this->authorize('leads-notes-update');
         $this->ensureNoteBelongsToLead($lead, $notesHistory);
 
         $leadStatuses = LeadStatus::all();
 
-        return view('notes_histories.edit', compact('lead', 'notesHistory', 'leadStatuses'));
+        return view('leads.notes.edit', compact('lead', 'notesHistory', 'leadStatuses'));
     }
 
     public function update(Request $request, Lead $lead, NotesHistory $notesHistory)
     {
-        $this->authorize('user-edit');
+        $this->authorize('leads-notes-update');
         $this->ensureNoteBelongsToLead($lead, $notesHistory);
 
         $request->validate([
@@ -94,7 +94,7 @@ class NotesHistoryController extends Controller
 
     public function destroy(Lead $lead, NotesHistory $notesHistory)
     {
-        $this->authorize('user-delete');
+        $this->authorize('leads-notes-delete');
         $this->ensureNoteBelongsToLead($lead, $notesHistory);
 
         $notesHistory->delete();

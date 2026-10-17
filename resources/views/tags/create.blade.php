@@ -1,7 +1,6 @@
 @extends('layouts.app')
-
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-80">
         <div style="padding: 0px 12px;">
             <div class="row">
                 <div class="col-lg-12 mb-4 margin-tb d-flex align-items-center justify-content-between bg-white shadow-sm p-3 rounded">

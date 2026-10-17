@@ -16,11 +16,11 @@ class TaskModal extends Component
     public $inProgressProjects;
     public function __construct(public $project)
     {
-        $this->projects = auth()->user()->hasRole('Admin')
+        $this->projects = auth()->user()->can('clients-access')
             ? auth()->user()->projects
             : auth()->user()->projectMembers;
 
-        $this->inProgressProjects = auth()->user()->hasRole('Admin')
+        $this->inProgressProjects = auth()->user()->can('clients-access')
             ? auth()->user()->projects
             : auth()->user()->projectMembers()->where('status', '!=', 'completed')->get();
 

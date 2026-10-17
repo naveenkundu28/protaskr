@@ -16,6 +16,104 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('tracker/report', [TrackerController::class, 'report']);
+
+// Read-only snapshot for the browser extension (running task, today's open tasks, tracked time).
+Route::get('extension/status', function (Request $request) {
+    $request->validate(['email' => 'required|email']);
+
+    $user = \App\Models\User::where('email', $request->query('email'))->first();
+    if (!$user) {
+        return response()->json(['message' => 'No user found for this email.'], 404);
+    }
+
+    $now = \Carbon\Carbon::now();
+    $today = $now->toDateString();
+
+    $runningHistory = \App\Models\TrackerHistory::where('user_id', $user->id)
+        ->where('is_running', true)
+        ->latest('start_time')
+        ->first();
+    $runningTask = $runningHistory ? \App\Models\Task::with('project')->find($runningHistory->task_id) : null;
+
+    $running = null;
+    if ($runningTask) {
+        $closedSeconds = (int) \App\Models\TrackerHistory::where('task_id', $runningTask->id)
+            ->where('is_running', false)
+            ->sum('elapsed_time');
+        $startedAt = \Carbon\Carbon::parse($runningHistory->start_time);
+        $running = [
+            'id' => $runningTask->id,
+            'title' => $runningTask->title,
+            'project' => optional($runningTask->project)->name,
+            'estimated_seconds' => $runningTask->estimated_hours ? (int) round($runningTask->estimated_hours * 3600) : null,
+            'elapsed_seconds' => $closedSeconds + max(0, $startedAt->diffInSeconds($now)),
+            'started_at' => $startedAt->toIso8601String(),
+        ];
+    }
+
+    $openTasks = \App\Models\Task::where('user_id', $user->id)
+        ->whereNotIn('status', ['completed', 'closed'])
+        ->where(function ($q) use ($today) {
+            $q->whereDate('created_at', $today)->orWhereDate('due_date', $today);
+        })
+        ->count();
+
+    $trackedToday = (int) \App\Models\TrackerHistory::where('user_id', $user->id)
+        ->where('is_running', false)
+        ->whereDate('created_at', $today)
+        ->sum('elapsed_time');
+    if ($runningHistory && \Carbon\Carbon::parse($runningHistory->start_time)->isSameDay($now)) {
+        $trackedToday += max(0, \Carbon\Carbon::parse($runningHistory->start_time)->diffInSeconds($now));
+    }
+
+    $lastStopped = \App\Models\TrackerHistory::where('user_id', $user->id)
+        ->where('is_running', false)
+        ->latest('end_time')
+        ->value('end_time');
+
+    // Full list of the user's unfinished tasks, only when asked for (the extension's Tasks page).
+    $tasks = null;
+    if ($request->query('include') === 'tasks') {
+        $tasks = \App\Models\Task::with('project')
+            ->withSum('trackerHistories as tracked_seconds', 'elapsed_time')
+            ->where('user_id', $user->id)
+            ->whereNotIn('status', ['completed', 'closed'])
+            ->latest('id')
+            ->limit(200)
+            ->get()
+            ->map(fn ($task) => [
+                'id' => $task->id,
+                'title' => $task->title,
+                'project' => optional($task->project)->name,
+                'status' => $task->status,
+                'priority' => $task->priority,
+                'due_date' => $task->due_date,
+                'estimated_seconds' => $task->estimated_hours ? (int) round($task->estimated_hours * 3600) : null,
+                'tracked_seconds' => $running && $running['id'] === $task->id
+                    ? $running['elapsed_seconds']
+                    : (int) $task->tracked_seconds,
+                'is_running' => $running && $running['id'] === $task->id,
+                'created_at' => optional($task->created_at)->toIso8601String(),
+            ]);
+    }
+
+    return response()->json([
+        'tasks' => $tasks,
+        'server_time' => $now->toIso8601String(),
+        'user' => ['id' => $user->id, 'name' => $user->name],
+        'running_task' => $running,
+        'today' => [
+            'open_tasks' => $openTasks,
+            'created_today' => \App\Models\Task::where('user_id', $user->id)->whereDate('created_at', $today)->count(),
+            'due_today' => \App\Models\Task::where('user_id', $user->id)
+                ->whereNotIn('status', ['completed', 'closed'])
+                ->whereDate('due_date', $today)
+                ->count(),
+            'tracked_seconds' => $trackedToday,
+            'last_stopped_at' => $lastStopped ? \Carbon\Carbon::parse($lastStopped)->toIso8601String() : null,
+        ],
+    ]);
+});
 Route::get('add-task', function(){
 	if(request('submit')){
 		$tasks = request('task');

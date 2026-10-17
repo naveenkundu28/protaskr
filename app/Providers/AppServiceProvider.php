@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,19 +23,31 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-		if (app()->environment('production')) {
-        URL::forceScheme('https');
-    }
+		
+        Paginator::useBootstrapFive();
+ 
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
+
+        \Illuminate\Support\Facades\Blade::directive('progressColorClass', function ($expression) {
+            return "<?php echo \App\Models\Project::progressColorClass($expression); ?>";
+        });
+
+        \Illuminate\Support\Facades\Blade::directive('progressColorHex', function ($expression) {
+            return "<?php echo \App\Models\Project::progressColorHex($expression); ?>";
+        });
+
         View::composer('*', function ($view) {
             $hiddenStatuses = [];
             $user = Auth::user();
 
-            if ($user && $user->hasRole('Employee')) {
+            if ($user && $user->hasRole(\App\Support\Roles::RESOURCE)) {
                 $hiddenStatuses = ['closed', 'completed'];
                 // $hiddenStatuses = [];
             }
             if ($user) {
-                $projectQuery = $user->hasRole('Admin') ? $user->projects() : $user->projectMembers();
+                $projectQuery = $user->can('clients-access') ? $user->projects() : $user->projectMembers();
 
                 $projects = $projectQuery->withCount([
                     'tasks as to_do_tasks' => fn($query) => $query->where('status', 'to_do'),

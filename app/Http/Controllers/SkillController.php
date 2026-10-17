@@ -12,7 +12,7 @@ class SkillController extends Controller
 {
     public function index(Request $request)
     {
-        $this->authorize('user-show');
+        $this->authorize('skills-access');
         $search = trim((string) $request->input('search'));
         $now = Carbon::now();
 
@@ -22,7 +22,7 @@ class SkillController extends Controller
             ->where('service_type', '!=', 'external')
             ->get(['front_resource', 'working_resource'])
             ->flatMap(function ($service) {
-                return [$service->front_resource, $service->working_resource];
+                return [$service->front_resource, ...$service->working_resource_ids];
             })->filter()->unique()->values();
 
         $skills = Skill::with([
@@ -38,14 +38,14 @@ class SkillController extends Controller
 
     public function create()
     {
-        $this->authorize('user-create');
+        $this->authorize('skills-create');
         return view('skills.create');
     }
 
 
     public function store(Request $request) : RedirectResponse
     {
-        $this->authorize('user-create');
+        $this->authorize('skills-create');
 
         $request->validate([
             'name' => 'required|unique:skills,name'
@@ -61,7 +61,7 @@ class SkillController extends Controller
 
     public function show($id): View
     {
-        $this->authorize('user-show');
+        $this->authorize('skills-access');
 
         $skills = Skill::findOrFail($id);
 
@@ -70,7 +70,7 @@ class SkillController extends Controller
 
     public function edit($id): View
     {
-        $this->authorize('user-edit');
+        $this->authorize('skills-update');
         $skills = Skill::findOrFail($id);
 
         return view('skills.edit', compact('skills'));
@@ -79,7 +79,7 @@ class SkillController extends Controller
 
     public function update(Request $request, $id): RedirectResponse
     {
-        $this->authorize('user-edit');
+        $this->authorize('skills-update');
 
         $request->validate([
             'name' => 'required|unique:skills,name,'.$id
@@ -98,7 +98,7 @@ class SkillController extends Controller
 
     public function destroy($id)
     {
-        $this->authorize('user-delete');
+        $this->authorize('skills-delete');
         $skills = Skill::findOrFail($id);
 
         $skills->delete();
