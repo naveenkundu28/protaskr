@@ -152,6 +152,7 @@
             flex-wrap: nowrap;
             align-items: center;
             justify-content: flex-end;
+            gap: 10px;
         }
 
         .task-detail .pm-project-head.track_timer button.start_btn,
@@ -257,6 +258,72 @@
         .task-detail .task-tool-btn.is-back:hover {
             background: #46536b;
             color: #fff;
+        }
+
+        .task-detail .task-tool-btn.is-more {
+            background: #eef1f6;
+            color: #46536b;
+            cursor: pointer;
+        }
+
+        .task-detail .task-tool-btn.is-more:hover,
+        .task-detail .task-tool-btn.is-more:focus,
+        .task-detail .task-tool-btn.is-more[aria-expanded="true"] {
+            background: #0d6efd;
+            color: #fff;
+        }
+
+        .task-detail .task-action-dropdown {
+            position: relative;
+        }
+
+        .task-detail .task-action-dropdown .dropdown-toggle::after {
+            display: none;
+        }
+
+        .task-detail .task-action-dropdown .dropdown-menu {
+            min-width: 190px;
+            padding: 6px;
+            margin-top: 6px !important;
+            border-radius: 10px;
+            border: 1px solid var(--task-detail-line, #e2e8f0);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            font-size: 14px;
+            right: 0 !important;
+            left: auto !important;
+        }
+
+        .task-detail .task-action-dropdown .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: #334155;
+            font-weight: 500;
+            background: transparent;
+            border: 0;
+            width: 100%;
+            text-align: left;
+            transition: background-color .15s ease, color .15s ease;
+        }
+
+        .task-detail .task-action-dropdown .dropdown-item:hover,
+        .task-detail .task-action-dropdown .dropdown-item:focus {
+            background-color: #f1f5f9;
+            color: #0d6efd;
+        }
+
+        .task-detail .task-action-dropdown .dropdown-item i {
+            font-size: 16px;
+            width: 18px;
+            display: inline-flex;
+            justify-content: center;
+        }
+
+        .task-detail .task-action-dropdown .dropdown-divider {
+            margin: 4px 0;
+            border-color: #f1f5f9;
         }
 
         .task-detail .task-description {
@@ -922,20 +989,34 @@
                             </button>
                         @endif
                     @endif
-                    @if ($canTrackManually)
-                        <button type="button" class="track_btn" data-bs-toggle="modal" data-bs-target="#manualtrack">Track Manually</button>
-                    @endif
-                    <div class="task-head-tools">
-                        @if ($canUpdate)
-                            <button type="button" class="task-tool-btn is-edit" data-bs-toggle="modal"
-                                data-bs-target="#editTaskModal" title="Edit task">
-                                <i class="bi bi-pencil-square"></i>
-                            </button>
-                        @endif
-                        <a href="{{ $task->story_id ? route('stories.show', $task->story_id) : route('tasks.index', $task->project ? ['project_id' => $task->project->id] : []) }}"
-                            class="task-tool-btn is-back" title="{{ $task->story_id ? 'Back to story' : 'Back to tasks' }}">
-                            <i class="bi bi-arrow-90deg-left"></i>
-                        </a>
+                    <div class="dropdown task-action-dropdown">
+                        <button type="button" class="task-tool-btn is-more dropdown-toggle" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" title="More options" aria-label="More task options">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                            @if ($canTrackManually)
+                                <li>
+                                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#manualtrack">
+                                        <i class="bi bi-clock-history text-primary"></i> Track Manually
+                                    </button>
+                                </li>
+                            @endif
+                            @if ($canUpdate)
+                                <li>
+                                    <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editTaskModal">
+                                        <i class="bi bi-pencil-square text-primary"></i> Edit Task
+                                    </button>
+                                </li>
+                            @endif
+                            @if ($canTrackManually || $canUpdate)
+                                <li><hr class="dropdown-divider"></li>
+                            @endif
+                            <li>
+                                <a class="dropdown-item" href="{{ $task->story_id ? route('stories.show', $task->story_id) : route('tasks.index', $task->project ? ['project_id' => $task->project->id] : []) }}">
+                                    <i class="bi bi-arrow-90deg-left text-secondary"></i> {{ $task->story_id ? 'Back to Story' : 'Back to Tasks' }}
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
