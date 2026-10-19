@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Carbon\Carbon;
 use App\Models\Chat;
 use App\Models\File;
+use App\Models\Story;
 use App\Models\Task;
 use App\Models\User;
 use App\Models\Project;
@@ -143,9 +144,15 @@ class TaskController extends Controller
 
         $totalTime = $this->_getTotalTrackerTime($user_id, $task->id);
 
-        $taskHistories = TrackerHistory::where('user_id', $user_id)->where('task_id', $task->id)->where('is_running', false)->get();
+        $taskHistories = $this->timeLogHistories($task);
 
-        return view('tasks.show', compact('task', 'chats', 'files', 'totalTime', 'taskHistories'));
+        // The open tracker row decides whether the timer is running; the clock starts from the server's own count.
+        $runningHistory = TrackerHistory::where('task_id', $task->id)->where('is_running', true)->latest('start_time')->first();
+        $runningSeconds = $runningHistory
+            ? max(0, (int) Carbon::parse($runningHistory->start_time)->diffInSeconds(Carbon::now()))
+            : null;
+
+        return view('tasks.show', compact('task', 'chats', 'files', 'totalTime', 'taskHistories', 'runningSeconds'));
     }
 
     public function update(Request $request, Task $task)
@@ -186,36 +193,67 @@ class TaskController extends Controller
         return back()->with('success', 'Task updated successfully.');
     }
 
-    public function updateTime(Request $request, $trackerId)
+    /**
+     * Edit one finished session of a task. The page sends either
+     *  - start_time + end_time: the duration is worked out from them, or
+     *  - start_time + elapsed_time (or elapsed_time alone): the end is start + duration.
+     * The saved values are sent back so the page shows exactly what is stored.
+     */
+    public function updateTime(Request $request, Task $task, TrackerHistory $trackerHistory)
     {
         $this->authorize('tasks-time-update');
 
-        $request->validate([
-            'elapsed_time' => 'required|integer|min:0',
-            'start_time' => 'nullable|date',
+        // the entry has to belong to the task whose page is being edited
+        abort_unless((int) $trackerHistory->task_id === (int) $task->id, 404);
+
+        if ($trackerHistory->is_running) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'elapsed_time' => 'This timer is still running. Stop it before editing its time.',
+            ]);
+        }
+
+        $validated = $request->validate([
+            'start_time' => 'nullable|required_with:end_time|date',
             'end_time' => 'nullable|date|after_or_equal:start_time',
+            'elapsed_time' => 'nullable|integer|min:0',
+        ], [
+            'end_time.after_or_equal' => 'The end time cannot be before the start time.',
+            'elapsed_time.integer' => 'Enter the duration as HH:MM:SS, for example 01:30:00.',
         ]);
 
-        $history = TrackerHistory::findOrFail($trackerId);
+        $hasTimes = $request->filled('start_time') && $request->filled('end_time');
+        $hasDuration = $request->filled('elapsed_time');
 
-        if ($request->filled('start_time')) {
-            $history->start_time = Carbon::parse($request->start_time);
+        if (!$hasTimes && !$hasDuration) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'elapsed_time' => 'Enter a duration or a start and end time.',
+            ]);
         }
 
-        if ($request->filled('end_time')) {
-            $history->end_time = Carbon::parse($request->end_time);
-        }
-
-        if ($request->filled('start_time') && $request->filled('end_time')) {
-            $history->elapsed_time = Carbon::parse($request->end_time)
-                ->diffInSeconds(Carbon::parse($request->start_time));
+        if ($hasTimes) {
+            $start = Carbon::parse($validated['start_time']);
+            $end = Carbon::parse($validated['end_time']);
+            $elapsed = (int) $start->diffInSeconds($end);
         } else {
-            $history->elapsed_time = $request->elapsed_time;
+            $elapsed = (int) $validated['elapsed_time'];
+            $start = $request->filled('start_time')
+                ? Carbon::parse($validated['start_time'])
+                : ($trackerHistory->start_time ? Carbon::parse($trackerHistory->start_time) : null);
+            $end = $start?->copy()->addSeconds($elapsed);
         }
-        $history->save();
+
+        $trackerHistory->start_time = $start;
+        $trackerHistory->end_time = $end ?? $trackerHistory->end_time;
+        $trackerHistory->elapsed_time = $elapsed;
+        $trackerHistory->save();
 
         return response()->json([
-            'success' => true
+            'success' => true,
+            'start_time' => $trackerHistory->start_time ? Carbon::parse($trackerHistory->start_time)->format('Y-m-d H:i:s') : null,
+            'end_time' => $trackerHistory->end_time ? Carbon::parse($trackerHistory->end_time)->format('Y-m-d H:i:s') : null,
+            'elapsed_time' => $elapsed,
+            'elapsed_formatted' => $this->_getTotalTime($elapsed),
+            'total_time' => $this->_getTotalTrackerTime($task->user_id, $task->id),
         ]);
     }
 
@@ -226,31 +264,18 @@ class TaskController extends Controller
         $request->validate(['status' => 'required|in:to_do,in_progress,completed,on_hold,in_review,pending,closed']);
 
         $task->status = $request->input('status');
-        $task->is_running = false;
-        $task->end_time = Carbon::now();
-        $task->elapsed_time = 0;
-        if ($task->status == 'completed') {
-            $taskHistory = TrackerHistory::where('task_id', $task->id)
-                ->where('is_running', true);
 
-            if ($taskHistory) {
-                $taskhistorydata = $taskHistory->first();
-                if ($taskhistorydata) {
-                    $startTime = Carbon::parse($taskhistorydata->start_time);
-                    $endTime = Carbon::now();
-
-                    $timeDifferenceInSeconds = $endTime->diffInSeconds($startTime);
-                    $taskHistory->update([
-                        'end_time' => $endTime,
-                        'is_running' => false,
-                        'elapsed_time' => $timeDifferenceInSeconds,
-                    ]);
-                }
-            }
-        }
+        // Any status change stops the timer, so the open tracker row has to be closed with it.
+        $timerStopped = TrackerHistory::where('task_id', $task->id)->where('is_running', true)->exists();
+        $this->closeRunningHistories($task->id);
         $task->save();
         if ($request->expectsJson()) {
-            return response()->json(['message' => 'Task status updated successfully.', 'status' => $task->status]);
+            return response()->json([
+                'message' => 'Task status updated successfully.',
+                'status' => $task->status,
+                'timer_stopped' => $timerStopped,
+                'total_time' => $this->_getTotalTrackerTime($task->user_id, $task->id),
+            ] + ($timerStopped ? $this->timeLogPayload($task) : []));
         }
         return back()->with('success', 'Task status updated successfully.');
 
@@ -307,30 +332,70 @@ class TaskController extends Controller
         $this->authorizeTaskTimer($task);
 
         $user_id = $task->user_id;
-        $taskcheck = Task::where('user_id', $user_id)->where('is_running', true)->first();
-        if ($taskcheck) {
-            return response()->json(['status' => false, 'message' => 'Stop "' . $taskcheck->title . '" timer first.']);
-        }
-        if ($task->is_running == false) {
-            if ($task->elapsed_time == 0) {
-                $task->update([
-                    'start_time' => Carbon::now(),
-                    'is_running' => true,
+
+        return DB::transaction(function () use ($task, $user_id) {
+            // Lock the assignee so two simultaneous starts cannot both pass the "nothing running" check.
+            User::withTrashed()->whereKey($user_id)->lockForUpdate()->first();
+
+            // The open tracker row is the source of truth for what is running.
+            $running = TrackerHistory::where('user_id', $user_id)
+                ->where('is_running', true)
+                ->latest('start_time')
+                ->first();
+
+            if ($running && (int) $running->task_id === (int) $task->id) {
+                // Already running on this task (second tab, stale page): just hand back the real clock.
+                return response()->json([
+                    'status' => true,
+                    'seconds' => max(0, (int) Carbon::parse($running->start_time)->diffInSeconds(Carbon::now())),
                 ]);
-            } else {
-                $task->update([
-                    'is_running' => true,
+            }
+
+            if ($running) {
+                $other = Task::find($running->task_id);
+
+                // what the task page's "Time Spent" counts (closed sessions) plus the session running right now
+                $trackedSeconds = (int) TrackerHistory::where('task_id', $running->task_id)
+                    ->where('user_id', $user_id)
+                    ->where('is_running', false)
+                    ->sum('elapsed_time')
+                    + max(0, (int) Carbon::parse($running->start_time)->diffInSeconds(Carbon::now()));
+
+                $dueDate = $other?->due_date ? Carbon::parse($other->due_date) : null;
+                $estimatedHours = $other?->estimated_hours;
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Stop the timer of that task first to start this task.',
+                    'running_task' => [
+                        'id' => $running->task_id,
+                        'title' => $other?->title ?? 'Another task',
+                        'url' => route('tasks.show', $running->task_id),
+                        'due_date' => $dueDate?->format('d F Y'),
+                        'is_overdue' => $dueDate !== null && $dueDate->copy()->endOfDay()->isPast(),
+                        'estimated' => $estimatedHours !== null
+                            ? rtrim(rtrim(number_format((float) $estimatedHours, 2), '0'), '.') . ' hrs'
+                            : null,
+                        'estimated_seconds' => $estimatedHours ? (int) round($estimatedHours * 3600) : null,
+                        'tracked_seconds' => $trackedSeconds,
+                    ],
                 ]);
             }
 
             $taskHistory = new TrackerHistory();
-            $taskHistory->task_id = $taskid;
+            $taskHistory->task_id = $task->id;
             $taskHistory->user_id = $user_id;
             $taskHistory->start_time = Carbon::now();
             $taskHistory->is_running = true;
             $taskHistory->save();
-            return response()->json(['status' => true]);
-        }
+
+            $statusChanged = $this->markInProgress($task);
+
+            return response()->json(['status' => true, 'seconds' => 0] + ($statusChanged ? [
+                'task_status' => 'in_progress',
+                'task_status_label' => config('site.tasks.status.in_progress'),
+            ] : []));
+        });
     }
 
     public function stopTimer($taskid)
@@ -339,30 +404,12 @@ class TaskController extends Controller
         $this->authorizeTaskTimer($task);
 
         $user_id = $task->user_id;
-        $taskHistory = TrackerHistory::where('user_id', $user_id)->where('task_id', $taskid)
-            ->where('is_running', true);
-        $taskhistorydata = $taskHistory->first();
 
-        // Nothing running (already stopped, or the start never reached the server): just make sure the task is marked stopped.
-        if ($taskhistorydata) {
-            $startTime = Carbon::parse($taskhistorydata->start_time);
-            $endTime = Carbon::now();
-
-            $timeDifferenceInSeconds = $endTime->diffInSeconds($startTime);
-            $taskHistory->update([
-                'end_time' => Carbon::now(),
-                'is_running' => false,
-                'elapsed_time' => $timeDifferenceInSeconds,
-            ]);
-        }
-        $task->update([
-            'end_time' => Carbon::now(),
-            'elapsed_time' => 0,
-            'is_running' => false,
-        ]);
+        // Nothing open (already stopped, or the start never reached the server) is fine: there is simply nothing to close.
+        $this->closeRunningHistories($task->id);
 
         $totalTime = $this->_getTotalTrackerTime($user_id, $taskid);
-        return response()->json(['total_time' => $totalTime]);
+        return response()->json(['total_time' => $totalTime] + $this->timeLogPayload($task));
     }
     public function saveTime(Request $request, $taskid)
     {
@@ -372,18 +419,21 @@ class TaskController extends Controller
         $taskHistory = TrackerHistory::query()
             ->where('task_id', $taskid)
             ->where('is_running', true)
+            ->latest('start_time')
             ->first();
-        $startTime = Carbon::parse($taskHistory->start_time);
-        $endTime = Carbon::now();
 
-        $timeDifferenceInSeconds = $endTime->diffInSeconds($startTime);
+        // Stopped from somewhere else (another tab, a status change): tell the page instead of failing.
+        if (!$taskHistory) {
+            return response()->json(['running' => false, 'elapsed_time' => 0]);
+        }
+
+        $timeDifferenceInSeconds = max(0, (int) Carbon::parse($taskHistory->start_time)->diffInSeconds(Carbon::now()));
+        // Keeps the open row current, so little is lost if the timer is never stopped.
         $taskHistory->update([
             'elapsed_time' => $timeDifferenceInSeconds,
         ]);
-        $task->update([
-            'elapsed_time' => $timeDifferenceInSeconds,
-        ]);
         return response()->json([
+            'running' => true,
             'message' => 'Time saved successfully',
             'elapsed_time' => $timeDifferenceInSeconds
         ]);
@@ -395,8 +445,8 @@ class TaskController extends Controller
         $this->authorizeTaskTimer($task);
 
         $request->validate([
-            'start' => 'required',
-            'end' => 'required',
+            'start' => 'required|date',
+            'end' => 'required|date|after:start',
         ]);
         $user_id = auth()->id();
         $startTime = Carbon::parse($request->start);
@@ -418,33 +468,13 @@ class TaskController extends Controller
             'task_ids.*' => 'exists:tasks,id',
         ]);
         $this->authorize('tasks-bulk-complete');
-        $task = Task::whereIn('id', $validated['task_ids'])
-            ->update([
-                'status' => 'completed',
-                'end_time' => Carbon::now(),
-                'is_running' => false,
-                'elapsed_time' => 0
-            ]);
         $task_ids = is_array($validated['task_ids']) ? $validated['task_ids'] : [$validated['task_ids']];
 
-        // Fetch the records that are currently running
-        $taskHistories = TrackerHistory::whereIn('task_id', $task_ids)
-            ->where('is_running', true)
-            ->get();
+        Task::whereIn('id', $task_ids)->update(['status' => 'completed']);
 
-        // Loop through each task history and calculate the elapsed time
-        foreach ($taskHistories as $taskHistory) {
-            // Calculate elapsed time in seconds
-            $startTime = Carbon::parse($taskHistory->start_time);
-            $endTime = Carbon::now();
-            $elapsedTimeInSeconds = $endTime->diffInSeconds($startTime);
-
-            // Update the individual task history with calculated values
-            $taskHistory->update([
-                'end_time' => $endTime,
-                'is_running' => false,
-                'elapsed_time' => $elapsedTimeInSeconds,
-            ]);
+        // Completing a task stops any timer still running on it
+        foreach ($task_ids as $task_id) {
+            $this->closeRunningHistories((int) $task_id);
         }
         return response()->json(['message' => 'Tasks status updated successfully!']);
     }
@@ -462,6 +492,74 @@ class TaskController extends Controller
         $this->authorize('tasks-delete', $task);
         $task->delete();
         return redirect()->route('tasks.index')->with('success', 'Task deleted successfully.');
+    }
+
+    /**
+     * Starting work on a task moves the task, and the story it belongs to, to In Progress.
+     * A closed task is left alone. Returns whether the task's own status changed.
+     */
+    private function markInProgress(Task $task): bool
+    {
+        if ($task->status === 'closed') {
+            return false;
+        }
+
+        if ($task->story_id) {
+            Story::whereKey($task->story_id)
+                ->where(fn ($query) => $query->whereNull('status')->orWhere('status', '!=', 'in_progress'))
+                ->update(['status' => 'in_progress']);
+        }
+
+        if ($task->status === 'in_progress') {
+            return false;
+        }
+
+        $task->update(['status' => 'in_progress']);
+
+        return true;
+    }
+
+    /**
+     * The finished sessions listed in the task's Time Log tab.
+     */
+    private function timeLogHistories(Task $task)
+    {
+        return TrackerHistory::where('user_id', $task->user_id)
+            ->where('task_id', $task->id)
+            ->where('is_running', false)
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * The Time Log rows as HTML, so the page can refresh the tab after a timer stops without a reload.
+     */
+    private function timeLogPayload(Task $task): array
+    {
+        $taskHistories = $this->timeLogHistories($task);
+
+        return [
+            'time_log_html' => view('tasks.partials.time-log-rows', [
+                'taskHistories' => $taskHistories,
+                'canEditTime' => Auth::user()->can('tasks-time-update'),
+            ])->render(),
+            'time_log_count' => $taskHistories->count(),
+        ];
+    }
+
+    /**
+     * Close every open tracker row of a task, each measured from its own start time.
+     */
+    private function closeRunningHistories(int $taskId): void
+    {
+        $now = Carbon::now();
+
+        TrackerHistory::where('task_id', $taskId)->where('is_running', true)->get()
+            ->each(fn (TrackerHistory $history) => $history->update([
+                'end_time' => $now,
+                'is_running' => false,
+                'elapsed_time' => max(0, (int) Carbon::parse($history->start_time)->diffInSeconds($now)),
+            ]));
     }
 
     /**

@@ -1005,3 +1005,19 @@
 .pm-tabs a.pm-tab-active.active { border-color: #e07b12; }
 .pm-tabs a.pm-tab-completed.active { border-color: #168657; }
 .pm-tabs a.pm-tab-on_hold.active { border-color: #d64555; }
+
+/* small green dot before the title of a task whose timer is running */
+.pm-running-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 8px;
+    border-radius: 50%;
+    background: #168657;
+    vertical-align: middle;
+    box-shadow: 0 0 0 3px rgba(22, 134, 87, 0.18);
+    animation: pmRunningPulse 1.4s ease-in-out infinite;
+}
+@keyframes pmRunningPulse {
+    50% { opacity: 0.35; }
+}

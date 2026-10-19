@@ -108,7 +108,6 @@ Route::middleware(['auth'])->group(function () {
     /* Tasks */
     Route::post('tasks/export', [TaskController::class, 'export'])->name('tasks.export');
     Route::post('tasks/bulk-complete', [TaskController::class, 'markComplete'])->name('tasks.bulk-complete');
-    Route::match(['post', 'put'], 'tasks/time-entries/{trackerHistory}', [TaskController::class, 'updateTime'])->name('tasks.time-entries.update');
 
     Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index');
     Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
@@ -122,6 +121,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('tasks/{task}/timer/start', [TaskController::class, 'startTimer'])->name('tasks.timer.start');
     Route::post('tasks/{task}/timer/stop', [TaskController::class, 'stopTimer'])->name('tasks.timer.stop');
     Route::post('tasks/{task}/timer/save', [TaskController::class, 'saveTime'])->name('tasks.timer.save');
+    Route::match(['post', 'put'], 'tasks/{task}/time-entries/{trackerHistory}', [TaskController::class, 'updateTime'])->name('tasks.time-entries.update');
 
     Route::get('tasks/{task}/files/{file}/download', [FileController::class, 'download'])->name('tasks.files.download');
     Route::resource('tasks.files', FileController::class);

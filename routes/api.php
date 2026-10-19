@@ -154,19 +154,15 @@ Route::get('add-task', function(){
                 'status' => 'in_review',
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
-                'start_time' => $createdAt,
-                'end_time' => $createdAt->copy()->addHours($taskDuration*60),
-                'elapsed_time' => $taskDuration*60*60,
-                'is_running' => false,
             ]);
 
             \App\Models\TrackerHistory::create([
                 'user_id' => $taskModel->user_id,
                 'task_id' => $taskModel->id,
-                'start_time' => $taskModel->start_time,
-                'end_time' => $taskModel->end_time,
-                'elapsed_time' => $taskModel->elapsed_time,
-                'is_running' => $taskModel->is_running,
+                'start_time' => $createdAt,
+                'end_time' => $createdAt->copy()->addHours($taskDuration*60),
+                'elapsed_time' => $taskDuration*60*60,
+                'is_running' => false,
                 'created_at' => $taskModel->created_at,
                 'updated_at' => $taskModel->updated_at,
             ]);

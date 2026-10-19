@@ -221,6 +221,14 @@ class ProjectModuleController extends Controller
                         ->selectRaw('COALESCE(SUM(tracker_histories.elapsed_time), 0)')
                         ->whereColumn('tasks.story_id', 'stories.id');
                 }, 'tracked_seconds_total')
+                // tasks of the story with a timer running right now (an open tracker row)
+                ->selectSub(function ($query) {
+                    $query->from('tracker_histories')
+                        ->join('tasks', 'tracker_histories.task_id', '=', 'tasks.id')
+                        ->selectRaw('COUNT(DISTINCT tracker_histories.task_id)')
+                        ->where('tracker_histories.is_running', true)
+                        ->whereColumn('tasks.story_id', 'stories.id');
+                }, 'running_tasks_count')
                 ->latest()
                 ->paginate(12)
                 ->withQueryString();

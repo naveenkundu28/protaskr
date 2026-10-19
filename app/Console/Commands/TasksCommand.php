@@ -42,40 +42,9 @@ class TasksCommand extends Command
             ['project', $task->project->name],
             ['title', $task->title],
             ['status', $task->status],
-            ['start_time', $task->start_time],
-            ['end_time', $task->end_time],
-            ['elapsed_time', $task->elapsed_time],
         ];
 
         table(['Key', 'Value'], $taskDetails);
-
-
-        $editTask = confirm(
-            label: 'Do you want to edit?',
-            default: false,
-        );
-
-        if ($editTask) {
-            $responses = form()
-                ->text(label: 'Start Time?', name: 'start_time', default: $task->start_time, required: true)
-                ->text(label: 'End Time?', name: 'end_time', default: $task->end_time, required: true)
-                ->text(label: 'Elapsed Time?', name: 'elapsed_time', default: $task->elapsed_time, required: true)
-                ->submit();
-
-            $task->update($responses);
-
-
-            $taskDetails = [
-                ['project', $task->project->name],
-                ['title', $task->title],
-                ['status', $task->status],
-                ['start_time', $task->start_time],
-                ['end_time', $task->end_time],
-                ['elapsed_time', $task->elapsed_time],
-            ];
-
-            table(['Key', 'Value'], $taskDetails);
-        }
 
         $histories = TrackerHistory::select('id', 'start_time', 'end_time', 'elapsed_time', 'is_running')->where('task_id', $taskId)->get();
 

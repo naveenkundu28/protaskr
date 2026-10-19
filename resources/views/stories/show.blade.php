@@ -433,6 +433,9 @@
                             </td>
 
                             <td>
+                                @if (in_array($task->id, $runningTaskIds))
+                                    <span class="pm-running-dot" title="Timer running" aria-label="Timer running"></span>
+                                @endif
                                 <a
                                     class="pm-link fw-semibold"
                                     href="{{ route('tasks.show', $task) }}"

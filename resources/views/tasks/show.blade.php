@@ -885,6 +885,133 @@
                 padding: 20px;
             }
         }
+
+        /* "Timer already running" popup */
+        .pm-modal.timer-conflict .modal-dialog {
+            max-width: 520px;
+        }
+
+        .timer-conflict .modal-body {
+            padding: 22px 28px 8px;
+        }
+
+        .timer-conflict .timer-conflict-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 4px 11px;
+            border-radius: 999px;
+            background: #e8f6ef;
+            color: #168657;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .timer-conflict .timer-conflict-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #168657;
+            animation: timerConflictPulse 1.4s ease-in-out infinite;
+        }
+
+        @keyframes timerConflictPulse {
+            50% { opacity: 0.3; }
+        }
+
+        .timer-conflict .timer-conflict-title {
+            margin: 10px 0 0;
+            color: var(--pm-ink);
+            font-size: 1.05rem;
+            font-weight: 750;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .timer-conflict .timer-conflict-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .timer-conflict .timer-conflict-stat {
+            padding: 12px 14px;
+            background: var(--pm-bg);
+            border: 1px solid var(--pm-line);
+            border-radius: 12px;
+            min-width: 0;
+        }
+
+        .timer-conflict .timer-conflict-label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--pm-muted);
+            font-size: 11.5px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .timer-conflict .timer-conflict-label i {
+            margin-right: 3px;
+            color: var(--pm-blue);
+        }
+
+        .timer-conflict .timer-conflict-stat strong {
+            display: block;
+            color: var(--pm-ink);
+            font-size: 14px;
+            font-weight: 750;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .timer-conflict .timer-conflict-stat strong.is-overdue {
+            color: #d64555;
+        }
+
+        .timer-conflict .timer-conflict-progress {
+            height: 6px;
+            margin-top: 12px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: var(--pm-line);
+        }
+
+        .timer-conflict .timer-conflict-progress span {
+            display: block;
+            height: 100%;
+            border-radius: 999px;
+            background: var(--pm-blue);
+            transition: width 0.4s ease;
+        }
+
+        .timer-conflict .timer-conflict-progress.is-over span {
+            background: #d64555;
+        }
+
+        .timer-conflict .timer-conflict-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin: 18px 0 16px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #fff6e8;
+            color: #8a5a12;
+            font-size: 13.5px;
+            line-height: 1.45;
+        }
+
+        .timer-conflict .timer-conflict-note i {
+            margin-top: 1px;
+            color: #e07b12;
+        }
+
+        @media (max-width: 480px) {
+            .timer-conflict .timer-conflict-stats {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 @endpush
 
@@ -894,6 +1021,7 @@
         $canControlTimer = Auth::user()->hasRole(\App\Support\Roles::ADMIN) || $task->user_id === Auth::id();
         $canTrackManually = Auth::user()->can('tasks-track-manually', $task) && $canControlTimer;
         $canEditTime = Auth::user()->can('tasks-time-update');
+        $timerRunning = $runningSeconds !== null;
     @endphp
 
     <div class="container-fluid mt-80 task-detail">
@@ -930,7 +1058,7 @@
         @endif
         <div class="alert alert-warning alert-dismissible fade show" role="alert" id="jsresp" style="display: none">
             <span id="textpara"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="btn-close" aria-label="Close" onclick="document.getElementById('jsresp').style.display = 'none'"></button>
         </div>
 
         {{-- Title, status and time tracker --}}
@@ -963,7 +1091,7 @@
                                 </ul>
                             </div>
                         @else
-                            <span class="pm-badge task-status task-status-{{ $task->status }}">{{ $currentStatusLabel }}</span>
+                            <span class="pm-badge task-status task-status-{{ $task->status }}" id="taskStatusBadge">{{ $currentStatusLabel }}</span>
                         @endif
                     </h1>
                     <p>
@@ -981,10 +1109,10 @@
                 <div class="right_action_btn">
                     @if(!Auth::user()->hasRole(\App\Support\Roles::CLIENT))
                         @if ($canControlTimer)
-                            <button type="button" class="start_btn" id="start-btn" @if ($task->is_running) style="display: none" @endif>
+                            <button type="button" class="start_btn" id="start-btn" @if ($timerRunning) style="display: none" @endif>
                                 <i class="bi bi-play-circle"></i> Start Timer <span><i class="bi bi-arrow-right"></i></span>
                             </button>
-                            <button type="button" class="stop_btn" id="stop-btn" @unless ($task->is_running) style="display: none" @endunless>
+                            <button type="button" class="stop_btn" id="stop-btn" @unless ($timerRunning) style="display: none" @endunless>
                                 <i class="bi bi-stop-circle"></i> Stop Timer <span><i class="bi bi-arrow-right"></i></span>
                             </button>
                         @endif
@@ -1119,7 +1247,7 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="tab-time-log-btn" data-bs-toggle="pill" data-bs-target="#tab-time-log"
                         type="button" role="tab" aria-controls="tab-time-log" aria-selected="false">
-                        Time Log <span class="count">({{ $taskHistories->count() }})</span>
+                        Time Log <span class="count" id="timeLogCount">({{ $taskHistories->count() }})</span>
                     </button>
                 </li>
                 @endif
@@ -1154,75 +1282,17 @@
                 <div class="tab-pane fade" id="tab-time-log" role="tabpanel" aria-labelledby="tab-time-log-btn">
                     <div class="table-responsive project_table">
                         <table class="table pm-table mb-0 align-middle">
-                            <tr>
-                                <th>No</th>
-                                <th>Start time</th>
-                                <th>End Time</th>
-                                <th>Total Time</th>
-                            </tr>
-                            @forelse ($taskHistories as $taskHistory)
+                            <thead>
                                 <tr>
-                                    <td data-id="{{ $taskHistory->id }}">{{ $loop->iteration }}</td>
-                                    <td data-id="{{ $taskHistory->id }}">
-                                        <span class="start-time-text">
-                                            {{ $taskHistory->start_time }}
-                                        </span>
-                                        @if ($canEditTime)
-                                            <div class="align-items-center d-flex gap-2 mt-1 time-edit d-none">
-                                                <div>
-                                                    <input type="datetime-local"
-                                                        class="form-control form-control-sm start-time-input"
-                                                        value="{{ \Carbon\Carbon::parse($taskHistory->start_time)->format('Y-m-d\TH:i') }}">
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td data-id="{{ $taskHistory->id }}">
-                                        <span class="end-time-text">
-                                            {{ $taskHistory->end_time }}
-                                        </span>
-                                        @if ($canEditTime)
-                                            <div class="align-items-center d-flex gap-2 mt-1 time-edit d-none">
-                                                <div>
-                                                    <input type="datetime-local"
-                                                        class="form-control form-control-sm end-time-input"
-                                                        value="{{ $taskHistory->end_time ? \Carbon\Carbon::parse($taskHistory->end_time)->format('Y-m-d\TH:i') : '' }}">
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </td>
-                                    <td data-id="{{ $taskHistory->id }}">
-                                        <span class="time-text">
-                                            {{ $taskHistory->elapsed_time_formatted }}
-                                        </span>
-                                        @if ($canEditTime)
-                                            <button class="btn btn-sm btn-primary edit-time ms-2">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <div class="align-items-center d-flex gap-2 mt-1 time-edit d-none">
-                                                <div>
-                                                    <input type="text" class="form-control form-control-sm time-input"
-                                                        value="{{ $taskHistory->elapsed_time_formatted }}"
-                                                        placeholder="HH:MM:SS">
-                                                </div>
-
-                                                <div class="mt-1">
-                                                    <button class="btn btn-success btn-sm save-time">
-                                                        <i class="bi bi-check"></i>
-                                                    </button>
-                                                    <button class="btn btn-secondary btn-sm cancel-time">
-                                                        <i class="bi bi-x"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </td>
+                                    <th>No</th>
+                                    <th>Start time</th>
+                                    <th>End Time</th>
+                                    <th>Total Time</th>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-4">No time has been tracked on this task yet.</td>
-                                </tr>
-                            @endforelse
+                            </thead>
+                            <tbody id="timeLogRows">
+                                @include('tasks.partials.time-log-rows')
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -1456,25 +1526,93 @@
             </div>
         @endif
 
+        {{-- Shown when the timer is started while another task is already being tracked --}}
+        @if ($canControlTimer)
+            <div class="modal fade pm-modal timer-conflict" id="timerConflictModal" tabindex="-1" aria-labelledby="timerConflictLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div>
+                                <span class="pm-eyebrow d-block">TIME TRACKER</span>
+                                <h5 class="modal-title fw-bold" id="timerConflictLabel">Timer already running</h5>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="timer-conflict-task">
+                                <span class="timer-conflict-live"><span class="timer-conflict-dot"></span>Running now</span>
+                                <h6 class="timer-conflict-title" id="timerConflictTitle"></h6>
+                            </div>
+
+                            <div class="timer-conflict-stats">
+                                <div class="timer-conflict-stat">
+                                    <span class="timer-conflict-label"><i class="bi bi-stopwatch"></i> Tracked so far</span>
+                                    <strong id="timerConflictTracked">00:00:00</strong>
+                                </div>
+                                <div class="timer-conflict-stat">
+                                    <span class="timer-conflict-label"><i class="bi bi-hourglass-split"></i> Estimated</span>
+                                    <strong id="timerConflictEstimate">Not set</strong>
+                                </div>
+                                <div class="timer-conflict-stat">
+                                    <span class="timer-conflict-label"><i class="bi bi-calendar-event"></i> Due date</span>
+                                    <strong id="timerConflictDue">Not set</strong>
+                                </div>
+                            </div>
+
+                            <div class="timer-conflict-progress d-none" id="timerConflictProgress" title="Tracked time against the estimate">
+                                <span id="timerConflictProgressBar"></span>
+                            </div>
+
+                            <div class="timer-conflict-note">
+                                <i class="bi bi-info-circle"></i>
+                                <span>Stop the timer of that task first to start this task.</span>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            <a href="#" class="btn btn-primary pm-button theme-color px-4" id="timerConflictLink">Go to task <i class="bi bi-arrow-right ms-1"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
     </div>
 
     @push('scripts')
         <script>
             (function () {
                 var toggle = document.getElementById('taskStatusToggle');
-                if (!toggle) return;
+                var badge = document.getElementById('taskStatusBadge');
                 var label = document.getElementById('taskStatusLabel');
                 var options = document.querySelectorAll('.task-status-option');
                 var url = @json(route('tasks.status.update', $task));
                 var token = @json(csrf_token());
                 var current = @json($task->status);
 
+                // Reflect a status on screen (dropdown for editors, plain badge for everyone else)
+                function showStatus(status, text) {
+                    var el = toggle || badge;
+                    if (!el) return;
+                    el.classList.remove('task-status-' + current);
+                    el.classList.add('task-status-' + status);
+                    (label || el).textContent = text;
+                    options.forEach(function (o) { o.classList.toggle('active', o.dataset.status === status); });
+                    current = status;
+                }
+
+                // Starting the timer moves the task to In Progress on the server
+                document.addEventListener('task:status-changed', function (e) {
+                    showStatus(e.detail.status, e.detail.label);
+                });
+
+                if (!toggle) return;
+
                 options.forEach(function (option) {
                     option.addEventListener('click', function (e) {
                         e.preventDefault();
                         var status = option.dataset.status;
                         if (status === current) return;
-                        var previous = current;
                         var body = new FormData();
                         body.append('status', status);
                         toggle.classList.add('is-saving');
@@ -1485,11 +1623,13 @@
                             body: body
                         }).then(function (res) {
                             if (!res.ok) throw new Error('Request failed');
-                            toggle.classList.remove('task-status-' + previous);
-                            toggle.classList.add('task-status-' + status);
-                            label.textContent = option.dataset.label;
-                            options.forEach(function (o) { o.classList.toggle('active', o === option); });
-                            current = status;
+                            return res.json();
+                        }).then(function (data) {
+                            // a status change stops the timer on the server, so stop the clock on screen too
+                            if (data.timer_stopped) {
+                                document.dispatchEvent(new CustomEvent('task:timer-stopped', {detail: data}));
+                            }
+                            showStatus(status, option.dataset.label);
                         }).catch(function () {
                             alert('Could not update the task status. Please try again.');
                         }).finally(function () {
@@ -1819,46 +1959,48 @@
                 });
             })();
 
-            let timer;
-            let seconds = {{ (int) $task->elapsed_time }};
-            let isRunning = {{ $task->is_running ? 'true' : 'false' }};
+            let timer = null;
+            let startedAtMs = null; // browser-clock moment the current run began; the display is derived from it
+            let lastSavedAt = 0;
+            let seconds = {{ (int) ($runningSeconds ?? 0) }};
+            let isRunning = {{ $timerRunning ? 'true' : 'false' }};
 
             function formatTime(sec) {
                 let hours = Math.floor(sec / 3600);
                 let minutes = Math.floor((sec % 3600) / 60);
-                let seconds = sec % 60;
-                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                let secs = sec % 60;
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             }
 
             function updateTimeDisplay() {
                 $('#time-display').text(formatTime(seconds));
             }
 
-            function saveTime() {
-                $.ajax({
-                    url: '{{ route('tasks.timer.save', ['task' => $task->id]) }}',
-                    method: 'POST',
-                    data: {
-                        elapsed_time: seconds,
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        seconds = response.elapsed_time;
-                    },
-                    error: function(error) {
-                        console.error('Error saving time:', error);
-                    }
-                });
+            // Point the clock at a known elapsed value (from the server) and redraw it
+            function setElapsed(sec) {
+                seconds = sec;
+                startedAtMs = Date.now() - sec * 1000;
+                updateTimeDisplay();
             }
 
-            function startTicking() {
-                timer = setInterval(() => {
-                    seconds++;
-                    updateTimeDisplay();
-                    if (seconds % 10 === 0) {
-                        saveTime();
-                    }
-                }, 1000);
+            function stopTicking() {
+                clearInterval(timer);
+                timer = null;
+            }
+
+            function showTimerAlert(message) {
+                $('#textpara').text(message);
+                $('#jsresp').show();
+            }
+
+            function timerErrorMessage(xhr, verb) {
+                if (xhr.status === 419) {
+                    return 'Your session has expired. Reload the page and try again.';
+                }
+                if (xhr.status === 403) {
+                    return 'You are not allowed to ' + verb + ' the timer on this task.';
+                }
+                return 'The timer could not be ' + verb + 'ed. Please try again.';
             }
 
             // Only one of the two buttons is ever visible
@@ -1867,10 +2009,78 @@
                 $('#stop-btn').toggle(running);
             }
 
+            function resetTimerUi() {
+                isRunning = false;
+                stopTicking();
+                showTimerButton(false);
+                seconds = 0;
+                updateTimeDisplay();
+            }
+
+            function saveTime() {
+                lastSavedAt = Date.now();
+                $.ajax({
+                    url: '{{ route('tasks.timer.save', ['task' => $task->id]) }}',
+                    method: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (!isRunning) {
+                            return;
+                        }
+                        if (response.running === false) {
+                            // stopped from another tab, the extension or a status change
+                            resetTimerUi();
+                            showTimerAlert('This timer was stopped from somewhere else. Reload the page to see the latest time.');
+                            return;
+                        }
+                        // the browser clock drives the display; only correct it when it has drifted
+                        if (Math.abs(response.elapsed_time - seconds) > 2) {
+                            setElapsed(response.elapsed_time);
+                        }
+                    },
+                    error: function(error) {
+                        console.error('Error saving time:', error);
+                    }
+                });
+            }
+
+            function startTicking() {
+                stopTicking();
+                lastSavedAt = Date.now();
+                timer = setInterval(() => {
+                    seconds = Math.max(0, Math.floor((Date.now() - startedAtMs) / 1000));
+                    updateTimeDisplay();
+                    if (Date.now() - lastSavedAt >= 10000) {
+                        saveTime();
+                    }
+                }, 1000);
+            }
+
             if (isRunning) {
                 showTimerButton(true);
+                setElapsed(seconds);
                 startTicking();
             }
+
+            // Show the finished session in the Time Log tab without a reload
+            function refreshTimeLog(data) {
+                if (typeof data.time_log_html === 'undefined') {
+                    return;
+                }
+                $('#timeLogRows').html(data.time_log_html);
+                $('#timeLogCount').text('(' + data.time_log_count + ')');
+            }
+
+            // A status change stops the timer on the server; mirror that on screen
+            document.addEventListener('task:timer-stopped', function(event) {
+                resetTimerUi();
+                if (event.detail && event.detail.total_time) {
+                    $('#tracked_hours').text(event.detail.total_time);
+                }
+                refreshTimeLog(event.detail || {});
+            });
 
             // Disable the button and show a "Please wait..." label; returns a function that restores it
             function setButtonLoading(button) {
@@ -1884,6 +2094,43 @@
                 return function() {
                     button.prop('disabled', false).html(originalHtml);
                 };
+            }
+
+            // Another task of this user is already being tracked: say which one and link to it
+            let conflictClock = null;
+
+            // Tracked time keeps counting in the popup, like the running task's own page would
+            function startConflictClock(runningTask) {
+                clearInterval(conflictClock);
+                const baseMs = Date.now() - (runningTask.tracked_seconds || 0) * 1000;
+
+                const draw = function() {
+                    const tracked = Math.max(0, Math.floor((Date.now() - baseMs) / 1000));
+                    $('#timerConflictTracked').text(formatTime(tracked));
+
+                    if (runningTask.estimated_seconds) {
+                        const ratio = tracked / runningTask.estimated_seconds;
+                        $('#timerConflictProgress').toggleClass('is-over', ratio > 1);
+                        $('#timerConflictProgressBar').css('width', Math.min(100, ratio * 100) + '%');
+                    }
+                };
+
+                draw();
+                conflictClock = setInterval(draw, 1000);
+            }
+
+            $('#timerConflictModal').on('hidden.bs.modal', function() {
+                clearInterval(conflictClock);
+            });
+
+            function showTimerConflict(runningTask) {
+                $('#timerConflictTitle').text(runningTask.title);
+                $('#timerConflictLink').attr('href', runningTask.url);
+                $('#timerConflictEstimate').text(runningTask.estimated || 'Not set');
+                $('#timerConflictDue').text(runningTask.due_date || 'Not set').toggleClass('is-overdue', !!runningTask.is_overdue);
+                $('#timerConflictProgress').toggleClass('d-none', !runningTask.estimated_seconds);
+                startConflictClock(runningTask);
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('timerConflictModal')).show();
             }
 
             $('#start-btn').on('click', function() {
@@ -1900,18 +2147,28 @@
                         _token: '{{ csrf_token() }}'
                     },
                     success: function(response) {
-                        if (response.status == false) {
+                        if (response.status === false) {
                             isRunning = false;
-                            $('#textpara').text(response.message);
-                            $('#jsresp').show();
+                            if (response.running_task) {
+                                showTimerConflict(response.running_task);
+                            } else {
+                                showTimerAlert(response.message);
+                            }
                         } else {
                             isRunning = true;
+                            setElapsed(response.seconds || 0);
                             startTicking();
                             showTimerButton(true);
+                            if (response.task_status) {
+                                document.dispatchEvent(new CustomEvent('task:status-changed', {
+                                    detail: {status: response.task_status, label: response.task_status_label}
+                                }));
+                            }
                         }
                     },
-                    error: function(error) {
-                        console.error('Error starting timer:', error);
+                    error: function(xhr) {
+                        console.error('Error starting timer:', xhr);
+                        showTimerAlert(timerErrorMessage(xhr, 'start'));
                     },
                     complete: restoreButton
                 });
@@ -1932,15 +2189,12 @@
                     },
                     success: function(response) {
                         $('#tracked_hours').text(response.total_time);
-                        showTimerButton(false);
-
-                        isRunning = false;
-                        clearInterval(timer);
-                        seconds = 0;
-                        updateTimeDisplay();
+                        refreshTimeLog(response);
+                        resetTimerUi();
                     },
-                    error: function(error) {
-                        console.error('Error stoping timer:', error);
+                    error: function(xhr) {
+                        console.error('Error stopping timer:', xhr);
+                        showTimerAlert(timerErrorMessage(xhr, 'stop'));
                     },
                     complete: restoreButton
                 });
@@ -1949,23 +2203,15 @@
             updateTimeDisplay();
 
             // ------------------inline edit of time log entries
-            // Convert HH:MM:SS → seconds
-            function timeToSeconds(time) {
-                let parts = time.split(':').map(p => parseInt(p) || 0);
+            // "HH:MM:SS" (or "HH:MM") → seconds, or null when the text is not a duration
+            function parseDuration(text) {
+                const match = /^\s*(\d+):([0-5]?\d)(?::([0-5]?\d))?\s*$/.exec(text || '');
 
-                let h = 0,
-                    m = 0,
-                    s = 0;
-
-                if (parts.length === 3) {
-                    [h, m, s] = parts;
-                } else if (parts.length === 2) {
-                    [h, m] = parts; // treat as HH:MM
-                } else if (parts.length === 1) {
-                    h = parts[0];
+                if (!match) {
+                    return null;
                 }
 
-                return (h * 3600) + (m * 60) + s;
+                return (Number(match[1]) * 3600) + (Number(match[2]) * 60) + Number(match[3] || 0);
             }
 
             // Convert seconds → HH:MM:SS
@@ -1977,10 +2223,52 @@
                 return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
             }
 
+            // datetime-local value → milliseconds, or null when empty or incomplete
+            function inputToMs(value) {
+                const ms = value ? new Date(value).getTime() : NaN;
+                return isNaN(ms) ? null : ms;
+            }
+
+            // Set an input and remember the value, so "changed" and Cancel compare against what is saved
+            function setSavedValue(input, value) {
+                input.val(value);
+                input[0].defaultValue = value;
+            }
+
+            function showTimeEditError(row, message) {
+                row.find('.time-edit-error').text(message).removeClass('d-none');
+            }
+
+            function timeEditErrorMessage(xhr) {
+                if (xhr.status === 422 && xhr.responseJSON) {
+                    const first = Object.values(xhr.responseJSON.errors || {})[0];
+                    return (first && first[0]) || xhr.responseJSON.message || 'The time could not be saved.';
+                }
+                if (xhr.status === 419) {
+                    return 'Your session has expired. Reload the page and try again.';
+                }
+                if (xhr.status === 403) {
+                    return 'You are not allowed to edit time entries.';
+                }
+                if (xhr.status === 404) {
+                    return 'This entry is no longer part of this task. Reload the page.';
+                }
+                return 'The time could not be saved. Please try again.';
+            }
+
+            function closeTimeEdit(row) {
+                row.data('touched', null);
+                row.find('.time-edit-error').addClass('d-none').text('');
+                row.find('.time-edit').addClass('d-none');
+                row.find('.time-text, .start-time-text, .end-time-text, .edit-time').show();
+            }
+
             // Edit Click
             $(document).on('click', '.edit-time', function() {
                 let row = $(this).closest('tr');
 
+                row.data('touched', null);
+                row.find('.time-edit-error').addClass('d-none').text('');
                 row.find('.time-text, .start-time-text, .end-time-text, .edit-time').hide();
                 row.find('.time-edit').removeClass('d-none');
             });
@@ -1989,48 +2277,111 @@
             $(document).on('click', '.cancel-time', function() {
                 let row = $(this).closest('tr');
 
-                row.find('.time-edit').addClass('d-none');
-                row.find('.time-text, .start-time-text, .end-time-text, .edit-time').show();
+                row.find('.time-edit input').each(function() {
+                    this.value = this.defaultValue;
+                });
+                closeTimeEdit(row);
+            });
+
+            // Changing the start or end shows the duration that follows from them
+            $(document).on('input change', '.start-time-input, .end-time-input', function() {
+                let row = $(this).closest('tr');
+                row.data('touched', 'times');
+
+                const start = inputToMs(row.find('.start-time-input').val());
+                const end = inputToMs(row.find('.end-time-input').val());
+
+                if (start !== null && end !== null && end >= start) {
+                    row.find('.time-input').val(secondsToTime(Math.round((end - start) / 1000)));
+                }
+            });
+
+            // Typing a duration makes it the value that counts
+            $(document).on('input', '.time-input', function() {
+                $(this).closest('tr').data('touched', 'duration');
             });
 
             // Save Click
             $(document).on('click', '.save-time', function() {
-                let td = $(this).closest('td');
-                let row = td.closest('tr');
-                let id = td.data('id');
-                let inputVal = td.find('.time-input').val();
-                let startVal = row.find('.start-time-input').val();
-                let endVal = row.find('.end-time-input').val();
+                const button = $(this);
+                const td = button.closest('td');
+                const row = td.closest('tr');
+                const id = td.data('id');
+                const startInput = row.find('.start-time-input');
+                const endInput = row.find('.end-time-input');
+                const durationInput = row.find('.time-input');
 
-                let tracker_seconds = timeToSeconds(inputVal);
+                row.find('.time-edit-error').addClass('d-none').text('');
 
-                let url = "{{ route('tasks.time-entries.update', ':id') }}";
+                const unchanged = row.find('.time-edit input').toArray().every(input => input.value === input.defaultValue);
+                if (unchanged) {
+                    closeTimeEdit(row);
+                    return;
+                }
+
+                const payload = {
+                    _token: '{{ csrf_token() }}',
+                    _method: 'PUT'
+                };
+
+                if (row.data('touched') === 'duration') {
+                    const seconds = parseDuration(durationInput.val());
+                    if (seconds === null) {
+                        showTimeEditError(row, 'Enter the duration as HH:MM:SS, for example 01:30:00.');
+                        return;
+                    }
+                    // the end follows from the start plus the duration
+                    payload.elapsed_time = seconds;
+                    if (startInput.val()) {
+                        payload.start_time = startInput.val();
+                    }
+                } else {
+                    const start = inputToMs(startInput.val());
+                    const end = inputToMs(endInput.val());
+                    if (start === null || end === null) {
+                        showTimeEditError(row, 'Enter both a start and an end time.');
+                        return;
+                    }
+                    if (end < start) {
+                        showTimeEditError(row, 'The end time cannot be before the start time.');
+                        return;
+                    }
+                    payload.start_time = startInput.val();
+                    payload.end_time = endInput.val();
+                }
+
+                let url = "{{ route('tasks.time-entries.update', ['task' => $task->id, 'trackerHistory' => ':id']) }}";
                 url = url.replace(':id', id);
+
+                button.prop('disabled', true);
 
                 $.ajax({
                     url: url,
                     method: 'POST',
-                    data: {
-                        elapsed_time: tracker_seconds,
-                        start_time: startVal,
-                        end_time: endVal,
-                        _token: '{{ csrf_token() }}',
-                        _method: 'PUT'
-                    },
+                    data: payload,
                     success: function(res) {
-                        if (res.success) {
-                            td.find('.time-text').text(secondsToTime(tracker_seconds));
-                            row.find('.start-time-text').text(startVal ? startVal.replace('T', ' ') : '');
-                            row.find('.end-time-text').text(endVal ? endVal.replace('T', ' ') : '');
+                        // show exactly what the server stored
+                        row.find('.start-time-text').text(res.start_time || '');
+                        row.find('.end-time-text').text(res.end_time || '');
+                        row.find('.time-text').text(res.elapsed_formatted);
 
-                            row.find('.time-edit').addClass('d-none');
-                            row.find('.time-text, .start-time-text, .end-time-text, .edit-time').show();
-                        }
+                        setSavedValue(startInput, res.start_time ? res.start_time.replace(' ', 'T') : '');
+                        setSavedValue(endInput, res.end_time ? res.end_time.replace(' ', 'T') : '');
+                        setSavedValue(durationInput, res.elapsed_formatted);
+
+                        $('#tracked_hours').text(res.total_time);
+                        closeTimeEdit(row);
                     },
-                    error: function(error) {
-                        console.log('Something went wrong', error);
+                    error: function(xhr) {
+                        console.error('Error saving time entry:', xhr);
+                        showTimeEditError(row, timeEditErrorMessage(xhr));
+                    },
+                    complete: function() {
+                        button.prop('disabled', false);
                     }
                 });
+            });
+
             $('#editTaskModal').on('shown.bs.modal', function() {
                 if (typeof window.initSummernoteEditors === 'function') {
                     window.initSummernoteEditors();

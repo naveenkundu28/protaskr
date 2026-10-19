@@ -26,6 +26,13 @@ class StoryController extends Controller {
             ->paginate(15)
             ->withQueryString();
 
+        // tasks on this page that have a timer running right now (an open tracker row)
+        $runningTaskIds = DB::table('tracker_histories')
+            ->whereIn('task_id', $tasks->pluck('id'))
+            ->where('is_running', true)
+            ->pluck('task_id')
+            ->all();
+
         $trackedSeconds = (int) DB::table('tracker_histories')
             ->join('tasks', 'tracker_histories.task_id', '=', 'tasks.id')
             ->where('tasks.story_id', $story->id)
@@ -44,7 +51,7 @@ class StoryController extends Controller {
             'team_members' => $story->project->members->unique('id')->values(),
         ];
 
-        return view('stories.show', compact('story', 'tasks', 'status', 'tab', 'overview'));
+        return view('stories.show', compact('story', 'tasks', 'status', 'tab', 'overview', 'runningTaskIds'));
     }
     public function storeTask(Request $request, Story $story) { $this->authorize('tasks-create');$story->load('project');$data=$request->validate(['title'=>'required|max:255','description'=>'nullable|string','user_id'=>'required|exists:users,id','due_date'=>'nullable|date','priority'=>'required|in:low,medium,high','estimated_hours'=>'nullable|numeric|min:0|max:4']);$data+=['client_id'=>$story->project->client_id,'project_id'=>$story->project_id,'story_id'=>$story->id,'status'=>'to_do','created_by'=>Auth::id()];Task::create($data);return back()->with('success','Task created successfully.'); }
 }

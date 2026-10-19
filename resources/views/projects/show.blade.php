@@ -3,7 +3,7 @@
 @section('title', $project->name)
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('assets/project-module.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/project-module.css') }}?v={{ filemtime(public_path('assets/project-module.css')) }}">
 @endpush
 
 @section('content')
@@ -449,6 +449,10 @@
                                 <tr>
                                     <td>{{ $stories->firstItem() + $loop->index }}</td>
                                     <td>
+                                        @if ((int) $story->running_tasks_count > 0)
+                                            @php $runningLabel = (int) $story->running_tasks_count === 1 ? 'A task is running' : (int) $story->running_tasks_count . ' tasks are running'; @endphp
+                                            <span class="pm-running-dot" title="{{ $runningLabel }}" aria-label="{{ $runningLabel }}"></span>
+                                        @endif
                                         @can('tasks-show')
                                         <a
                                             class="pm-link fw-semibold"

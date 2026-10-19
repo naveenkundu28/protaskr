@@ -11,7 +11,6 @@ class Task extends Model
     use HasFactory;
 
     protected $guarded = [];
-    protected $dates = ['start_time','end_time'];
 
     public function user()
     {
