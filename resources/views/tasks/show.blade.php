@@ -1341,71 +1341,78 @@
 
         {{-- Edit task --}}
         @if ($canUpdate)
-            <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel"
+            <div class="modal fade pm-modal" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel"
                 aria-hidden="true">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                     <div class="modal-content">
                         <form action="{{ route('tasks.update', $task->id) }}" method="POST">
                             @csrf
                             @method('PUT')
                             <div class="modal-header">
-                                <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
+                                <div>
+                                    @if ($task->story || $task->deliveryProject)
+                                        <span class="pm-eyebrow d-block">{{ $task->story?->title ?? $task->deliveryProject?->name }}</span>
+                                    @endif
+                                    <h5 class="modal-title fw-bold" id="editTaskModalLabel">Edit Task</h5>
+                                </div>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"
                                     aria-label="Close"></button>
                             </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label for="title" class="form-label">Title</label>
-                                    <input type="text" name="title" id="title" class="form-control"
-                                        value="{{ $task->title }}" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="description" class="form-label">Description</label>
-                                    <textarea name="description" id="summernote" class="form-control">{{ $task->description }}</textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="due_date" class="form-label">Due Date</label>
-                                    <input type="date" name="due_date" id="due_date" class="form-control"
-                                        value="{{ $task->due_date }}">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="priority" class="form-label">Priority</label>
-                                    <select name="priority" id="priority" class="form-select" required>
-                                        <option value="low" {{ $task->priority == 'low' ? 'selected' : '' }}>Low
-                                        </option>
-                                        <option value="medium" {{ $task->priority == 'medium' ? 'selected' : '' }}>Medium
-                                        </option>
-                                        <option value="high" {{ $task->priority == 'high' ? 'selected' : '' }}>High
-                                        </option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="status" class="form-label">Status</label>
-                                    <select name="status" id="status" class="form-select" required>
-                                        @foreach (config('site.tasks.status') as $key => $value)
-                                            @unless (in_array($key, $hiddenStatuses))
-                                                <option value="{{ $key }}" @selected($task->status == $key)>
-                                                    {{ $value }}
+                            <div class="modal-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="title" class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+                                        <input type="text" name="title" id="title" class="form-control"
+                                            value="{{ $task->title }}" placeholder="Enter task title" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="user_id" class="form-label fw-semibold">Assign To <span class="text-danger">*</span></label>
+                                        <select name="user_id" id="user_id" class="form-select" required>
+                                            <option value="">Select a user</option>
+                                            @foreach ($task->deliveryProject?->members ?? [] as $user)
+                                                <option value="{{ $user->id }}" @selected($user->id == $task->user_id)>
+                                                    {{ $user->name }}
                                                 </option>
-                                            @endunless
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="user_id" class="form-label">Assign To</label>
-                                    <select name="user_id" id="user_id" class="form-select" required>
-                                        <option value="">Select a user</option>
-                                        @foreach ($task->deliveryProject?->members ?? [] as $user)
-                                            <option value="{{ $user->id }}" @selected($user->id == $task->user_id)>
-                                                {{ $user->name }}
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="status" class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+                                        <select name="status" id="status" class="form-select" required>
+                                            @foreach (config('site.tasks.status') as $key => $value)
+                                                @unless (in_array($key, $hiddenStatuses))
+                                                    <option value="{{ $key }}" @selected($task->status == $key)>
+                                                        {{ $value }}
+                                                    </option>
+                                                @endunless
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="priority" class="form-label fw-semibold">Priority <span class="text-danger">*</span></label>
+                                        <select name="priority" id="priority" class="form-select" required>
+                                            <option value="low" {{ $task->priority == 'low' ? 'selected' : '' }}>Low
                                             </option>
-                                        @endforeach
-                                    </select>
+                                            <option value="medium" {{ $task->priority == 'medium' ? 'selected' : '' }}>Medium
+                                            </option>
+                                            <option value="high" {{ $task->priority == 'high' ? 'selected' : '' }}>High
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="due_date" class="form-label fw-semibold">Due Date</label>
+                                        <input type="date" name="due_date" id="due_date" class="form-control"
+                                            value="{{ $task->due_date }}">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="description" class="form-label fw-semibold">Description</label>
+                                        <textarea name="description" id="summernote" class="form-control" placeholder="Task description (optional)">{{ $task->description }}</textarea>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary">Update Task</button>
+                            <div class="modal-footer bg-light px-4 py-3">
+                                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary pm-button theme-color px-4">Update Task</button>
                             </div>
                         </form>
                     </div>
@@ -2024,6 +2031,10 @@
                         console.log('Something went wrong', error);
                     }
                 });
+            $('#editTaskModal').on('shown.bs.modal', function() {
+                if (typeof window.initSummernoteEditors === 'function') {
+                    window.initSummernoteEditors();
+                }
             });
         </script>
     @endpush
