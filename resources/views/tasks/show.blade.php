@@ -666,9 +666,9 @@
 
         .task-detail .card_tracker .card {
             justify-content: center;
-            gap: 12px;
-            min-height: 130px;
-            padding: 20px 22px;
+            gap: 8px;
+            min-height: 96px;
+            padding: 14px 20px;
             border-color: var(--task-detail-line);
             border-radius: 12px;
             box-shadow: 0 4px 14px rgba(34, 73, 125, .035);
@@ -677,21 +677,21 @@
         .task-detail .card_tracker .card-label {
             margin: 0;
             color: var(--task-detail-muted);
-            font-size: 15px;
+            font-size: 14px;
         }
 
         .task-detail .card_tracker .card-value {
-            gap: 12px;
+            gap: 10px;
             color: #14213d;
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 650;
         }
 
         .task-detail .card_tracker .avatar {
-            width: 42px;
-            height: 42px;
-            flex: 0 0 42px;
-            font-size: 16px;
+            width: 36px;
+            height: 36px;
+            flex: 0 0 36px;
+            font-size: 15px;
         }
 
         .task-detail .card_tracker .card-value > span {
