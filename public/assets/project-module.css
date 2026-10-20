@@ -971,7 +971,7 @@
 }
 
 .story-list-table .status_table_points {
-    width: 10%;
+    width: 6%;
     white-space: nowrap;
 }
 
@@ -987,9 +987,12 @@
     width: 9%;
 }
 
-.story-list-table .status_table_status,
+.story-list-table .status_table_status {
+    width: 13%;
+}
+
 .story-list-table .status_table_priority {
-    width: 9%;
+    width: 10%;
 }
 
 .story-list-table .status_table_due_date {
@@ -1075,7 +1078,7 @@
 .story-completion-modal .completion-footer .btn { min-width: 120px; height: 42px; border: 0; border-radius: 11px; background: #286df1; box-shadow: 0 6px 14px rgba(40, 109, 241, .2); font-weight: 650; }
 .story-completion-modal .completion-footer .btn:hover { background: #195cdb; }
 .story-list-status-dropdown { display: inline-block; }
-.story-list-status-dropdown .task-status-toggle { padding: 6px 9px; font-size: inherit; }
+.story-list-status-dropdown .task-status-toggle { padding: 6px 9px; font-size: inherit; white-space: nowrap; }
 .story-priority-dropdown { display: inline-block; }
 .story-priority-static { display: inline-flex; align-items: center; border-radius: 7px; padding: 5px 9px; font-size: .8rem; font-weight: 700; text-transform: capitalize; }
 .story-priority-toggle { display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 7px; padding: 5px 9px; font-size: .8rem; font-weight: 700; text-transform: capitalize; }

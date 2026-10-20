@@ -606,7 +606,7 @@ header .menu_compress_btn {
     line-height: 1;
 }
 .app-shell header.topnav.mb-4 {
-    background: url('/assets/img/side_bar.jpg');
+    background: url('img/side_bar.jpg');
     background-size: cover;
     background-position: center bottom;
     background-repeat: no-repeat;

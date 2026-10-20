@@ -450,7 +450,7 @@
                             <tr>
                                 <th class="status_table_number">#</th>
                                 <th class="status_table_title">Story Title</th>
-                                <th class="status_table_points">Story Points</th>
+                                <th class="status_table_points"><span class="d-block" style="font-size: 9px; line-height: 1;">Story</span>Points</th>
                                 <th class="status_table_task">Tasks</th>
                                 <th class="status_table_estimated">Est. Hours</th>
                                 @if (!Auth::user()->hasRole(\App\Support\Roles::CLIENT))
