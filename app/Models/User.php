@@ -28,6 +28,8 @@ class User extends Authenticatable
         'phone_no',
         'alt_phone_no',
         'experience',
+        'shift_start_time',
+        'shift_end_time',
         'is_show_report',
         'role_id',
     ];

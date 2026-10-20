@@ -1,12 +1,14 @@
 <div class="dashboard_content_header">
     <div class="row">
         <div class="right_menu" id="rightMenu">
-            <div class="search_box">
-                <button><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+            <div class="search_box global-search">
+                <button type="button" aria-label="Search"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                     </svg>
                 </button>
-                <input type="text" name="" placeholder="Search clients, users, skills, reports...">
+                @php($globalSearchPlaceholder = Auth::user()?->isAdmin() ? 'Search clients, users, projects, tasks...' : 'Search projects, tasks...')
+                <input type="search" id="globalSearchInput" autocomplete="off" placeholder="{{ $globalSearchPlaceholder }}" aria-label="{{ $globalSearchPlaceholder }}">
+                <div class="global-search-results" id="globalSearchResults" role="listbox" aria-label="Search results" hidden></div>
             </div>  
             <div class="right_profile_notification">
                 <button class="date-picker-button" type="button">
@@ -17,7 +19,7 @@
                     </svg>
 
                     <!-- Text Label -->
-                    <span class="date-label">September 2026</span>
+                    <span class="date-label">{{ now()->format('F Y') }}</span>
 
                     <!-- Chevron Down Icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
@@ -116,3 +118,112 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+    <script>
+        (() => {
+            const input = document.getElementById('globalSearchInput');
+            const results = document.getElementById('globalSearchResults');
+            if (!input || !results) return;
+
+            const endpoint = @json(route('search.global'));
+            const icons = {
+                Client: 'bi-building', User: 'bi-person', Lead: 'bi-person-lines-fill',
+                Project: 'bi-kanban', Story: 'bi-bookmark', Task: 'bi-check2-square'
+            };
+            let debounceTimer;
+            let activeRequest;
+
+            const closeResults = () => {
+                results.hidden = true;
+                results.replaceChildren();
+            };
+
+            const showMessage = (message) => {
+                const item = document.createElement('div');
+                item.className = 'global-search-message';
+                item.textContent = message;
+                results.replaceChildren(item);
+                results.hidden = false;
+            };
+
+            const renderResults = (items) => {
+                results.replaceChildren();
+                if (!items.length) {
+                    showMessage('No matching records found.');
+                    return;
+                }
+
+                items.forEach((item) => {
+                    const link = document.createElement('a');
+                    link.className = 'global-search-result';
+                    link.href = item.url;
+                    link.setAttribute('role', 'option');
+
+                    const icon = document.createElement('span');
+                    icon.className = 'global-search-result-icon';
+                    const iconElement = document.createElement('i');
+                    iconElement.className = `bi ${icons[item.type] || 'bi-search'}`;
+                    icon.append(iconElement);
+
+                    const copy = document.createElement('span');
+                    copy.className = 'global-search-result-copy';
+                    const title = document.createElement('span');
+                    title.className = 'global-search-result-title';
+                    title.textContent = item.title;
+                    copy.append(title);
+                    if (item.detail) {
+                        const detail = document.createElement('span');
+                        detail.className = 'global-search-result-detail';
+                        detail.textContent = item.detail;
+                        copy.append(detail);
+                    }
+
+                    const type = document.createElement('span');
+                    type.className = 'global-search-result-type';
+                    type.textContent = item.type;
+                    link.append(icon, copy, type);
+                    results.append(link);
+                });
+                results.hidden = false;
+            };
+
+            input.addEventListener('input', () => {
+                window.clearTimeout(debounceTimer);
+                if (activeRequest) activeRequest.abort();
+                const term = input.value.trim();
+                if (term.length < 2) {
+                    closeResults();
+                    return;
+                }
+
+                debounceTimer = window.setTimeout(async () => {
+                    activeRequest = new AbortController();
+                    showMessage('Searching…');
+                    try {
+                        const response = await fetch(`${endpoint}?q=${encodeURIComponent(term)}`, {
+                            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                            signal: activeRequest.signal
+                        });
+                        if (!response.ok) throw new Error('Search request failed');
+                        const payload = await response.json();
+                        renderResults(payload.results || []);
+                    } catch (error) {
+                        if (error.name !== 'AbortError') showMessage('Search is temporarily unavailable.');
+                    }
+                }, 220);
+            });
+
+            input.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') closeResults();
+                if (event.key === 'ArrowDown' && !results.hidden) {
+                    event.preventDefault();
+                    results.querySelector('a')?.focus();
+                }
+            });
+            document.addEventListener('click', (event) => {
+                if (!event.target.closest('.global-search')) closeResults();
+            });
+        })();
+    </script>
+@endpush

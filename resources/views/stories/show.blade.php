@@ -9,6 +9,19 @@
 
 <div class="container-fluid mt-80">
 
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     {{-- Breadcrumb --}}
     <div class="pm-crumb">
         <a href="{{ route('projects.index') }}">
@@ -88,14 +101,22 @@
                     <input id="story-task-search" type="search" name="search" value="{{ request('search') }}" placeholder="Search tasks">
                 </form>
                 @can('tasks-create')
+                    @if ($story->status !== 'completed')
                     <button class="btn btn-primary pm-button theme-color story-create-task" onclick="openPopup()">
                         <i class="bi bi-plus-lg"></i> Create Task
                     </button>
+                    @endif
                 @endcan
             </div>
         </div>
 
-        @if (filled($story->acceptance_criteria))
+        @php
+            $acceptanceCriteriaMarkup = (string) $story->acceptance_criteria;
+            $acceptanceCriteriaText = html_entity_decode(strip_tags($acceptanceCriteriaMarkup));
+            $hasAcceptanceCriteria = preg_match('/[^\s\x{00a0}\x{200b}]/u', $acceptanceCriteriaText) === 1
+                || preg_match('/<(img|video|audio|iframe|table)\b/i', $acceptanceCriteriaMarkup) === 1;
+        @endphp
+        @if ($hasAcceptanceCriteria)
             <section class="story-summary-section story-acceptance-section">
                 <div class="story-summary-section-icon acceptance-icon">
                     <i class="bi bi-file-earmark-text"></i>
@@ -150,6 +171,13 @@
     <div class="task_tabs">
         <div class="pm-tabs">@foreach(['overview' => 'Overview', 'all'=>'All','to_do'=>'To Do','in_progress'=>'In Progress','in_review'=>'In Review','completed'=>'Completed','on_hold'=>'On Hold'] as $key=>$label)<a class="task-tab-{{ $key }} {{ $tab === $key ? 'active' : '' }}" href="{{ route('stories.show', array_filter(['story' => $story, 'tab' => $key, 'search' => request('search')])) }}">{{ $label }}</a>@endforeach</div>
     </div>
+
+    @if ($story->status === 'completed')
+        <div class="alert alert-info d-flex align-items-center gap-2" role="status">
+            <i class="bi bi-lock-fill" aria-hidden="true"></i>
+            <span>This story is completed and locked. Change its status above to reopen it before editing the story or its tasks.</span>
+        </div>
+    @endif
 
     {{-- Create Task --}}
     {{-- <div class="collapse mb-4" id="createTask">
@@ -286,7 +314,7 @@
             $trackedHours = intdiv($overview['tracked_seconds'], 3600);
             $trackedMinutes = intdiv($overview['tracked_seconds'] % 3600, 60);
             $teamMembers = $overview['team_members'];
-            $estimatedHours = rtrim(rtrim(number_format($overview['estimated_hours'], 2, '.', ''), '0'), '.');
+            $estimatedHours = \App\Support\DurationFormatter::fromHours($overview['estimated_hours']);
             $taskStatuses = $overview['task_statuses'];
             $taskTotal = $overview['task_total'];
             $taskPercent = fn ($taskStatus) => $taskTotal ? round(($taskStatuses->get($taskStatus, 0) / $taskTotal) * 100) : 0;
@@ -349,7 +377,7 @@
                     @foreach ([
                         ['purple', '#c084fc', 'layers', 'Total Tasks', $overview['task_total'], 'Tasks in this story'],
                         ['orange', '#fb923c', 'people-fill', 'Team Members', $teamMembers->count(), null],
-                        ['blue', '#60a5fa', 'calendar-check', 'Estimate Hours', $estimatedHours . 'h', 'Planned effort'],
+                        ['blue', '#60a5fa', 'calendar-check', 'Estimate Hours', $estimatedHours, 'Planned effort'],
                         ['green', '#4ade80', 'clock', 'Total Hours', $trackedHours . 'h ' . $trackedMinutes . 'm', 'Time tracked so far'],
                     ] as [$color, $waveColor, $icon, $label, $value, $subtitle])
                         @if (Auth::user()->hasRole(\App\Support\Roles::CLIENT) && $label === 'Total Hours')
@@ -449,13 +477,38 @@
                             </td>
 
                             <td>
-                                <span class="pm-badge priority-{{ $task->priority }}">
-                                    {{ ucfirst($task->priority) }}
-                                </span>
+                                @can('tasks-update', $task)
+                                    @if ($task->status !== 'completed')
+                                        <div class="dropdown task-inline-priority">
+                                            <button type="button" class="task-inline-priority-toggle priority-{{ $task->priority }}" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Change priority for {{ $task->title }}">
+                                                <span>{{ ucfirst($task->priority) }}</span>
+                                                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                                            </button>
+                                            <ul class="dropdown-menu story-status-menu shadow-sm">
+                                                @foreach (['low' => 'Low', 'medium' => 'Medium', 'high' => 'High'] as $priorityValue => $priorityLabel)
+                                                    <li>
+                                                        <form method="POST" action="{{ route('tasks.priority.update', $task) }}">
+                                                            @csrf
+                                                            @method('PATCH')
+                                                            <input type="hidden" name="priority" value="{{ $priorityValue }}">
+                                                            <button type="submit" class="dropdown-item story-status-option {{ $task->priority === $priorityValue ? 'active' : '' }}">
+                                                                <span class="story-priority-dot priority-dot-{{ $priorityValue }}"></span>{{ $priorityLabel }}
+                                                            </button>
+                                                        </form>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    @else
+                                        <span class="pm-badge priority-{{ $task->priority }}">{{ ucfirst($task->priority) }}</span>
+                                    @endif
+                                @else
+                                    <span class="pm-badge priority-{{ $task->priority }}">{{ ucfirst($task->priority) }}</span>
+                                @endcan
                             </td>
 
                             <td>
-                                {{ rtrim(rtrim(number_format($task->estimated_hours ?? 0, 2, '.', ''), '0'), '.') }} Hrs
+                                {{ \App\Support\DurationFormatter::fromHours($task->estimated_hours ?? 0) }}
                             </td>
 
                             @if(!Auth::user()->hasRole(\App\Support\Roles::CLIENT))
@@ -471,7 +524,29 @@
                             </td>
 
                             <td>
-                                {{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('d M Y') : '—' }}
+                                @can('tasks-update', $task)
+                                    @if ($task->status !== 'completed')
+                                        <form method="POST" action="{{ route('tasks.due-date.update', $task) }}" class="task-inline-due-date">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input
+                                                type="date"
+                                                name="due_date"
+                                                value="{{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('Y-m-d') : '' }}"
+                                                aria-label="Change due date for {{ $task->title }}"
+                                                title="Click to change due date"
+                                                onchange="this.form.submit()"
+                                                onclick="if (this.showPicker) this.showPicker()"
+                                            >
+                                            <span>{{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('d M Y') : 'Set due date' }}</span>
+                                            <i class="bi bi-calendar3" aria-hidden="true"></i>
+                                        </form>
+                                    @else
+                                        {{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('d M Y') : '—' }}
+                                    @endif
+                                @else
+                                    {{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('d M Y') : '—' }}
+                                @endcan
                             </td>
 
                         </tr>
@@ -506,6 +581,7 @@
 </div>
 
 @can('tasks-create')
+@if ($story->status !== 'completed')
 <div class="modal fade pm-modal" id="storyTaskModal" tabindex="-1" aria-labelledby="storyTaskModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -563,7 +639,33 @@
         </div>
     </div>
 </div>
+@endif
 @endcan
+
+@if (session('completion_error'))
+<div class="modal fade story-completion-modal" id="storyCompletionErrorModal" tabindex="-1" aria-labelledby="storyCompletionErrorTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="completion-accent"></div>
+            <button type="button" class="btn-close completion-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="completion-content">
+                <div class="completion-icon"><i class="bi bi-list-check" aria-hidden="true"></i></div>
+                <div class="completion-eyebrow">Story progress</div>
+                <h2 class="completion-title" id="storyCompletionErrorTitle">A few tasks are still open</h2>
+                <p class="completion-message">{{ session('completion_error') }}</p>
+                <div class="completion-flow" aria-label="Complete all tasks, then complete the story">
+                    <div class="completion-step"><span class="completion-step-number">1</span><span>Complete all tasks</span></div>
+                    <i class="bi bi-arrow-right completion-flow-arrow" aria-hidden="true"></i>
+                    <div class="completion-step"><span class="completion-step-number"><i class="bi bi-check2" aria-hidden="true"></i></span><span>Complete the story</span></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 completion-footer">
+                <button type="button" class="btn btn-primary text-white" data-bs-dismiss="modal">Got it</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <script>
 function openPopup() {
@@ -581,6 +683,9 @@ function closePopup() {
     }
 }
 document.addEventListener("DOMContentLoaded", function () {
+    var completionErrorModal = document.getElementById("storyCompletionErrorModal");
+    if (completionErrorModal) bootstrap.Modal.getOrCreateInstance(completionErrorModal).show();
+
     var modalEl = document.getElementById("storyTaskModal");
     if (modalEl) {
         modalEl.addEventListener("shown.bs.modal", function () {

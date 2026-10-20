@@ -58,7 +58,15 @@ class AuthServiceProvider extends ServiceProvider
                 continue;
             }
 
-            if (in_array($permission, ['tasks-show', 'tasks-update', 'tasks-delete', 'tasks-track-manually'], true)) {
+            if ($permission === 'tasks-track-manually') {
+                Gate::define($permission, function (User $user, ?Task $task = null) {
+                    return $task !== null && (int) $task->user_id === (int) $user->id;
+                });
+
+                continue;
+            }
+
+            if (in_array($permission, ['tasks-show', 'tasks-update', 'tasks-delete'], true)) {
                 Gate::define($permission, function (User $user, ?Task $task = null) use ($permission) {
                     if (!$user->hasPermission($permission)) {
                         return false;

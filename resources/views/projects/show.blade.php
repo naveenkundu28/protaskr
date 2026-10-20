@@ -14,6 +14,19 @@
 
     <div class="container-fluid mt-80">
 
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         {{-- Breadcrumb --}}
         <div class="pm-crumb">
             <a href="{{ route('projects.index') }}">Projects</a>
@@ -93,7 +106,7 @@
                     $taskTotal = $overview['task_total'];
                     $trackedHours = intdiv($overview['tracked_seconds'], 3600);
                     $trackedMinutes = intdiv($overview['tracked_seconds'] % 3600, 60);
-                    $estimatedHours = rtrim(rtrim(number_format($overview['estimated_hours'], 2, '.', ''), '0'), '.') ?: '0';
+                    $estimatedHours = \App\Support\DurationFormatter::fromHours($overview['estimated_hours']);
                     $taskStatusCounts = $overview['tasks'];
                     $teamMembers = $project->members->unique('id')->values();
                     $taskPercent = fn ($status) => $taskTotal ? round(($taskStatusCounts->get($status, 0) / $taskTotal) * 100) : 0;
@@ -205,7 +218,7 @@
                                 </div>
                                 <div class="metric-info">
                                 <h3>{{ $showEstimatedHours ? 'Estimated Hours' : 'Total Hours' }}</h3>
-                                <div class="value">{{ $showEstimatedHours ? $estimatedHours . 'h' : $trackedHours . 'h ' . $trackedMinutes . 'm' }}</div>
+                                <div class="value">{{ $showEstimatedHours ? $estimatedHours : $trackedHours . 'h ' . $trackedMinutes . 'm' }}</div>
                                 <div class="card-bottom">
                                 <p class="subtitle-text">{{ $showEstimatedHours ? 'Estimated effort for all tasks' : 'Time consumed so far' }}</p>
                             </div>
@@ -401,9 +414,17 @@
 
                 <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
 
-                    <h4 class="mb-0">
-                        Stories
-                    </h4>
+                    <div class="d-flex align-items-center flex-wrap gap-3">
+                        <h4 class="mb-0">Stories</h4>
+                        <nav class="story-list-filters" aria-label="Filter stories">
+                            <a class="{{ $storyFilter === 'active' ? 'active' : '' }}" href="{{ route('projects.show', [$project, 'tab' => 'stories', 'story_filter' => 'active']) }}" @if ($storyFilter === 'active') aria-current="page" @endif>
+                                Active <span>({{ $storyCounts['active'] }})</span>
+                            </a>
+                            <a class="{{ $storyFilter === 'completed' ? 'active' : '' }}" href="{{ route('projects.show', [$project, 'tab' => 'stories', 'story_filter' => 'completed']) }}" @if ($storyFilter === 'completed') aria-current="page" @endif>
+                                Completed <span>({{ $storyCounts['completed'] }})</span>
+                            </a>
+                        </nav>
+                    </div>
 
                     @can('projects-stories-create')
                         <!-- <a
@@ -475,7 +496,7 @@
                                     </td>
 
                                     <td>
-                                        {{ rtrim(rtrim(number_format((float) $story->estimated_hours_total, 2, '.', ''), '0'), '.') ?: '0' }}h
+                                        {{ \App\Support\DurationFormatter::fromHours($story->estimated_hours_total) }}
                                     </td>
 
                                     @if (!Auth::user()->hasRole(\App\Support\Roles::CLIENT))
@@ -489,39 +510,116 @@
                                     </td>
                                     @endif
                                     <td>
-                                        <span class="pm-badge {{ $story->status }}">
-                                            {{ str_replace('_', ' ', ucfirst($story->status)) }}
-                                        </span>
-                                        
+                                        @can('projects-stories-update')
+                                            @php
+                                                $storyStatusOptions = ['to_do' => 'To Do', 'in_progress' => 'In Progress', 'in_review' => 'In Review', 'blocked' => 'On Hold', 'completed' => 'Completed'];
+                                                $storyStatusStyle = $story->status === 'blocked' ? 'on_hold' : $story->status;
+                                            @endphp
+                                            <div class="dropdown story-status-dropdown story-list-status-dropdown">
+                                                <button type="button" class="task-status task-status-toggle task-status-{{ $storyStatusStyle }}" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Change status for {{ $story->title }}" title="{{ $story->status === 'completed' ? 'Reopen the story before editing it or its tasks' : 'Change story status' }}">
+                                                    <span>{{ $storyStatusOptions[$story->status] ?? ucfirst(str_replace('_', ' ', $story->status)) }}</span>
+                                                    <i class="bi bi-chevron-down"></i>
+                                                </button>
+                                                <ul class="dropdown-menu story-status-menu shadow-sm">
+                                                    @foreach ($storyStatusOptions as $statusValue => $statusLabel)
+                                                        <li>
+                                                            <form method="POST" action="{{ route('stories.status.update', $story) }}">
+                                                                @csrf
+                                                                @method('PATCH')
+                                                                <input type="hidden" name="status" value="{{ $statusValue }}">
+                                                                <button type="submit" class="dropdown-item story-status-option {{ $story->status === $statusValue ? 'active' : '' }}">
+                                                                    <span class="task-status-dot task-status-dot-{{ $statusValue === 'blocked' ? 'on_hold' : $statusValue }}"></span>{{ $statusLabel }}
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @else
+                                            <span class="pm-badge {{ $story->status }}">{{ str_replace('_', ' ', ucfirst($story->status)) }}</span>
+                                        @endcan
                                     </td>
 
-                                    <td class="text-capitalize priority_badge">
-                                        <span class="low_priority">{{ $story->priority }}</span>
+                                    <td class="text-capitalize">
+                                        @can('projects-stories-update')
+                                            @if ($story->status !== 'completed')
+                                            <div class="dropdown story-priority-dropdown">
+                                                <button type="button" class="story-priority-toggle priority-{{ $story->priority }}" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Change priority for {{ $story->title }}">
+                                                    <span>{{ $story->priority }}</span>
+                                                    <i class="bi bi-chevron-down"></i>
+                                                </button>
+                                                <ul class="dropdown-menu story-status-menu shadow-sm">
+                                                    @foreach (['low' => 'Low', 'medium' => 'Medium', 'high' => 'High'] as $priorityValue => $priorityLabel)
+                                                        <li>
+                                                            <form method="POST" action="{{ route('stories.priority.update', $story) }}">
+                                                                @csrf
+                                                                @method('PATCH')
+                                                                <input type="hidden" name="priority" value="{{ $priorityValue }}">
+                                                                <button type="submit" class="dropdown-item story-status-option {{ $story->priority === $priorityValue ? 'active' : '' }}">
+                                                                    <span class="story-priority-dot priority-dot-{{ $priorityValue }}"></span>{{ $priorityLabel }}
+                                                                </button>
+                                                            </form>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                            @else
+                                                <span class="story-priority-static priority-{{ $story->priority }}">{{ $story->priority }}</span>
+                                            @endif
+                                        @else
+                                            <span class="story-priority-static priority-{{ $story->priority }}">{{ $story->priority }}</span>
+                                        @endcan
                                     </td>
 
                                     <td>
-                                        {{ optional($story->due_date)->format('d M Y') ?: '—' }}
+                                        @can('projects-stories-update')
+                                            @if ($story->status !== 'completed')
+                                            <form method="POST" action="{{ route('stories.due-date.update', $story) }}" class="story-due-date-form">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input
+                                                    type="date"
+                                                    name="due_date"
+                                                    value="{{ optional($story->due_date)->format('Y-m-d') }}"
+                                                    aria-label="Change due date for {{ $story->title }}"
+                                                    title="Click to change due date"
+                                                    onchange="this.form.submit()"
+                                                    onclick="if (this.showPicker) this.showPicker()"
+                                                >
+                                                <span>{{ optional($story->due_date)->format('d M Y') ?: 'Set due date' }}</span>
+                                                <i class="bi bi-calendar3" aria-hidden="true"></i>
+                                            </form>
+                                            @else
+                                                {{ optional($story->due_date)->format('d M Y') ?: '—' }}
+                                            @endif
+                                        @else
+                                            {{ optional($story->due_date)->format('d M Y') ?: '—' }}
+                                        @endcan
                                     </td>
                                     <td class="action_emp_status">
-                                        <div class="project-actions">
-                                            <button type="button" class="emp_status_action" aria-label="Story actions">
-                                                <i class="bi bi-three-dots"></i>
-                                            </button>
-                                            <ul>
-                                                @can('projects-stories-update')
-                                                    <li><a href="{{ route('projects.show', ['project' => $project, 'tab' => 'stories', 'edit_story' => $story->id]) }}">Edit</a></li>
-                                                @endcan
-                                                @can('projects-stories-delete')
-                                                    <li>
-                                                        <form method="POST" class="mb-0" action="{{ route('stories.destroy', $story) }}" onsubmit="return confirm('Delete this story?');">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button class="project-delete-action" type="submit">Delete</button>
-                                                        </form>
-                                                    </li>
-                                                @endcan
-                                            </ul>
-                                        </div>
+                                        @if ($story->status !== 'completed')
+                                            <div class="project-actions">
+                                                <button type="button" class="emp_status_action" aria-label="Story actions">
+                                                    <i class="bi bi-three-dots"></i>
+                                                </button>
+                                                <ul>
+                                                    @can('projects-stories-update')
+                                                        <li><a href="{{ route('projects.show', ['project' => $project, 'tab' => 'stories', 'edit_story' => $story->id]) }}">Edit</a></li>
+                                                    @endcan
+                                                    @can('projects-stories-delete')
+                                                        <li>
+                                                            <form method="POST" class="mb-0" action="{{ route('stories.destroy', $story) }}" onsubmit="return confirm('Delete this story?');">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button class="project-delete-action" type="submit">Delete</button>
+                                                            </form>
+                                                        </li>
+                                                    @endcan
+                                                </ul>
+                                            </div>
+                                        @else
+                                            <span class="text-muted" title="Reopen the story to make changes"><i class="bi bi-lock-fill" aria-hidden="true"></i></span>
+                                        @endif
                                     </td>
 
                                 </tr>
@@ -533,7 +631,7 @@
                                         colspan="10"
                                         class="text-center py-5 text-muted"
                                     >
-                                        No stories yet. Create the first story to organise this project.
+                                        {{ $storyFilter === 'completed' ? 'No completed stories yet.' : 'No active stories yet.' }}
                                     </td>
                                 </tr>
 
@@ -1120,5 +1218,36 @@
         </div>
 
     </div>
+
+    @if (session('completion_error'))
+        <div class="modal fade story-completion-modal" id="storyCompletionErrorModal" tabindex="-1" aria-labelledby="storyCompletionErrorTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="completion-accent"></div>
+                    <button type="button" class="btn-close completion-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="completion-content">
+                        <div class="completion-icon"><i class="bi bi-list-check" aria-hidden="true"></i></div>
+                        <div class="completion-eyebrow">Story progress</div>
+                        <h2 class="completion-title" id="storyCompletionErrorTitle">A few tasks are still open</h2>
+                        <p class="completion-message">{{ session('completion_error') }}</p>
+                        <div class="completion-flow" aria-label="Complete all tasks, then complete the story">
+                            <div class="completion-step"><span class="completion-step-number">1</span><span>Complete all tasks</span></div>
+                            <i class="bi bi-arrow-right completion-flow-arrow" aria-hidden="true"></i>
+                            <div class="completion-step"><span class="completion-step-number"><i class="bi bi-check2" aria-hidden="true"></i></span><span>Complete the story</span></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 completion-footer">
+                        <button type="button" class="btn btn-primary text-white" data-bs-dismiss="modal">Got it</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var completionErrorModal = document.getElementById('storyCompletionErrorModal');
+                if (completionErrorModal) bootstrap.Modal.getOrCreateInstance(completionErrorModal).show();
+            });
+        </script>
+    @endif
 
 @endsection

@@ -13,6 +13,7 @@ class FileController extends Controller
     public function index(Task $task)
     {
         $this->authorize('tasks-show', $task);
+        $task->loadMissing('story');
 
         $files = Auth::user()->files()->where('task_id', $task->id)->latest()->get();
         return view('tasks.files.index', compact('files', 'task'));
@@ -21,6 +22,7 @@ class FileController extends Controller
     public function create(Task $task)
     {
         $this->authorize('tasks-update', $task);
+        $this->ensureTaskStoryIsEditable($task);
 
         return view('tasks.files.create', compact('task'));
     }
@@ -39,6 +41,7 @@ class FileController extends Controller
     public function store(Request $request, Task $task)
     {
         $this->authorize('tasks-update', $task);
+        $this->ensureTaskStoryIsEditable($task);
 
         $allowed = 'jpeg,png,jpg,gif,svg,doc,docx,pdf,txt,html,css,js,php,java,c,cpp';
 
@@ -115,6 +118,7 @@ class FileController extends Controller
     public function edit(Task $task, File $file)
     {
         $this->authorize('tasks-update', $task);
+        $this->ensureTaskStoryIsEditable($task);
 
         return view('tasks.files.edit', compact('file', 'task'));
     }
@@ -122,6 +126,7 @@ class FileController extends Controller
     public function update(Request $request, Task $task, File $file)
     {
         $this->authorize('tasks-update', $task);
+        $this->ensureTaskStoryIsEditable($task);
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -155,6 +160,7 @@ class FileController extends Controller
     public function destroy(Task $task,File $file)
     {
         $this->authorize('tasks-update', $task);
+        $this->ensureTaskStoryIsEditable($task);
 
         $this->ensureTaskFileRelation($task, $file);
         Storage::disk('public')->delete($file->path);

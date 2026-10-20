@@ -6,6 +6,7 @@ use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\HourController;
+use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LeadStatusController;
 use App\Http\Controllers\NotesHistoryController;
@@ -44,6 +45,7 @@ Route::middleware(['auth'])->group(function () {
 
     /* Dashboard and own profile */
     Route::get('/', [HomeController::class, 'index'])->name('dashboard');
+    Route::get('search/global', [GlobalSearchController::class, 'index'])->name('search.global');
     Route::get('profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
 
@@ -76,6 +78,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('stories/{story}', [StoryController::class, 'show'])->name('stories.show');
     Route::put('stories/{story}', [StoryController::class, 'update'])->name('stories.update');
     Route::patch('stories/{story}/status', [StoryController::class, 'updateStatus'])->name('stories.status.update');
+    Route::patch('stories/{story}/priority', [StoryController::class, 'updatePriority'])->name('stories.priority.update');
+    Route::patch('stories/{story}/due-date', [StoryController::class, 'updateDueDate'])->name('stories.due-date.update');
     Route::delete('stories/{story}', [StoryController::class, 'destroy'])->name('stories.destroy');
     Route::post('stories/{story}/tasks', [StoryController::class, 'storeTask'])->name('stories.tasks.store');
 
@@ -113,6 +117,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
     Route::get('tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
     Route::put('tasks/{task}', [TaskController::class, 'update'])->name('tasks.update');
+    Route::patch('tasks/{task}/priority', [TaskController::class, 'updatePriority'])->name('tasks.priority.update');
+    Route::patch('tasks/{task}/due-date', [TaskController::class, 'updateDueDate'])->name('tasks.due-date.update');
     Route::delete('tasks/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
     Route::post('tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.status.update');

@@ -4,20 +4,93 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('assets/project-module.css') }}">
+    <style>
+        .projects-page-topbar {
+            align-items: flex-start;
+            gap: 16px;
+        }
+        .projects-page-topbar h1 {
+            flex: 0 0 auto;
+            margin: 0;
+            white-space: nowrap;
+        }
+        .projects-page-topbar .right_search_box {
+            min-width: 0;
+            flex: 1 1 auto;
+            justify-content: flex-end;
+        }
+        .projects-filter-form {
+            position: static !important;
+            left: auto !important;
+            transform: none !important;
+            display: flex;
+            flex: 1 1 auto;
+            min-width: 0;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .projects-filter-form .select2-container {
+            flex: 1 1 190px;
+            min-width: 0;
+            max-width: 280px;
+        }
+        .projects-filter-form .select2-container .select2-selection--single {
+            display: flex;
+            align-items: center;
+            height: 42px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        .projects-filter-form .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: normal;
+            padding: 0 36px 0 14px;
+        }
+        .projects-filter-form .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 100%;
+            right: 10px;
+        }
+        .projects-filter-form input[name="search"] {
+            flex: 1 1 200px;
+            min-width: 160px;
+            max-width: 320px;
+        }
+        @media (max-width: 1199.98px) {
+            .projects-page-topbar {
+                flex-wrap: wrap;
+            }
+            .projects-page-topbar h1 {
+                flex-basis: 100%;
+            }
+            .projects-page-topbar .right_search_box,
+            .projects-filter-form {
+                width: 100%;
+            }
+            .projects-page-topbar .right_search_box {
+                justify-content: flex-start;
+            }
+        }
+        @media (max-width: 575.98px) {
+            .projects-filter-form .select2-container,
+            .projects-filter-form input[name="search"] {
+                flex: 1 1 100%;
+                max-width: none;
+            }
+        }
+    </style>
 @endpush
 
 @section('content')
 <div class="container-fluid mt-80">
     <div class="pm-heading">
-        <div class="inner_page_topbar">
+        <div class="inner_page_topbar projects-page-topbar">
             <h1>Projects</h1>
             <div class="right_search_box">
-                <form method="GET" action="{{ route('projects.index') }}" class="search_box projects-filter-form"">
+                <form method="GET" action="{{ route('projects.index') }}" class="search_box projects-filter-form">
                     @if(request('status'))
                         <input type="hidden" name="status" value="{{ request('status') }}">
                     @endif
                     
-                                        <select name="client_id" class="project-list-filter">
+                                        <select name="client_id" class="project-list-filter select2" data-placeholder="Select Client">
     <option value="">Select Client</option>
     @foreach($clients as $client)
         <option value="{{ $client->id }}" @selected(request('client_id') == $client->id)>
@@ -26,7 +99,7 @@
     @endforeach
 </select>
 
-<select name="assigned_user_id" class="project-list-filter">
+<select name="assigned_user_id" class="project-list-filter select2" data-placeholder="Select Assigned User">
     <option value="">Select Assigned User</option>
     @foreach($users as $user)
         <option value="{{ $user->id }}" @selected(request('assigned_user_id') == $user->id)>

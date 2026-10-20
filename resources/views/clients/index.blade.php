@@ -204,6 +204,9 @@
             display: block;
             margin-top: 2px;
         }
+        .clients-table-nowrap {
+            white-space: nowrap;
+        }
     </style>
 @endpush
 
@@ -359,11 +362,11 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Client Name</th>
-                        <th>Client Email</th>
-                        <th>Company Name</th>
+                        <th>Client / Company</th>
                         <th>Assigned Resources</th>
-                        <th>Status</th>
+                        <th>Billable Users</th>
+                        <th class="clients-table-nowrap">Service Start Date</th>
+                        <th class="clients-table-nowrap">Status</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -378,7 +381,7 @@
                             <td>{{ $projects->firstItem() + $loop->index }}</td>
                             <td>
                                 <a class="pm-link fw-semibold" href="{{ route('clients.show', $project->id) }}">
-                                    {{ $project->name }}
+                                    {{ $project->name }}{{ $project->company_name ? ' (' . $project->company_name . ')' : '' }}
                                 </a>
                                 @if ($project->type)
                                     <small class="client-type-tag">
@@ -387,21 +390,33 @@
                                 @endif
                             </td>
                             <td>
-                                @if ($project->client_email)
-                                    @php
-                                        $emailParts = explode('@', $project->client_email, 2);
-                                        $visiblePrefix = substr($emailParts[0], 0, 2);
-                                    @endphp
-                                    {{ $visiblePrefix }}*****@*****.com
+                                @if ($project->assigned_resource_names->isNotEmpty())
+                                    <div class="assigned-resource-list">
+                                        @foreach ($project->assigned_resource_names as $resourceName)
+                                            @php
+                                                $nameParts = preg_split('/\\s+/', trim($resourceName));
+                                                $initials = strtoupper(
+                                                    substr($nameParts[0], 0, 1) .
+                                                    (count($nameParts) > 1
+                                                        ? substr($nameParts[count($nameParts) - 1], 0, 1)
+                                                        : '')
+                                                );
+                                            @endphp
+
+                                            <span class="assigned-resource">
+                                                <span class="assigned-resource-avatar">{{ $initials }}</span>
+                                                <span>{{ $resourceName }}</span>
+                                            </span>
+                                        @endforeach
+                                    </div>
                                 @else
                                     —
                                 @endif
                             </td>
-                            <td>{{ $project->company_name ?: '—' }}</td>
                             <td>
-                                @if ($project->assigned_resource_names->isNotEmpty())
+                                @if ($project->billable_resource_names->isNotEmpty())
                                     <div class="assigned-resource-list">
-                                        @foreach ($project->assigned_resource_names as $resourceName)
+                                        @foreach ($project->billable_resource_names as $resourceName)
                                             @php
                                                 $nameParts = preg_split('/\s+/', trim($resourceName));
                                                 $initials = strtoupper(
@@ -451,7 +466,12 @@
                             {{-- <td>
                                 <span class="fw-semibold">{{ number_format((float) ($project->current_month_hours ?? 0), 2) }}</span>
                             </td> --}}
-                            <td>
+                            <td class="clients-table-nowrap">
+                                {{ $project->latest_service_start_date
+                                    ? \Carbon\Carbon::parse($project->latest_service_start_date)->format('j F Y')
+                                    : '—' }}
+                            </td>
+                            <td class="clients-table-nowrap">
                                 <span class="pm-badge pm-status-{{ $project->status }} {{ $project->status }}">
                                     {{ str_replace('_', ' ', ucfirst($project->status)) }}
                                 </span>
@@ -555,7 +575,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center py-5 text-muted">
+                            <td colspan="7" class="text-center py-5 text-muted">
                                 No clients match your filters.
                             </td>
                         </tr>

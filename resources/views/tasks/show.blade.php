@@ -1017,11 +1017,16 @@
 
 @section('content')
     @php
-        $canUpdate = Auth::user()->can('tasks-update', $task);
-        $canControlTimer = Auth::user()->hasRole(\App\Support\Roles::ADMIN) || $task->user_id === Auth::id();
-        $canTrackManually = Auth::user()->can('tasks-track-manually', $task) && $canControlTimer;
-        $canEditTime = Auth::user()->can('tasks-time-update');
-        $timerRunning = $runningSeconds !== null;
+        $storyLocked = $task->story?->status === 'completed';
+        $taskLocked = $task->status === 'completed';
+        $readOnly = $storyLocked || $taskLocked;
+        $canUpdate = !$readOnly && Auth::user()->can('tasks-update', $task);
+        $isTaskAssignee = (int) $task->user_id === (int) Auth::id();
+        $canControlTimer = !$readOnly && $isTaskAssignee;
+        $canTrackManually = !$readOnly && Auth::user()->can('tasks-track-manually', $task) && $canControlTimer;
+        $canEditTime = !$readOnly && Auth::user()->can('tasks-time-update');
+        $canDeleteTask = Auth::user()->hasRole(\App\Support\Roles::ADMIN) && Auth::user()->can('tasks-delete', $task);
+        $timerRunning = $canControlTimer && $runningSeconds !== null;
     @endphp
 
     <div class="container-fluid mt-80 task-detail">
@@ -1045,6 +1050,16 @@
         @if (session('error'))
             <div class="alert alert-danger">
                 {{ session('error') }}
+            </div>
+        @endif
+        @if ($readOnly)
+            <div class="alert alert-info d-flex align-items-center gap-2" role="status">
+                <i class="bi bi-lock-fill" aria-hidden="true"></i>
+                @if ($storyLocked)
+                    <span>This task belongs to a completed story and is locked. Reopen the story to make changes.</span>
+                @else
+                    <span>This task is completed and locked. Completed tasks cannot be changed.</span>
+                @endif
             </div>
         @endif
         @if ($errors->any())
@@ -1103,7 +1118,7 @@
                 </div>
             </div>
             <div class="right_action_btn">
-                @if(!Auth::user()->hasRole(\App\Support\Roles::CLIENT))
+                @if ($canControlTimer)
                     <p class="timer">Time Tracker ( <span id="time-display">00:00:00</span> )</p>
                 @endif
                 <div class="right_action_btn">
@@ -1134,6 +1149,21 @@
                                     <button type="button" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editTaskModal">
                                         <i class="bi bi-pencil-square text-primary"></i> Edit Task
                                     </button>
+                                </li>
+                            @endif
+                            @if ($canDeleteTask)
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    @if (!$hasTrackedTime && !$storyLocked)
+                                        <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#deleteTaskModal">
+                                            <i class="bi bi-trash3"></i> Delete Task
+                                        </button>
+                                    @else
+                                        <button type="button" class="dropdown-item text-muted" disabled title="{{ $hasTrackedTime ? 'This task has tracked time and cannot be deleted.' : 'Reopen the completed story before deleting its tasks.' }}">
+                                            <i class="bi bi-lock"></i> Delete Task
+                                            <small class="d-block ms-4">{{ $hasTrackedTime ? 'Time has been tracked' : 'Story is completed' }}</small>
+                                        </button>
+                                    @endif
                                 </li>
                             @endif
                             @if ($canTrackManually || $canUpdate)
@@ -1180,7 +1210,7 @@
                     <span class="card-label">Estimated Hours</span>
                     <div class="card-value">
                         <svg class="icon-green" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                        <span>{{ $task->estimated_hours !== null ? rtrim(rtrim(number_format((float) $task->estimated_hours, 2), '0'), '.') . ' hrs' : 'Not set' }}</span>
+                        <span>{{ \App\Support\DurationFormatter::fromHours($task->estimated_hours, 'Not set') }}</span>
                     </div>
                 </div>
 
@@ -1377,11 +1407,12 @@
                         @empty
                             <div class="task-chat-empty" id="taskChatEmpty">
                                 <i class="bi bi-chat-dots"></i>
-                                No messages yet. Start the conversation below.
+                                No messages yet. @unless ($readOnly) Start the conversation below. @endunless
                             </div>
                         @endforelse
                     </div>
 
+                    @if (!$readOnly)
                     <form id="chatForm" class="task-chat-composer" method="POST"
                         action="{{ route('tasks.chat.store', $task->id) }}">
                         @csrf
@@ -1404,6 +1435,15 @@
                             </button>
                         </div>
                     </form>
+                    @else
+                        <p class="text-muted small mb-0">
+                            @if ($storyLocked)
+                                This story is completed. Reopen it to add a message.
+                            @else
+                                This task is completed. Completed tasks cannot be changed.
+                            @endif
+                        </p>
+                    @endif
                     </div>
                 </div>
             </div>
@@ -1521,6 +1561,31 @@
                                 <button type="submit" class="btn btn-primary">Add Time</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($canDeleteTask && !$hasTrackedTime && !$storyLocked)
+            <div class="modal fade pm-modal task-delete-modal" id="deleteTaskModal" tabindex="-1" aria-labelledby="deleteTaskModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header border-0 pb-0">
+                            <div class="task-delete-icon"><i class="bi bi-trash3"></i></div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body pt-2">
+                            <h5 class="modal-title fw-bold mb-2" id="deleteTaskModalLabel">Delete this task?</h5>
+                            <p class="text-muted mb-0">Are you sure you want to delete <strong>{{ $task->title }}</strong>? This action cannot be undone.</p>
+                        </div>
+                        <div class="modal-footer border-0 pt-0">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            <form action="{{ route('tasks.destroy', $task) }}" method="POST" class="m-0">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger"><i class="bi bi-trash3 me-1"></i> Delete task</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>

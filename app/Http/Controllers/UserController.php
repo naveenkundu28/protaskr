@@ -11,6 +11,7 @@ use App\Models\Hour;
 use App\Models\Service;
 use App\Models\Role;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -29,10 +30,23 @@ class UserController extends Controller
         $this->authorize('users-access');
 
         $search = trim((string) $request->input('search'));
+        $group = $request->input('group') === 'outsource' ? 'outsource' : 'team';
+        $baseUsers = User::whereDoesntHave('role', function ($q) {
+            $q->where('name', \App\Support\Roles::ADMIN);
+        });
+        $teamCount = (clone $baseUsers)->where('user_type', 'Internal')->count();
+        $outsourceCount = (clone $baseUsers)->where('user_type', 'External')->count();
+        $resignedCount = User::onlyTrashed()->count();
 
         $data = User::with(['primarySkills', 'secondarySkills', 'tags'])
             ->whereDoesntHave('role', function ($q) {
                 $q->where('name', \App\Support\Roles::ADMIN);
+            })
+            ->where('user_type', $group === 'team' ? 'Internal' : 'External')
+            ->when($request->filled('tag_id'), function ($query) use ($request) {
+                $query->whereHas('tags', function ($tagQuery) use ($request) {
+                    $tagQuery->where('tags.id', $request->input('tag_id'));
+                });
             })
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($subQuery) use ($search) {
@@ -62,8 +76,8 @@ class UserController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        return view('users.index', compact('data'))
-            ->with('i', ($request->input('page', 1) - 1) * 5);
+        return view('users.index', compact('data', 'group', 'teamCount', 'outsourceCount', 'resignedCount'))
+            ->with('i', ($request->input('page', 1) - 1) * 50);
     }
 
     public function listing(Request $request): View
@@ -196,12 +210,19 @@ class UserController extends Controller
     {
         $this->authorize('users-create');
 
+        $isExternal = $request->input('user_type') === 'External';
+
         $this->validate($request, [
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email',
-            'employee_id' => 'required|unique:users,employee_id',
-            'password' => 'required|same:confirm-password',
-            'role_id' => 'required|exists:roles,id'
+            'user_type' => 'required|in:Internal,External',
+            'name' => 'required|string',
+            'email' => ($isExternal ? 'nullable' : 'required') . '|email|unique:users,email',
+            'employee_id' => 'required|string|unique:users,employee_id',
+            'password' => ($isExternal ? 'nullable' : 'required') . '|same:confirm-password',
+            'role_id' => ($isExternal ? 'nullable' : 'required') . '|exists:roles,id',
+            'primary_skills' => 'required|array|min:1',
+            'primary_skills.*' => 'exists:skills,id',
+            'tags' => 'required|array|min:1',
+            'tags.*' => 'exists:tags,id',
         ]);
 
         $input = $request->only([
@@ -218,7 +239,12 @@ class UserController extends Controller
             'role_id',
         ]);
 
-        $input['password'] = Hash::make($input['password']);
+        if ($isExternal) {
+            $input['email'] = $request->input('email') ?: 'external-' . Str::slug($request->input('employee_id')) . '-' . Str::lower(Str::random(8)) . '@users.invalid';
+            $input['role_id'] = Role::where('name', \App\Support\Roles::RESOURCE)->value('id');
+        }
+
+        $input['password'] = Hash::make($request->input('password') ?: Str::random(40));
         $input['is_show_report'] = $request->input('is_show_report', true);
 
         $user = User::create($input);
@@ -236,7 +262,8 @@ class UserController extends Controller
             $user->tags()->sync($request->tags);
         }
 
-        return redirect()->route('users.index')->with('success', 'User created successfully');
+        return redirect()->route('users.index', $isExternal ? ['group' => 'outsource'] : [])
+            ->with('success', 'User created successfully');
     }
 
     /**
@@ -288,12 +315,19 @@ class UserController extends Controller
     {
         $this->authorize('users-update');
 
+        $isExternal = $request->input('user_type') === 'External';
+
         $this->validate($request, [
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email,' . $id,
-            'employee_id' => 'required|unique:users,employee_id,'. $id,
-            'password' => 'same:confirm-password',
-            'role_id' => 'required|exists:roles,id'
+            'user_type' => 'required|in:Internal,External',
+            'name' => 'required|string',
+            'email' => ($isExternal ? 'nullable' : 'required') . '|email|unique:users,email,' . $id,
+            'employee_id' => 'required|string|unique:users,employee_id,' . $id,
+            'password' => ($isExternal ? 'nullable' : 'sometimes|nullable') . '|same:confirm-password',
+            'role_id' => ($isExternal ? 'nullable' : 'required') . '|exists:roles,id',
+            'primary_skills' => 'required|array|min:1',
+            'primary_skills.*' => 'exists:skills,id',
+            'tags' => $isExternal ? 'required|array|min:1' : 'sometimes|array',
+            'tags.*' => 'exists:tags,id',
         ]);
 
         $input = $request->all();
@@ -302,10 +336,11 @@ class UserController extends Controller
         } else {
             $input = Arr::except($input, array('password'));
         }
-        $input['is_show_report'] = $request->input('is_show_report', true);
-
-        $user = User::find($id);
-        $roleChanged = (int) $user->role_id !== (int) $request->role_id;
+        $user = User::findOrFail($id);
+        $input['is_show_report'] = $request->has('is_show_report')
+            ? $request->input('is_show_report')
+            : $user->is_show_report;
+        $roleChanged = $request->has('role_id') && (int) $user->role_id !== (int) $request->role_id;
         $user->update($input);
 
         if ($roleChanged) {
@@ -319,7 +354,7 @@ class UserController extends Controller
 
         $user->tags()->sync($request->tags ?? []);
 
-        return redirect()->route('users.index')
+        return redirect()->route('users.index', $isExternal ? ['group' => 'outsource'] : [])
             ->with('success', 'User updated successfully');
     }
 
@@ -382,8 +417,16 @@ class UserController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        return view('users.resigned', compact('data'))
-            ->with('i', ($request->input('page', 1) - 1) * 5);
+        $resignedCount = User::onlyTrashed()->count();
+        $teamCount = User::whereDoesntHave('role', function ($q) {
+            $q->where('name', \App\Support\Roles::ADMIN);
+        })->where('user_type', 'Internal')->count();
+        $outsourceCount = User::whereDoesntHave('role', function ($q) {
+            $q->where('name', \App\Support\Roles::ADMIN);
+        })->where('user_type', 'External')->count();
+
+        return view('users.resigned', compact('data', 'resignedCount', 'teamCount', 'outsourceCount'))
+            ->with('i', ($request->input('page', 1) - 1) * 50);
     }
 
     public function restore($id)

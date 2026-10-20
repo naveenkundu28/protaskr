@@ -24,14 +24,14 @@ class HomeController extends Controller
         $this->middleware('auth');
     }
 
-    public function index()
+    public function index(Request $request)
     {
         
         $user = Auth::user();
         $now = Carbon::now();
 
         if ($user->hasRole(\App\Support\Roles::RESOURCE)) {
-            return view('dashboard.resources', $this->resourceDashboard($user, $now));
+            return view('dashboard.resources', $this->resourceDashboard($user, $now, $request));
         }
 
         $tasksCount = $user->tasks()->where('status', '!=', 'completed')->count();
@@ -257,10 +257,9 @@ class HomeController extends Controller
     }
     /**
      * Figures for the resource dashboard. Everything is limited to the logged-in
-     * resource: the clients and projects they are on, and the tasks assigned to
-     * or created by them.
+     * resource: the projects they are on and the tasks assigned to them.
      */
-    private function resourceDashboard(User $user, Carbon $now): array
+    private function resourceDashboard(User $user, Carbon $now, Request $request): array
     {
         $monthStart = $now->copy()->startOfMonth();
         $lastMonthStart = $monthStart->copy()->subMonthNoOverflow();
@@ -270,9 +269,7 @@ class HomeController extends Controller
         // percentage change, or null when there is nothing to compare against
         $change = fn ($current, $previous) => $previous > 0 ? (int) round(($current - $previous) / $previous * 100) : null;
 
-        $myTasks = fn () => Task::query()
-            ->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('created_by', $user->id))
-            ->whereHas('project', fn ($q) => $q->whereNull('deleted_at'));
+        $myTasks = fn () => Task::query()->where('user_id', $user->id);
 
         // Top cards
         $clientsCount = $user->projectMembers()->where('status', '!=', 'completed')->count();
@@ -285,14 +282,65 @@ class HomeController extends Controller
 
         $openTasksCount = $myTasks()->whereNotIn('status', ['completed', 'closed'])->count();
 
+        $activeTimers = TrackerHistory::query()
+            ->where('user_id', $user->id)
+            ->where('is_running', true)
+            ->whereNotNull('start_time')
+            ->with(['task.story.project.client', 'task.deliveryProject.client'])
+            ->orderBy('start_time')
+            ->get()
+            ->map(function (TrackerHistory $history) use ($now) {
+                $task = $history->task;
+                $project = $task?->story?->project ?? $task?->deliveryProject;
+
+                return [
+                    'task_id' => $task?->id ?? $history->task_id,
+                    'task' => $task?->title ?? 'Task',
+                    'story' => $task?->story?->title,
+                    'project' => $project?->name,
+                    'client' => $project?->client?->name,
+                    'seconds' => max((int) $history->elapsed_time, max(0, (int) Carbon::parse($history->start_time)->diffInSeconds($now))),
+                ];
+            })
+            ->values()
+            ->all();
+
         $secondsThisMonth = (int) TrackerHistory::where('user_id', $user->id)
+            ->where('is_running', false)
             ->whereBetween('start_time', [$monthStart, $now])->sum('elapsed_time');
+        $runningThisMonth = TrackerHistory::where('user_id', $user->id)
+            ->where('is_running', true)
+            ->whereBetween('start_time', [$monthStart, $now])->get(['start_time', 'elapsed_time']);
+        foreach ($runningThisMonth as $history) {
+            $secondsThisMonth += max((int) $history->elapsed_time, max(0, (int) Carbon::parse($history->start_time)->diffInSeconds($now)));
+        }
         $secondsLastMonth = (int) TrackerHistory::where('user_id', $user->id)
             ->whereBetween('start_time', [$lastMonthStart, $lastMonthSameDay])->sum('elapsed_time');
-        $assignedHours = (float) Task::where('user_id', $user->id)
-            ->whereBetween('created_at', [$monthStart, $now])
-            ->whereHas('project', fn ($q) => $q->whereNull('deleted_at'))
-            ->sum('estimated_hours');
+        $assignedHours = (float) $myTasks()->sum('estimated_hours');
+
+        // Current-month service hours billed to this resource: direct services use
+        // their hours field, while proxy hours are stated in the service comment.
+        $monthServices = Service::query()
+            ->where('year', $now->year)
+            ->where('month', $now->month)
+            ->whereIn('service_type', ['direct', 'proxy'])
+            ->get(['id', 'service_type', 'hours', 'front_resource', 'working_resource', 'cancel_reason']);
+        $employeeId = trim((string) $user->employee_id);
+        $billedHours = 0.0;
+        foreach ($monthServices as $service) {
+            if ($service->service_type === 'direct') {
+                $isAssigned = in_array($user->id, $service->working_resource_ids, true)
+                    || (int) $service->front_resource === (int) $user->id;
+                if ($isAssigned) {
+                    $billedHours += (float) ($service->hours ?? 0);
+                }
+                continue;
+            }
+
+            if ($employeeId !== '' && preg_match_all('/(?<![A-Za-z0-9])' . preg_quote($employeeId, '/') . '\\s*-\\s*(\\d+(?:\\.\\d+)?)/i', (string) $service->cancel_reason, $matches)) {
+                $billedHours += array_sum(array_map('floatval', $matches[1]));
+            }
+        }
 
         // Small bar graph on each card, drawn to match the card's month-on-month change: rising bars for
         // an increase, falling bars for a decrease, and flat grey bars when there is nothing to compare with.
@@ -311,34 +359,30 @@ class HomeController extends Controller
             //     'spark' => $shape($change($projectsCount, $projectsBeforeThisMonth))],
             ['icon' => 'bi-card-checklist', 'tone' => 'resources', 'label' => 'Open Tasks', 'value' => $openTasksCount, 'trend' => false,
                 'spark' => $shape(false)],
-            ['icon' => 'bi-hourglass-split', 'tone' => 'clients', 'label' => 'Billed Hours',
-                'value' => 0, 'trend' => false,
+            ['icon' => 'bi-hourglass-split', 'tone' => 'clients', 'label' => 'Billed Hours (This Month)',
+                'value' => \App\Support\DurationFormatter::fromHours($billedHours), 'trend' => false,
                 'spark' => $shape(false)],
             ['icon' => 'bi-hourglass-split', 'tone' => 'free-hours', 'label' => 'Assigned Hours',
-                'value' => rtrim(rtrim(number_format($assignedHours, 1), '0'), '.'), 'trend' => false,
+                'value' => \App\Support\DurationFormatter::fromHours($assignedHours), 'trend' => false,
                 'spark' => $shape(false)],
                 
             ['icon' => 'bi-clock', 'tone' => 'total-hours', 'label' => 'Hours (This Month)',
-                'value' => rtrim(rtrim(number_format($secondsThisMonth / 3600, 1), '0'), '.'),
+                'value' => \App\Support\DurationFormatter::fromHours($secondsThisMonth / 3600),
                 'trend' => $hoursTrend,
                 'spark' => $shape($hoursTrend)],
         ];
 
-        // Task status: every task still open, plus the ones finished this month
-        $open = $myTasks()->whereNotIn('status', ['completed', 'closed'])
-            ->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status');
-        $completedThisMonth = $myTasks()->whereIn('status', ['completed', 'closed'])
-            ->where('updated_at', '>=', $monthStart)->count();
+        // Show the full status breakdown for tasks assigned to this resource.
+        $statusCounts = $myTasks()->selectRaw('status, count(*) as total')
+            ->groupBy('status')->pluck('total', 'status');
 
         $taskStatuses = [
-            ['label' => 'To Do', 'count' => (int) ($open['to_do'] ?? 0), 'color' => '#3d9bf5'],
-            ['label' => 'In Progress', 'count' => (int) ($open['in_progress'] ?? 0), 'color' => '#2f6fe4'],
-            ['label' => 'In Review', 'count' => (int) ($open['in_review'] ?? 0), 'color' => '#f7b23b'],
-            ['label' => 'Completed', 'count' => $completedThisMonth, 'color' => '#22c58b'],
-            ['label' => 'On Hold', 'count' => (int) ($open['on_hold'] ?? 0), 'color' => '#f0464f'],
+            ['label' => 'To Do', 'count' => (int) (($statusCounts['to_do'] ?? 0) + ($statusCounts['pending'] ?? 0)), 'color' => '#3d9bf5'],
+            ['label' => 'In Progress', 'count' => (int) ($statusCounts['in_progress'] ?? 0), 'color' => '#2f6fe4'],
+            ['label' => 'In Review', 'count' => (int) ($statusCounts['in_review'] ?? 0), 'color' => '#f7b23b'],
+            ['label' => 'Completed', 'count' => (int) (($statusCounts['completed'] ?? 0) + ($statusCounts['closed'] ?? 0)), 'color' => '#22c58b'],
+            ['label' => 'On Hold', 'count' => (int) (($statusCounts['on_hold'] ?? 0) + ($statusCounts['blocked'] ?? 0)), 'color' => '#f0464f'],
         ];
-        // any other open status (for example "pending") is counted with To Do
-        $taskStatuses[0]['count'] += (int) $open->except(['to_do', 'in_progress', 'in_review', 'on_hold'])->sum();
         $taskTotal = array_sum(array_column($taskStatuses, 'count'));
 
         // Project progress: share of each project's tasks that are completed
@@ -350,7 +394,7 @@ class HomeController extends Controller
             ['dot' => '#93c5fd', 'bar' => '#8b5cf6'],
         ];
         $projectProgress = Project::whereHas('members', fn ($q) => $q->where('users.id', $user->id))
-            ->withCount(['tasks', 'tasks as completed_tasks_count' => fn ($q) => $q->where('status', 'completed')])
+            ->withCount(['tasks', 'tasks as completed_tasks_count' => fn ($q) => $q->whereIn('status', ['completed', 'closed'])])
             ->latest('updated_at')
             ->take(5)
             ->get()
@@ -362,7 +406,130 @@ class HomeController extends Controller
             ] + $palette[$index % count($palette)])
             ->all();
 
-        return compact('stats', 'taskStatuses', 'taskTotal', 'projectProgress', 'projectsCount');
+        [$calendarView, $calendarDate, $calendarStart, $calendarEnd] = $this->resourceCalendarRange($request, $now);
+        $calendarDays = $this->resourceCalendarDays($user, $calendarStart, $calendarEnd, $calendarView);
+        $shiftStart = Carbon::parse($user->shift_start_time ?: '09:00:00');
+        $weeklyShiftStartMinute = ((int) $shiftStart->format('G') * 60) + (int) $shiftStart->format('i');
+
+        return compact(
+            'stats', 'taskStatuses', 'taskTotal', 'projectProgress', 'projectsCount',
+            'calendarView', 'calendarDate', 'calendarStart', 'calendarEnd', 'calendarDays', 'activeTimers',
+            'weeklyShiftStartMinute'
+        );
+    }
+
+    private function resourceCalendarRange(Request $request, Carbon $now): array
+    {
+        $view = $request->query('calendar_view') === 'week' ? 'week' : 'month';
+        try {
+            $date = Carbon::parse($request->query('calendar_date', $now->toDateString()))->startOfDay();
+        } catch (\Throwable $exception) {
+            $date = $now->copy()->startOfDay();
+        }
+
+        if ($view === 'week') {
+            $start = $date->copy()->startOfWeek(Carbon::MONDAY);
+            $end = $date->copy()->endOfWeek(Carbon::SUNDAY);
+        } else {
+            $start = $date->copy()->startOfMonth();
+            $end = $date->copy()->endOfMonth();
+        }
+
+        return [$view, $date, $start, $end];
+    }
+
+    private function resourceCalendarDays(User $user, Carbon $start, Carbon $end, string $view): array
+    {
+        $rangeStart = $start->copy()->startOfDay();
+        $rangeEnd = $end->copy()->endOfDay();
+        $now = Carbon::now();
+        $histories = TrackerHistory::query()
+            ->where('user_id', $user->id)
+            ->whereNotNull('start_time')
+            ->where('start_time', '<=', $rangeEnd)
+            ->where(function ($query) use ($rangeStart) {
+                $query->where('end_time', '>=', $rangeStart)->orWhereNull('end_time');
+            })
+            ->with('task:id,title,status')
+            ->get(['id', 'task_id', 'start_time', 'end_time', 'elapsed_time', 'is_running']);
+
+        $segmentsByDay = [];
+        $trackedByDay = [];
+        $trackedStatusTasksByDay = [];
+        $taskColorMap = $histories->pluck('task_id')->unique()->sort()->values()
+            ->mapWithKeys(fn ($taskId, $index) => [$taskId => $index % 7]);
+        foreach ($histories as $history) {
+            $intervalStart = Carbon::parse($history->start_time);
+            $intervalEnd = $history->end_time
+                ? Carbon::parse($history->end_time)
+                : ($history->is_running
+                    ? $now
+                    : $intervalStart->copy()->addSeconds(max(0, (int) $history->elapsed_time)));
+            if ($history->is_running && $intervalEnd->lessThan($now)) {
+                $intervalEnd = $now;
+            }
+            if ($intervalEnd->lessThanOrEqualTo($intervalStart)) {
+                $intervalEnd = $intervalStart->copy()->addSeconds(max(0, (int) $history->elapsed_time));
+            }
+
+            $dayCursor = $intervalStart->copy()->startOfDay();
+            while ($dayCursor->lte($intervalEnd) && $dayCursor->lte($rangeEnd)) {
+                $dayStart = $dayCursor->copy()->max($rangeStart);
+                $dayEnd = $dayCursor->copy()->endOfDay()->min($rangeEnd);
+                $segmentStart = $intervalStart->copy()->max($dayStart);
+                $segmentEnd = $intervalEnd->copy()->min($dayEnd);
+                if ($segmentEnd->greaterThan($segmentStart)) {
+                    $seconds = $segmentStart->diffInSeconds($segmentEnd);
+                    $dateKey = $dayCursor->toDateString();
+                    $trackedByDay[$dateKey] = ($trackedByDay[$dateKey] ?? 0) + $seconds;
+                    $taskStatus = match ($history->task?->status) {
+                        'in_progress' => 'in_progress',
+                        'in_review' => 'in_review',
+                        'on_hold', 'blocked' => 'blocked',
+                        'completed', 'closed' => 'completed',
+                        default => 'to_do',
+                    };
+                    $trackedStatusTasksByDay[$dateKey][$history->task_id] = $taskStatus;
+                    $segmentsByDay[$dateKey][] = [
+                        'title' => $history->task?->title ?? 'Task',
+                        'task_id' => $history->task_id,
+                        'color_index' => $taskColorMap[$history->task_id] ?? 0,
+                        'status' => $taskStatus,
+                        'start_minute' => $segmentStart->hour * 60 + $segmentStart->minute,
+                        'duration_minutes' => max(1, (int) ceil($seconds / 60)),
+                        'start_label' => $segmentStart->format('g:i A'),
+                        'end_label' => $segmentEnd->format('g:i A'),
+                    ];
+                }
+                $dayCursor->addDay();
+            }
+        }
+
+        $estimated = Task::query()
+            ->where('user_id', $user->id)
+            ->whereNotNull('due_date')
+            ->whereBetween('due_date', [$start->toDateString(), $end->toDateString()])
+            ->selectRaw('due_date as activity_date, SUM(estimated_hours) as total_hours')
+            ->groupBy('activity_date')->pluck('total_hours', 'activity_date');
+
+        $days = [];
+        for ($day = $start->copy(); $day->lte($end); $day->addDay()) {
+            $key = $day->toDateString();
+            $statusCounts = array_fill_keys(['completed', 'in_progress', 'in_review', 'blocked', 'to_do'], 0);
+            foreach ($trackedStatusTasksByDay[$key] ?? [] as $taskStatus) {
+                $statusCounts[$taskStatus]++;
+            }
+            $days[] = [
+                'date' => $day->copy(),
+                'tracked_seconds' => (int) ($trackedByDay[$key] ?? 0),
+                'estimated_hours' => (float) ($estimated[$key] ?? 0),
+                'tracked_task_count' => count($trackedStatusTasksByDay[$key] ?? []),
+                'tracked_status_counts' => $statusCounts,
+                'tracked_tasks' => $segmentsByDay[$key] ?? [],
+            ];
+        }
+
+        return $days;
     }
 
     /**

@@ -40,8 +40,9 @@ class TaskController extends Controller
         $tab = $request->get('status') ?: $request->get('tab', 'active');
 
         $baseQuery = Task::query()
-            ->whereHas('project', function ($query) {
-                $query->whereNull('deleted_at');
+            ->where(function ($query) {
+                $query->whereHas('project', fn ($clientQuery) => $clientQuery->whereNull('deleted_at'))
+                    ->orWhereHas('deliveryProject');
             })
             ->when(
                 $user->hasRole(\App\Support\Roles::CLIENT),
@@ -51,6 +52,8 @@ class TaskController extends Controller
                 $user->hasRole(\App\Support\Roles::RESOURCE),
                 fn ($query) => $query->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('created_by', $user->id))
             )
+            ->when($request->get('client_id'), fn ($query, $clientId) => $query->where('client_id', $clientId))
+            ->when($request->get('delivery_project_id'), fn ($query, $deliveryProjectId) => $query->where('project_id', $deliveryProjectId))
             ->when($request->get('project_id'), function ($query) {
                 $query->where('client_id', request('project_id'));
             })
@@ -59,9 +62,6 @@ class TaskController extends Controller
             })
             ->when($request->get('user'), function ($query) {
                 $query->where('user_id', request('user'));
-            })
-            ->when($request->get('cdate'), function ($query) {
-                $query->whereDate('created_at', request('cdate'));
             })
             ->when($request->get('duedate'), function ($query) {
                 $query->whereDate('due_date', request('duedate'));
@@ -73,11 +73,14 @@ class TaskController extends Controller
             'in_progress' => (clone $baseQuery)->where('status', 'in_progress')->count(),
             'in_review' => (clone $baseQuery)->where('status', 'in_review')->count(),
             'on_hold' => (clone $baseQuery)->where('status', 'on_hold')->count(),
+            'completed' => (clone $baseQuery)->where('status', 'completed')->count(),
         ];
 
         $tasks = (clone $baseQuery)
             ->with([
                 'project',
+                'deliveryProject.client',
+                'story',
                 'user' => function ($query) {
                     $query->withTrashed();
                 }
@@ -93,7 +96,27 @@ class TaskController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        $users = User::ofRole(\App\Support\Roles::RESOURCE)->withTrashed()->get();
+        $users = User::ofRole(\App\Support\Roles::RESOURCE)->withTrashed()->orderBy('name')->get();
+        $clients = Client::query()->orderBy('name')->get(['id', 'name']);
+        $projectAssignments = DB::table('project_members')
+            ->select('project_id', 'user_id')
+            ->union(DB::table('tasks')
+                ->select('project_id', 'user_id')
+                ->whereNotNull('project_id')
+                ->whereNotNull('user_id'))
+            ->get()
+            ->groupBy('project_id')
+            ->map(fn ($assignments) => $assignments->pluck('user_id')->map(fn ($id) => (string) $id)->values());
+        $filterProjects = Project::query()
+            ->orderBy('name')
+            ->get(['id', 'client_id', 'name'])
+            ->map(fn (Project $filterProject) => [
+                'id' => (string) $filterProject->id,
+                'name' => $filterProject->name,
+                'client_id' => (string) $filterProject->client_id,
+                'members' => $projectAssignments->get($filterProject->id, collect()),
+            ])
+            ->values();
         $project = null;
         if ($request->get('project_id')) {
             // $project = Client::with('users')->find($request->get('project_id'));
@@ -107,6 +130,8 @@ class TaskController extends Controller
             'project' => $project,
             'tasks' => $tasks,
             'users' => $users,
+            'clients' => $clients,
+            'filterProjects' => $filterProjects,
             'currentTab' => $tab,
             'tabCounts' => $tabCounts,
         ]);
@@ -143,6 +168,9 @@ class TaskController extends Controller
         $chats = Chat::with('user')->where('task_id', $task->id)->get();
 
         $totalTime = $this->_getTotalTrackerTime($user_id, $task->id);
+        $hasTrackedTime = $task->trackerHistories()
+            ->where(fn ($query) => $query->where('elapsed_time', '>', 0)->orWhere('is_running', true))
+            ->exists();
 
         $taskHistories = $this->timeLogHistories($task);
 
@@ -152,12 +180,13 @@ class TaskController extends Controller
             ? max(0, (int) Carbon::parse($runningHistory->start_time)->diffInSeconds(Carbon::now()))
             : null;
 
-        return view('tasks.show', compact('task', 'chats', 'files', 'totalTime', 'taskHistories', 'runningSeconds'));
+        return view('tasks.show', compact('task', 'chats', 'files', 'totalTime', 'taskHistories', 'runningSeconds', 'hasTrackedTime'));
     }
 
     public function update(Request $request, Task $task)
     {
         $this->authorize('tasks-update', $task);
+        $this->ensureTaskStoryIsEditable($task);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -193,6 +222,41 @@ class TaskController extends Controller
         return back()->with('success', 'Task updated successfully.');
     }
 
+    public function updatePriority(Request $request, Task $task)
+    {
+        $this->authorize('tasks-update', $task);
+        $this->ensureTaskStoryIsEditable($task);
+
+        $data = $request->validate(['priority' => 'required|in:low,medium,high']);
+        $task->update($data);
+
+        return back()->with('success', 'Task priority updated successfully.');
+    }
+
+    public function updateDueDate(Request $request, Task $task)
+    {
+        $this->authorize('tasks-update', $task);
+        $this->ensureTaskStoryIsEditable($task);
+
+        $data = $request->validate(['due_date' => 'nullable|date']);
+        $oldDueDate = $task->due_date ? Carbon::parse($task->due_date)->format('Y-m-d') : null;
+        $newDueDate = ($data['due_date'] ?? null) ?: null;
+
+        DB::transaction(function () use ($task, $oldDueDate, $newDueDate) {
+            $task->update(['due_date' => $newDueDate]);
+
+            if ($oldDueDate !== $newDueDate) {
+                $task->dueDateHistories()->create([
+                    'old_due_date' => $oldDueDate,
+                    'new_due_date' => $newDueDate,
+                    'changed_by' => Auth::id(),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Task due date updated successfully.');
+    }
+
     /**
      * Edit one finished session of a task. The page sends either
      *  - start_time + end_time: the duration is worked out from them, or
@@ -202,6 +266,7 @@ class TaskController extends Controller
     public function updateTime(Request $request, Task $task, TrackerHistory $trackerHistory)
     {
         $this->authorize('tasks-time-update');
+        $this->ensureTaskStoryIsEditable($task);
 
         // the entry has to belong to the task whose page is being edited
         abort_unless((int) $trackerHistory->task_id === (int) $task->id, 404);
@@ -260,6 +325,7 @@ class TaskController extends Controller
     public function updateStatus(Request $request, Task $task)
     {
         $this->authorize('tasks-update', $task);
+        $this->ensureTaskStoryIsEditable($task);
 
         $request->validate(['status' => 'required|in:to_do,in_progress,completed,on_hold,in_review,pending,closed']);
 
@@ -285,6 +351,7 @@ class TaskController extends Controller
     {
         $task = Task::findOrFail($taskid);
         $this->authorize('tasks-show', $task);
+        $this->ensureTaskStoryIsEditable($task);
 
         $userId = auth()->id();
 
@@ -374,7 +441,7 @@ class TaskController extends Controller
                         'due_date' => $dueDate?->format('d F Y'),
                         'is_overdue' => $dueDate !== null && $dueDate->copy()->endOfDay()->isPast(),
                         'estimated' => $estimatedHours !== null
-                            ? rtrim(rtrim(number_format((float) $estimatedHours, 2), '0'), '.') . ' hrs'
+                            ? \App\Support\DurationFormatter::fromHours($estimatedHours)
                             : null,
                         'estimated_seconds' => $estimatedHours ? (int) round($estimatedHours * 3600) : null,
                         'tracked_seconds' => $trackedSeconds,
@@ -470,6 +537,10 @@ class TaskController extends Controller
         $this->authorize('tasks-bulk-complete');
         $task_ids = is_array($validated['task_ids']) ? $validated['task_ids'] : [$validated['task_ids']];
 
+        if (Task::whereIn('id', $task_ids)->whereHas('story', fn ($query) => $query->where('status', 'completed'))->exists()) {
+            return response()->json(['message' => 'This story is completed. Reopen it before changing its tasks.'], 403);
+        }
+
         Task::whereIn('id', $task_ids)->update(['status' => 'completed']);
 
         // Completing a task stops any timer still running on it
@@ -490,8 +561,23 @@ class TaskController extends Controller
     public function destroy(Task $task)
     {
         $this->authorize('tasks-delete', $task);
+        abort_unless(Auth::user()->hasRole(\App\Support\Roles::ADMIN), 403, 'Only an admin can delete tasks.');
+        $this->ensureTaskStoryIsEditable($task, true);
+
+        $hasTrackedTime = $task->trackerHistories()
+            ->where(fn ($query) => $query->where('elapsed_time', '>', 0)->orWhere('is_running', true))
+            ->exists();
+
+        if ($hasTrackedTime) {
+            return back()->with('error', 'This task cannot be deleted because time has already been tracked.');
+        }
+
+        $storyId = $task->story_id;
         $task->delete();
-        return redirect()->route('tasks.index')->with('success', 'Task deleted successfully.');
+
+        return $storyId
+            ? redirect()->route('stories.show', $storyId)->with('success', 'Task deleted successfully.')
+            : redirect()->route('tasks.index')->with('success', 'Task deleted successfully.');
     }
 
     /**
@@ -562,15 +648,10 @@ class TaskController extends Controller
             ]));
     }
 
-    /**
-     * Only the assignee may log time against a task. Administrators retain their
-     * existing task-management access.
-     */
+    /** Only the assigned user may start, stop, save, or manually log time. */
     private function authorizeTaskTimer(Task $task): void
     {
-        abort_unless(
-            Auth::user()->hasRole(\App\Support\Roles::ADMIN) || $task->user_id === Auth::id(),
-            403
-        );
+        $this->ensureTaskStoryIsEditable($task);
+        abort_unless((int) $task->user_id === (int) Auth::id(), 403);
     }
 }

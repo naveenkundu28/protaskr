@@ -2,8 +2,19 @@
 @section('title', 'Hourly Report')
 @section('content')
 
-    <div class="container-fluid mt-80">
-        <h2>Hourly Report</h2>
+    @php
+        $hourlyUserCount = $users->count();
+        $hourlyDensity = $hourlyUserCount >= 25 ? 'hourly-report-table--compact' : ($hourlyUserCount >= 21 ? 'hourly-report-table--standard' : 'hourly-report-table--roomy');
+    @endphp
+
+    <div class="container-fluid mt-80 hourly-report-page">
+        <div class="hourly-report-heading">
+            <div>
+                <span class="hourly-report-eyebrow">TIME TRACKING</span>
+                <h1>Hourly Report</h1>
+                <p>Review daily hours and performance across your team.</p>
+            </div>
+        </div>
 
         @if (session('success'))
             <div class="alert alert-success" role="alert">
@@ -11,52 +22,43 @@
             </div>
         @endif
 
-        <div class="row mb-3">
-
-            <form method="GET" class="col-md-3" action="{{ route('reports.hourly.index') }}">
+        <div class="hourly-report-toolbar">
+            <form method="GET" class="hourly-report-filter" action="{{ route('reports.hourly.index') }}">
+                <label for="hourlyMonth">Report month</label>
                 <div class="input-group">
-                    <input type="month" name="month" class="form-control" value="{{ request('month') ?? date('Y-m') }}">
-                    <button class="btn btn-primary">Search</button>
+                    <input id="hourlyMonth" type="month" name="month" class="form-control" value="{{ request('month') ?? date('Y-m') }}">
+                    <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i> Search</button>
                 </div>
             </form>
 
-            <div class="col-md-3">
-                <select class="form-control" id="userFilter">
-                    <option value="">All Users</option>
+            <div class="hourly-report-filter">
+                <label for="userFilter">Team member</label>
+                <select class="form-select" id="userFilter">
+                    <option value="">All users</option>
                     @foreach ($users as $user)
-                        <option value="{{ $user->id }}">
-                            {{ $user->name }}
-                        </option>
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
                     @endforeach
                 </select>
             </div>
 
-
             @if (auth()->user()?->can('reports-hourly-update'))
-                <div class="col-md-3">
-                    <form method="POST" class="input-group" action="{{ route('reports.hourly.generate-weekly') }}">
-
-                        @csrf
-
-                        <input type="date" name="report_date" class="form-control" max="{{ now()->subDay()->format('Y-m-d') }}"
+                <form method="POST" class="hourly-report-filter hourly-report-fetch" action="{{ route('reports.hourly.generate-weekly') }}">
+                    @csrf
+                    <label for="hourlyFetchDate">Fetch report through</label>
+                    <div class="input-group">
+                        <input id="hourlyFetchDate" type="date" name="report_date" class="form-control" max="{{ now()->subDay()->format('Y-m-d') }}"
                             value="{{ now()->subDay()->format('Y-m-d') }}">
-
                         <button type="submit" class="btn btn-info text-white">
                             <i class="bi bi-arrow-repeat me-1"></i> Fetch
                         </button>
-                    </form>
-
-                </div>
+                    </div>
+                </form>
             @endif
         </div>
 
-        <div class="table-scroll-top mb-1">
-            <div></div>
-        </div>
+        <div class="table-responsive table-scroll-bottom hourly-report-table-card">
 
-        <div class="table-responsive table-scroll-bottom">
-
-            <table class="table table-bordered table-sm text-center text-nowrap report-table">
+            <table class="table table-bordered table-sm text-center text-nowrap report-table hourly-report-table {{ $hourlyDensity }}">
                 <thead>
                     <tr class="f-12">
                         <th>#</th>
@@ -70,9 +72,7 @@
                         <th>Date</th>
                         @foreach ($users as $user)
                             @php
-                                $name = explode(' ', $user->name);
-                                $initials = strtoupper(substr($name[0], 0, 1) . '_' . substr(end($name), 0, 1));
-
+                                $firstName = explode(' ', trim($user->name))[0] ?? $user->name;
                                 $tagColor = $user->color ?: '#6c757d';
                                 $hex = ltrim($tagColor, '#');
                                 if (strlen($hex) === 3) {
@@ -84,15 +84,15 @@
                                 $brightness = ($r * 299 + $g * 587 + $b * 114) / 1000;
                                 $textColor = $brightness > 159 ? '#111111' : '#ffffff';
                             @endphp
-                            <th class="px-4" data-user="{{ $user->id }}" title="{{ $user->name }}" style="font-weight: 600; background-color: {{ $tagColor }}; color: {{ $textColor }};">
-                                {{ $initials }}
+                            <th class="hourly-report-user-heading" data-user="{{ $user->id }}" title="{{ $user->name }}" style="font-weight: 600; background-color: {{ $tagColor }}; color: {{ $textColor }};">
+                                {{ $firstName }}
                             </th>
                         @endforeach
                     </tr>
                     <tr class="f-12">
                         <th>Total</th>
                         @foreach ($users as $user)
-                            <th data-user="{{ $user->id }}">
+                            <th data-user="{{ $user->id }}" data-user-name="{{ explode(' ', trim($user->name))[0] ?? $user->name }}">
                                 @php
                                     $minutes = $totals[$user->id] ?? 0;
                                 @endphp
@@ -110,7 +110,7 @@
                                     $report = $reports[$date][$user->id][0] ?? null;
                                     $minutes = $report->time ?? 0;
                                 @endphp
-                                <td data-user="{{ $user->id }}" class="daily-report-cell p-0"
+                                <td data-user="{{ $user->id }}" data-user-name="{{ explode(' ', trim($user->name))[0] ?? $user->name }}" class="daily-report-cell p-0"
                                     title="{{ $report && $report->performance ? $user->name . ' - ' . $report->performance->title : $user->name . ' - Absent' }}"
                                     style="background-color: {{ $report->performance->background_color ?? '#8b1c1c' }}; color: {{ $report->performance->font_color ?? '#fff' }};">
                                     <button type="button"
@@ -131,10 +131,10 @@
                             @endforeach
                         </tr>
                     @endforeach
-                    <tr class="f-12">
+                    <tr class="f-12 hourly-report-total-row">
                         <th>Total</th>
                         @foreach ($users as $user)
-                            <th data-user="{{ $user->id }}">
+                            <th data-user="{{ $user->id }}" data-user-name="{{ explode(' ', trim($user->name))[0] ?? $user->name }}">
                                 @php
                                     $minutes = $totals[$user->id] ?? 0;
                                 @endphp
@@ -146,8 +146,8 @@
             </table>
         </div>
 
-        <h5 class="mt-4">Performance Legend</h5>
-        <div class="d-flex flex-wrap gap-3 pb-4">
+        <h5 class="hourly-report-legend-title">Performance Legend</h5>
+        <div class="hourly-report-legend">
             @foreach ($performances as $p)
                 <div
                     style="background: {{ $p->background_color }}; color: {{ $p->font_color }}; padding:6px 12px; border-radius:4px;">
@@ -155,8 +155,8 @@
                 </div>
             @endforeach
         </div>
-        <h5 class="mt-4">Tags Legend</h5>
-        <div class="d-flex flex-wrap gap-3 pb-4">
+        <h5 class="hourly-report-legend-title">Tags Legend</h5>
+        <div class="hourly-report-legend">
             @foreach ($tags as $p)
                 @php
                     $tagColor = $p->color ?: '#6c757d';
@@ -250,89 +250,33 @@
 
 @endsection
 
-@push('styles')
-    <style>
-        .table-scroll-top {
-            overflow-x: auto;
-            overflow-y: hidden;
-        }
-
-        .table-scroll-top div {
-            height: 1px;
-        }
-
-        .table-scroll-bottom {
-            overflow-x: auto;
-        }
-    </style>
-@endpush
-
 @push('scripts')
     <script>
-        // -----------START: code for top scroll and bottom scroll sync----------------
+        function updateHourlyReportDensity() {
+            const table = $('.hourly-report-table');
+            const visibleUserCount = $('#userFilter').val() ? 1 : table.find('thead tr:nth-child(2) th[data-user]').length;
+            const densityClass = visibleUserCount >= 25 ? 'hourly-report-table--compact' :
+                (visibleUserCount >= 21 ? 'hourly-report-table--standard' : 'hourly-report-table--roomy');
 
-        let topScroll;
-        let bottomScroll;
-
-        // ✅ Make function global
-        function syncWidth() {
-            if (!topScroll || !bottomScroll) return;
-
-            const table = bottomScroll.find('table');
-            const tableWidth = table.outerWidth();
-            const containerWidth = bottomScroll.outerWidth();
-
-            topScroll.find('div').width(tableWidth);
-
-            if (tableWidth > containerWidth) {
-                topScroll.show();
-            } else {
-                topScroll.hide();
-            }
+            table.removeClass('hourly-report-table--compact hourly-report-table--standard hourly-report-table--roomy')
+                .addClass(densityClass);
         }
+
         $(document).ready(function() {
             $('[title]').tooltip();
-
-
-            topScroll = $('.table-scroll-top');
-            bottomScroll = $('.table-scroll-bottom');
-
-            syncWidth();
-
-            // Sync scroll positions
-            topScroll.on('scroll', function() {
-                bottomScroll.scrollLeft($(this).scrollLeft());
-            });
-
-            bottomScroll.on('scroll', function() {
-                topScroll.scrollLeft($(this).scrollLeft());
-            });
-
-            // Recalculate on window resize
-            $(window).on('resize', syncWidth);
-
-            // -----------END: code for top scroll and bottom scroll sync----------------
+            updateHourlyReportDensity();
         });
 
         $('#userFilter').change(function() {
-            let user = $(this).val();
-            if (user == '') {
-                $('td,th').show();
-                $('.report-table th:first-child, .report-table td:first-child').css('width', 'auto');
-                $('.report-table th[data-user], .report-table td[data-user]').css('width', 'auto');
+            const user = $(this).val();
+            const userCells = $('.hourly-report-table [data-user]');
 
-            } else {
-                $('td[data-user],th[data-user]').hide();
-                $('td[data-user=' + user + '],th[data-user=' + user + ']').show();
-
-                $('.report-table th:first-child, .report-table td:first-child').css('width', '50%');
-                $('.report-table th[data-user=' + user + '], .report-table td[data-user=' + user + ']').css('width',
-                    '50%');
+            userCells.removeClass('hourly-report-user-hidden');
+            if (user !== '') {
+                userCells.not('[data-user="' + user + '"]').addClass('hourly-report-user-hidden');
             }
 
-            // $('.table-scroll-top').toggle();
-            syncWidth();
-
+            updateHourlyReportDensity();
         });
 
         const dailyReportEditModal = document.getElementById('dailyReportEditModal');

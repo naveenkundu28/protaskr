@@ -149,8 +149,18 @@ class DailyReportController extends Controller
     public function getDailyTaskReports()
     {
         $this->authorize('reports-daily-task');
-        $tags = Tag::all();
-        return view('reports.daily-task', compact('tags'));
+        $tags = Tag::orderByRaw("CASE LOWER(name) WHEN 'php' THEN 0 WHEN 'ui/ux' THEN 1 WHEN 'node' THEN 2 WHEN 'devops' THEN 3 ELSE 4 END")
+            ->orderBy('name')
+            ->get();
+        $teamMembers = User::where('user_type', 'Internal')
+            ->where('is_show_report', true)
+            ->whereDoesntHave('role', function ($query) {
+                $query->where('name', \App\Support\Roles::ADMIN);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('reports.daily-task', compact('tags', 'teamMembers'));
     }
 
     public function getUserTasks(Request $request)
@@ -189,7 +199,7 @@ class DailyReportController extends Controller
         $taskIds = $trackerSums->pluck('task_id')->unique()->values();
 
         // Load tasks once
-        $tasks = \App\Models\Task::with('project')
+        $tasks = \App\Models\Task::with(['project', 'deliveryProject', 'story'])
             ->whereIn('id', $taskIds)
             ->get()
             ->keyBy('id');
@@ -208,6 +218,11 @@ class DailyReportController extends Controller
                 }
 
                 $taskClone = clone $task;
+                $taskClone->client_name = $task->project?->name;
+                $taskClone->project_name = $task->deliveryProject?->name;
+                $taskClone->project_page_id = $task->deliveryProject?->id;
+                $taskClone->story_title = $task->story?->title;
+                $taskClone->story_page_id = $task->story?->id;
                 $taskClone->total_task_seconds = (int) $tracker->total_seconds;
                 $taskClone->total_task_time = $this->_getTotalTime((int) $tracker->total_seconds);
 

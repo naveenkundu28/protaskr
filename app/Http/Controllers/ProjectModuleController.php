@@ -201,12 +201,28 @@ class ProjectModuleController extends Controller
 
             $formStory = Story::findOrFail($request->integer('edit_story'));
             abort_unless($formStory->project_id === $project->id, 404);
+            if ($formStory->status === 'completed') {
+                return redirect()->route('projects.show', ['project' => $project, 'tab' => 'stories'])
+                    ->with('error', 'This story is completed. Reopen it before making changes.');
+            }
         }
 
         $stories = null;
+        $storyFilter = $request->query('story_filter', 'active') === 'completed' ? 'completed' : 'active';
+        $storyCounts = [
+            'completed' => (int) $storyStatuses->get('completed', 0),
+            'active' => (int) ($storyStatuses->sum() - $storyStatuses->get('completed', 0)),
+        ];
 
         if ($request->get('tab') === 'stories') {
-            $stories = $project->stories()
+            $storiesQuery = $project->stories();
+            if ($storyFilter === 'completed') {
+                $storiesQuery->where('status', 'completed');
+            } else {
+                $storiesQuery->where('status', '!=', 'completed');
+            }
+
+            $stories = $storiesQuery
                 ->select('stories.*')
                 ->with('creator:id,name')
                 ->withCount('tasks')
@@ -245,7 +261,7 @@ class ProjectModuleController extends Controller
 
         return view(
             'projects.show',
-            compact('project', 'overview', 'formStory', 'stories', 'currentFolder', 'folders', 'projectFiles', 'showEstimatedHours')
+            compact('project', 'overview', 'formStory', 'stories', 'storyFilter', 'storyCounts', 'currentFolder', 'folders', 'projectFiles', 'showEstimatedHours')
         );
     }
 

@@ -1,5 +1,5 @@
 {{-- Rows of the Files tab on the task page. Also returned after an upload to refresh the list in place. --}}
-@php($canUpdateFiles = auth()->user()->can('tasks-update'))
+@php($canUpdateFiles = auth()->user()->can('tasks-update', $task) && $task->story?->status !== 'completed')
 @forelse ($files as $file)
     <tr>
         <td>{{ $loop->iteration }}</td>

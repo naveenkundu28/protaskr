@@ -63,13 +63,17 @@
                                 </li>
                                 @endcan
                                 @can('clients-access')
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle {{ request()->is('clients*') ? 'active' : '' }}"
-                                        href="{{ route('clients.index') }}" role="button" data-bs-toggle="dropdown"
-                                        aria-expanded="false">
-                                        <i class="bi bi-building"></i> Clients
-                                    </a>
-                                    <ul class="dropdown-menu">
+                                @php($clientsMenuOpen = request()->is('clients*') || request()->routeIs('services.listing.index', 'services.bulk.edit'))
+                                <li class="nav-item sidebar-nav-item has-submenu {{ $clientsMenuOpen ? 'is-open is-active-route' : '' }}">
+                                    <div class="sidebar-parent-row">
+                                        <a class="nav-link sidebar-parent-link {{ $clientsMenuOpen ? 'active' : '' }}" href="{{ route('clients.index') }}">
+                                            <i class="bi bi-building"></i><span class="sidebar-nav-label">Clients</span>
+                                        </a>
+                                        <button class="sidebar-submenu-toggle" type="button" aria-label="Toggle Clients submenu" aria-controls="clientsSubmenu" aria-expanded="{{ $clientsMenuOpen ? 'true' : 'false' }}">
+                                            <i class="bi {{ $clientsMenuOpen ? 'bi-dash-lg' : 'bi-plus-lg' }}" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <ul class="dropdown-menu sidebar-submenu {{ $clientsMenuOpen ? 'show' : '' }}" id="clientsSubmenu">
                                         <li>
                                             <a class="dropdown-item {{ request()->is('clients?type=archived*') ? 'active' : '' }}"
                                                 href="{{ route('clients.index') }}">
@@ -88,7 +92,7 @@
                                         <li>
                                             <a class="dropdown-item {{ request()->routeIs('services.bulk.edit') ? 'active' : '' }}"
                                                 href="{{ route('services.bulk.edit') }}">
-                                                <i class="bi bi-plus-square me-2"></i> Bulk Service Addition
+                                                <i class="bi bi-plus-square me-2"></i> Bulk Services
                                             </a>
                                         </li>
                                         @endcan
@@ -118,16 +122,21 @@
                                 </li>
                             @endcan
                             @can('users-access')
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle {{ request()->is('users*') || request()->is('users/resigned*') ? 'active' : '' }}"
-                                        href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-people"></i> Users
-                                    </a>
-                                    <ul class="dropdown-menu">
+                                @php($usersMenuOpen = request()->is('users*'))
+                                <li class="nav-item sidebar-nav-item has-submenu {{ $usersMenuOpen ? 'is-open is-active-route' : '' }}">
+                                    <div class="sidebar-parent-row">
+                                        <a class="nav-link sidebar-parent-link {{ $usersMenuOpen ? 'active' : '' }}" href="{{ route('users.index') }}">
+                                            <i class="bi bi-people"></i><span class="sidebar-nav-label">Users</span>
+                                        </a>
+                                        <button class="sidebar-submenu-toggle" type="button" aria-label="Toggle Users submenu" aria-controls="usersSubmenu" aria-expanded="{{ $usersMenuOpen ? 'true' : 'false' }}">
+                                            <i class="bi {{ $usersMenuOpen ? 'bi-dash-lg' : 'bi-plus-lg' }}" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <ul class="dropdown-menu sidebar-submenu {{ $usersMenuOpen ? 'show' : '' }}" id="usersSubmenu">
                                         <li>
                                             <a class="dropdown-item {{ request()->is('users') ? 'active' : '' }}"
                                                 href="{{ route('users.index') }}">
-                                                <i class="bi bi-people"></i> Users list
+                                                <i class="bi bi-people me-2"></i> Users list
                                             </a>
                                         </li>
                                         <li>
@@ -141,17 +150,22 @@
                             @endcan
 
                             @canany(['reports-hourly', 'reports-daily-task'])
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle {{ request()->is('reports/hourly*') || request()->is('reports/daily-task*') ? 'active' : '' }}"
-                                        href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="bi bi-bar-chart-line"></i> Daily Report
-                                    </a>
-                                    <ul class="dropdown-menu">
+                                @php($reportsMenuOpen = request()->is('reports/hourly*') || request()->is('reports/daily-task*'))
+                                <li class="nav-item sidebar-nav-item has-submenu {{ $reportsMenuOpen ? 'is-open is-active-route' : '' }}">
+                                    <div class="sidebar-parent-row">
+                                        <a class="nav-link sidebar-parent-link {{ $reportsMenuOpen ? 'active' : '' }}" href="{{ Auth::user()->can('reports-hourly') ? route('reports.hourly.index') : route('reports.daily-task.index') }}">
+                                            <i class="bi bi-bar-chart-line"></i><span class="sidebar-nav-label">Daily Report</span>
+                                        </a>
+                                        <button class="sidebar-submenu-toggle" type="button" aria-label="Toggle Daily Report submenu" aria-controls="reportsSubmenu" aria-expanded="{{ $reportsMenuOpen ? 'true' : 'false' }}">
+                                            <i class="bi {{ $reportsMenuOpen ? 'bi-dash-lg' : 'bi-plus-lg' }}" aria-hidden="true"></i>
+                                        </button>
+                                    </div>
+                                    <ul class="dropdown-menu sidebar-submenu {{ $reportsMenuOpen ? 'show' : '' }}" id="reportsSubmenu">
                                         @can('reports-hourly')
                                         <li>
                                             <a class="dropdown-item {{ request()->is('reports/hourly*') ? 'active' : '' }}"
                                                 href="{{ route('reports.hourly.index') }}">
-                                                <i class="bi bi-clock"></i> Hourly Report
+                                                <i class="bi bi-clock me-2"></i> Hourly Report
                                             </a>
                                         </li>
                                         @endcan
@@ -159,7 +173,7 @@
                                         <li>
                                             <a class="dropdown-item {{ request()->is('reports/daily-task*') ? 'active' : '' }}"
                                                 href="{{ route('reports.daily-task.index') }}">
-                                                <i class="bi bi-hourglass-split"></i> Daily Task Report
+                                                <i class="bi bi-hourglass-split me-2"></i> Task Reports
                                             </a>
                                         </li>
                                         @endcan
@@ -232,11 +246,12 @@
                 $(document).on('show.bs.dropdown', '.service-action-dropdown', function() {
                     const $dropdown = $(this);
                     const $menu = $dropdown.find('.dropdown-menu');
-                    const offset = $dropdown.find('[data-bs-toggle="dropdown"]').offset();
+                    const $trigger = $dropdown.find('[data-bs-toggle="dropdown"]');
+                    const offset = $trigger.offset();
 
                     $menu.appendTo('body').css({
                         position: 'absolute',
-                        top: offset.top + $dropdown.outerHeight(),
+                        top: offset.top + $trigger.outerHeight(),
                         left: offset.left,
                         zIndex: 1080
                     }).addClass('show');

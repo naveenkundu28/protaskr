@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\TrackerTrait;
 use Carbon\CarbonInterval;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -11,6 +12,11 @@ class TrackerHistory extends Model
 {
     use HasFactory, TrackerTrait;
     protected $guarded = [];
+
+    public function task(): BelongsTo
+    {
+        return $this->belongsTo(Task::class);
+    }
 
     public function getElapsedTimeFormattedAttribute()
     {

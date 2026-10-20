@@ -4,201 +4,11 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('assets/project-module.css') }}">
-    <style>
-        .inner_page_topbar h1 {
-            white-space: nowrap;
-            margin: 0;
-            font-size: 2rem;
-            font-weight: 750;
-        }
-        .inner_page_topbar .right_search_box {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 0;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
-        .inner_page_topbar .search_box {
-            position: relative;
-            margin: 0;
-        }
-        .inner_page_topbar .search_box input {
-            background: #fff;
-            outline: none;
-            border: 1px solid #ddd;
-            padding: 10px 36px 10px 42px;
-            font-size: 14px;
-            min-width: 250px;
-            border-radius: 10px;
-            color: #010132;
-            height: 42px;
-            transition: all .15s ease;
-        }
-        .inner_page_topbar .search_box input:focus {
-            border-color: #1469e8;
-            box-shadow: 0 0 0 3px rgba(20, 105, 232, 0.12);
-        }
-        .inner_page_topbar .search_box button {
-            position: absolute;
-            left: 14px;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            background: transparent;
-            border: 0;
-            padding: 0;
-            color: #64748b;
-            cursor: pointer;
-            line-height: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .search_clear_link {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8;
-            background: transparent;
-            border: none;
-            padding: 2px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13px;
-            text-decoration: none;
-            border-radius: 50%;
-            transition: all .15s ease;
-        }
-        .search_clear_link:hover {
-            color: #0f172a;
-            background: #f1f5f9;
-        }
-        .filter-toggle-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            height: 42px;
-            padding: 0 16px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            background: #fff;
-            color: #46536b;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: all .15s ease;
-        }
-        .filter-toggle-btn:hover,
-        .filter-toggle-btn:focus,
-        .filter-toggle-btn[aria-expanded="true"] {
-            background: #f8faff;
-            border-color: #1469e8;
-            color: #1469e8;
-        }
-        .filter-toggle-btn.has-filter {
-            background: #eef5ff;
-            border-color: #1469e8;
-            color: #1469e8;
-            font-weight: 600;
-        }
-        .filter-badge-count {
-            background: #1469e8;
-            color: #fff;
-            font-size: 11px;
-            font-weight: 700;
-            padding: 2px 7px;
-            border-radius: 10px;
-            line-height: 1.2;
-        }
-        .toggle-chevron {
-            font-size: 11px;
-            color: #94a3b8;
-            transition: transform .2s ease;
-        }
-        .filter-toggle-btn[aria-expanded="true"] .toggle-chevron {
-            transform: rotate(180deg);
-        }
-        .pm-filter-panel {
-            background: #fff;
-            border: 1px solid #e6edf7;
-            border-radius: 14px;
-            padding: 20px 24px;
-            margin-bottom: 22px;
-            box-shadow: 0 8px 24px rgba(20, 105, 232, 0.05);
-        }
-        .pm-filter-panel-title {
-            font-size: 12px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .06em;
-            color: #46536b;
-        }
-        .pm-filter-label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: .05em;
-            color: #64748b;
-            margin-bottom: 6px;
-            display: block;
-        }
-        .pm-filter-input {
-            height: 42px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            font-size: 14px;
-            color: #17243d;
-            padding: 0 14px;
-            background-color: #fff;
-            transition: all .15s ease;
-        }
-        .pm-filter-input:focus {
-            border-color: #1469e8;
-            box-shadow: 0 0 0 3px rgba(20, 105, 232, 0.12);
-            outline: none;
-        }
-        .pm-button {
-            height: 42px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            border-radius: 10px !important;
-            padding: 0 18px !important;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-        .task-status-btn {
-            border: 0;
-            background: transparent;
-            padding: 0;
-            cursor: pointer;
-        }
-        .task-status-btn:focus {
-            outline: none;
-            box-shadow: none;
-        }
-        @media (max-width: 991px) {
-            .inner_page_topbar {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 16px;
-            }
-            .inner_page_topbar .right_search_box {
-                justify-content: flex-start;
-            }
-            .inner_page_topbar .search_box input {
-                min-width: 100%;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('assets/tasks.css') }}">
 @endpush
 
 @section('content')
-<div class="container-fluid mt-80">
+<div class="container-fluid mt-80 tasks-page">
     {{-- Alerts --}}
     @session('success')
         <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
@@ -207,45 +17,30 @@
         </div>
     @endsession
 
-    {{-- Top heading & search/action bar --}}
+    @php
+        $taskListFilters = array_filter([
+            'tab' => $currentTab,
+            'status' => request('status'),
+            'user' => request('user'),
+            'duedate' => request('duedate'),
+            'client_id' => request('client_id'),
+            'delivery_project_id' => request('delivery_project_id'),
+            'project_id' => optional($project)->id,
+        ], fn ($value) => $value !== null && $value !== '');
+        $withoutTaskFilter = function ($key) use ($taskListFilters) {
+            $filters = $taskListFilters;
+            unset($filters[$key]);
+            return $filters;
+        };
+    @endphp
+
+    {{-- Page title and actions --}}
     <div class="pm-heading">
         <div class="inner_page_topbar">
-            <h1>{{ isset($project) ? $project->name . ' - Tasks' : 'Tasks' }}</h1>
+            <div class="tasks-page-title">
+                <h1>{{ isset($project) ? $project->name . ' - Tasks' : 'Tasks' }}</h1>
+            </div>
             <div class="right_search_box">
-                {{-- Search Box --}}
-                <div class="search_box">
-                    <button type="button" id="topbarSearchBtn" aria-label="Search">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"></path>
-                        </svg>
-                    </button>
-                    <input type="text" id="topbarSearchInput" value="{{ request('search') }}" placeholder="Search tasks...">
-                    @if (request('search'))
-                        <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'status' => request('status'), 'user' => request('user'), 'cdate' => request('cdate'), 'duedate' => request('duedate'), 'project_id' => optional($project)->id])) }}" class="search_clear_link" title="Clear search">
-                            <i class="bi bi-x-lg"></i>
-                        </a>
-                    @endif
-                </div>
-
-                {{-- Filter Toggle Button --}}
-                @php
-                    $hasFilters = request('status') || request('user') || request('cdate') || request('duedate');
-                    $activeFilterCount = (!empty(request('status')) ? 1 : 0)
-                        + (!empty(request('user')) ? 1 : 0)
-                        + (!empty(request('cdate')) ? 1 : 0)
-                        + (!empty(request('duedate')) ? 1 : 0);
-                @endphp
-                <button type="button" class="filter-toggle-btn {{ $hasFilters ? 'has-filter' : '' }}"
-                    data-bs-toggle="collapse" data-bs-target="#tasksFilterSection"
-                    aria-expanded="{{ $hasFilters ? 'true' : 'false' }}" aria-controls="tasksFilterSection" id="filterToggleBtn">
-                    <i class="bi bi-funnel{{ $hasFilters ? '-fill text-primary' : '' }}"></i>
-                    <span>Filter</span>
-                    @if ($hasFilters)
-                        <span class="filter-badge-count">{{ $activeFilterCount }}</span>
-                    @endif
-                    <i class="bi bi-chevron-down toggle-chevron"></i>
-                </button>
-
                 {{-- Export Button --}}
                 @can('tasks-export')
                     <button type="button" class="btn btn-outline-secondary pm-button" data-bs-toggle="modal" data-bs-target="#exportModal">
@@ -260,41 +55,24 @@
                     </button>
                 @endcan
 
-                {{-- Create Task Button --}}
-                @can('tasks-create')
-                    <a href="#" data-bs-toggle="modal" data-bs-target="#createTaskModal" class="btn btn-primary pm-button">
-                        <i class="bi bi-plus-lg"></i> New Task
-                    </a>
-                @endcan
             </div>
         </div>
     </div>
 
-    {{-- Slide-down Filter Section --}}
-    <div class="collapse {{ $hasFilters ? 'show' : '' }} mb-4" id="tasksFilterSection">
-        <div class="pm-filter-panel">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-sliders text-primary"></i>
-                    <span class="pm-filter-panel-title">Filter Tasks</span>
-                </div>
-                @if ($hasFilters || request('search'))
-                    <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'project_id' => optional($project)->id])) }}" class="text-danger small text-decoration-none fw-semibold">
-                        <i class="bi bi-arrow-counterclockwise"></i> Reset All
-                    </a>
-                @endif
-            </div>
+    {{-- Always-visible task filters --}}
+    @php
+        $hasFilters = request('status') || request('user') || request('duedate') || request('client_id') || request('delivery_project_id');
+    @endphp
+    <div class="tasks-filter-fields mb-3">
+        <form method="GET" action="{{ route('tasks.index') }}" id="tasksFilterForm" class="m-0">
+            @if ($project)
+                <input type="hidden" value="{{ $project->id }}" name="project_id">
+            @endif
+            <input type="hidden" name="tab" value="{{ $currentTab }}">
 
-            <form method="GET" action="{{ route('tasks.index') }}" id="tasksFilterForm" class="m-0">
-                @if ($project)
-                    <input type="hidden" value="{{ $project->id }}" name="project_id">
-                @endif
-                <input type="hidden" name="tab" value="{{ $currentTab }}">
-                <input type="hidden" name="search" id="filterHiddenSearch" value="{{ request('search') }}">
-
-                <div class="row g-3 align-items-end">
+            <div class="row g-3 align-items-end">
                     {{-- Status Filter --}}
-                    <div class="col-lg-3 col-md-6">
+                    <div class="col-lg-2 col-md-6">
                         <label class="pm-filter-label" for="filter_status">Status</label>
                         <select name="status" id="filter_status" class="form-select pm-filter-input" aria-label="Filter by status">
                             <option value="">All Statuses</option>
@@ -309,11 +87,11 @@
                     </div>
 
                     {{-- Assigned To Filter --}}
-                    <div class="col-lg-3 col-md-6">
+                    <div class="col-lg-2 col-md-6">
                         <label class="pm-filter-label" for="filter_user">Assigned To</label>
-                        <select name="user" id="filter_user" class="form-select pm-filter-input" aria-label="Filter by user">
+                        <select name="user" id="filter_user" class="form-select pm-filter-input select2" aria-label="Filter by user">
                             <option value="">All Employees</option>
-                            @foreach ($project ? $project->users : $users as $user)
+                            @foreach ($users as $user)
                                 <option value="{{ $user->id }}" @selected(request('user') == $user->id)>
                                     {{ $user->name }}
                                 </option>
@@ -321,34 +99,54 @@
                         </select>
                     </div>
 
-                    {{-- Created Date --}}
-                    <div class="col-lg-2 col-md-4">
-                        <label class="pm-filter-label" for="filter_cdate">Created Date</label>
-                        <input id="filter_cdate" type="date" name="cdate" class="form-control pm-filter-input"
-                            value="{{ request('cdate') }}">
+                    {{-- Client Filter --}}
+                    <div class="col-lg-2 col-md-6">
+                        <label class="pm-filter-label" for="filter_client">Client</label>
+                        <select name="client_id" id="filter_client" class="form-select pm-filter-input select2"
+                            aria-label="Filter by client" @disabled($project)>
+                            <option value="">All Clients</option>
+                            @foreach ($clients as $client)
+                                <option value="{{ $client->id }}" @selected((string) (optional($project)->id ?: request('client_id')) === (string) $client->id)>
+                                    {{ $client->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Project Filter --}}
+                    <div class="col-lg-2 col-md-6">
+                        <label class="pm-filter-label" for="filter_project">Project</label>
+                        <select name="delivery_project_id" id="filter_project" class="form-select pm-filter-input select2"
+                            aria-label="Filter by project">
+                            <option value="">All Projects</option>
+                            @foreach ($filterProjects as $filterProject)
+                                <option value="{{ $filterProject['id'] }}" @selected(request('delivery_project_id') == $filterProject['id'])>
+                                    {{ $filterProject['name'] }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
 
                     {{-- Due Date --}}
-                    <div class="col-lg-2 col-md-4">
+                    <div class="col-lg-2 col-md-6">
                         <label class="pm-filter-label" for="filter_duedate">Due Date</label>
                         <input id="filter_duedate" type="date" name="duedate" class="form-control pm-filter-input"
                             value="{{ request('duedate') }}">
                     </div>
 
                     {{-- Action Buttons --}}
-                    <div class="col-lg-2 col-md-4 d-flex gap-2">
-                        <button type="submit" id="applyTasksFilterBtn" class="btn btn-primary pm-button w-100">
+                    <div class="col-lg-2 col-md-6 tasks-filter-actions">
+                        <button type="submit" id="applyTasksFilterBtn" class="btn btn-primary pm-button">
                             <i class="bi bi-funnel"></i> Apply
                         </button>
                         @if ($hasFilters)
-                            <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'search' => request('search'), 'project_id' => optional($project)->id])) }}" class="btn btn-light border text-danger pm-button px-3" title="Clear Filters">
+                            <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'project_id' => optional($project)->id])) }}" class="btn btn-light border text-danger pm-button px-3" title="Clear Filters">
                                 Reset
                             </a>
                         @endif
                     </div>
-                </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 
     {{-- Tabs (Active, To Do, In Progress, In Review, On Hold, Completed) --}}
@@ -360,54 +158,56 @@
                 'in_progress' => 'In Progress' . (isset($tabCounts['in_progress']) ? ' (' . $tabCounts['in_progress'] . ')' : ''),
                 'in_review' => 'In Review' . (isset($tabCounts['in_review']) ? ' (' . $tabCounts['in_review'] . ')' : ''),
                 'on_hold' => 'On Hold' . (isset($tabCounts['on_hold']) ? ' (' . $tabCounts['on_hold'] . ')' : ''),
-                'completed' => 'Completed',
+                'completed' => 'Completed' . (isset($tabCounts['completed']) ? ' (' . $tabCounts['completed'] . ')' : ''),
             ];
         @endphp
         @foreach ($tabList as $tabKey => $tabLabel)
             <a class="task-tab-{{ $tabKey }} {{ $currentTab == $tabKey ? 'active' : '' }}"
-                href="{{ route('tasks.index', array_filter(['tab' => $tabKey, 'search' => request('search'), 'status' => request('status'), 'user' => request('user'), 'cdate' => request('cdate'), 'duedate' => request('duedate'), 'project_id' => optional($project)->id])) }}">
+                href="{{ route('tasks.index', array_merge($withoutTaskFilter('status'), ['tab' => $tabKey])) }}">
                 {{ $tabLabel }}
             </a>
         @endforeach
     </div>
 
-    {{-- Active filter tags (if search or filters applied) --}}
+    {{-- Active filter tags --}}
     @php
-        $selectedUser = request('user') ? ($project ? $project->users->firstWhere('id', request('user')) : $users->firstWhere('id', request('user'))) : null;
+        $selectedUser = request('user') ? $users->firstWhere('id', request('user')) : null;
+        $selectedClient = request('client_id') ? $clients->firstWhere('id', request('client_id')) : null;
+        $selectedFilterProject = request('delivery_project_id') ? $filterProjects->firstWhere('id', (string) request('delivery_project_id')) : null;
         $statusConfig = config('site.tasks.status');
         $selectedStatusLabel = request('status') && isset($statusConfig[request('status')]) ? $statusConfig[request('status')] : null;
     @endphp
-    @if (request('search') || request('status') || request('user') || request('cdate') || request('duedate'))
+    @if (request('status') || request('user') || request('duedate') || request('client_id') || request('delivery_project_id'))
         <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
             <span class="text-muted small">Active Filters:</span>
-            @if (request('search'))
-                <span class="badge bg-light text-dark border py-1 px-2 d-inline-flex align-items-center gap-1">
-                    Search: "{{ request('search') }}"
-                    <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'status' => request('status'), 'user' => request('user'), 'cdate' => request('cdate'), 'duedate' => request('duedate'), 'project_id' => optional($project)->id])) }}" class="text-muted text-decoration-none ms-1">&times;</a>
-                </span>
-            @endif
             @if ($selectedStatusLabel)
                 <span class="badge bg-light text-primary border py-1 px-2 d-inline-flex align-items-center gap-1">
                     Status: {{ $selectedStatusLabel }}
-                    <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'search' => request('search'), 'user' => request('user'), 'cdate' => request('cdate'), 'duedate' => request('duedate'), 'project_id' => optional($project)->id])) }}" class="text-primary text-decoration-none ms-1">&times;</a>
+                    <a href="{{ route('tasks.index', $withoutTaskFilter('status')) }}" class="text-primary text-decoration-none ms-1">&times;</a>
                 </span>
             @endif
             @if ($selectedUser)
                 <span class="badge bg-light text-primary border py-1 px-2 d-inline-flex align-items-center gap-1">
-                    User: {{ $selectedUser->name }}
-                    <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'search' => request('search'), 'status' => request('status'), 'cdate' => request('cdate'), 'duedate' => request('duedate'), 'project_id' => optional($project)->id])) }}" class="text-primary text-decoration-none ms-1">&times;</a>
+                    Assigned to: {{ $selectedUser->name }}
+                    <a href="{{ route('tasks.index', $withoutTaskFilter('user')) }}" class="text-primary text-decoration-none ms-1">&times;</a>
                 </span>
             @endif
-            @if (request('cdate'))
+            @if ($selectedClient)
                 <span class="badge bg-light text-primary border py-1 px-2 d-inline-flex align-items-center gap-1">
-                    Created: {{ \Carbon\Carbon::parse(request('cdate'))->format('d M Y') }}
-                    <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'search' => request('search'), 'status' => request('status'), 'user' => request('user'), 'duedate' => request('duedate'), 'project_id' => optional($project)->id])) }}" class="text-primary text-decoration-none ms-1">&times;</a>
+                    Client: {{ $selectedClient->name }}
+                    <a href="{{ route('tasks.index', $withoutTaskFilter('client_id')) }}" class="text-primary text-decoration-none ms-1">&times;</a>
+                </span>
+            @endif
+            @if ($selectedFilterProject)
+                <span class="badge bg-light text-primary border py-1 px-2 d-inline-flex align-items-center gap-1">
+                    Project: {{ $selectedFilterProject['name'] }}
+                    <a href="{{ route('tasks.index', $withoutTaskFilter('delivery_project_id')) }}" class="text-primary text-decoration-none ms-1">&times;</a>
                 </span>
             @endif
             @if (request('duedate'))
                 <span class="badge bg-light text-primary border py-1 px-2 d-inline-flex align-items-center gap-1">
                     Due: {{ \Carbon\Carbon::parse(request('duedate'))->format('d M Y') }}
-                    <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'search' => request('search'), 'status' => request('status'), 'user' => request('user'), 'cdate' => request('cdate'), 'project_id' => optional($project)->id])) }}" class="text-primary text-decoration-none ms-1">&times;</a>
+                    <a href="{{ route('tasks.index', $withoutTaskFilter('duedate')) }}" class="text-primary text-decoration-none ms-1">&times;</a>
                 </span>
             @endif
             <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'project_id' => optional($project)->id])) }}" class="btn btn-link btn-sm text-danger p-0 text-decoration-none small ms-1">
@@ -417,53 +217,90 @@
     @endif
 
     {{-- ================= TABLE CARD ================= --}}
-    <div class="pm-card">
+    <div class="pm-card tasks-table-card">
         <div class="table-responsive project_table">
-            <table class="table pm-table align-middle">
+            <table class="table pm-table tasks-table align-middle">
                 <thead>
                     <tr>
                         @can('tasks-bulk-complete')
-                            <th style="width: 40px;"><input class="maincheck form-check-input" onclick="checkAll()" type="checkbox"></th>
+                            <th class="tasks-select-column"><input class="maincheck form-check-input" onclick="checkAll()" type="checkbox" aria-label="Select all available tasks"></th>
                         @endcan
-                        <th>#</th>
-                        <th>Title</th>
+                        <th class="tasks-number-column">#</th>
+                        <th>Task</th>
+                        <th>Story</th>
                         <th>Project</th>
-                        <th>Due Date</th>
+                        <th>Client</th>
                         <th>Assigned To</th>
-                        <th>Time</th>
-                        <th width="110px">Status</th>
+                        <th>Due Date</th>
+                        <th>Time Tracked</th>
+                        <th class="tasks-status-column">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($tasks as $task)
                         <tr class="{{ $task->color }}">
                             @can('tasks-bulk-complete')
-                                <td><input type="checkbox" class="check form-check-input" name="status[]" value="{{ $task->id }}"></td>
+                                <td class="tasks-select-column">
+                                    @if ($task->status !== 'completed' && $task->story?->status !== 'completed')
+                                        <input type="checkbox" class="check form-check-input" name="status[]" value="{{ $task->id }}">
+                                    @else
+                                        <i class="bi bi-lock-fill text-muted" title="{{ $task->status === 'completed' ? 'This task is completed' : 'This task belongs to a completed story' }}" aria-label="Locked task"></i>
+                                    @endif
+                                </td>
                             @endcan
-                            <td>{{ $tasks->firstItem() + $loop->index }}</td>
-                            <td>
+                            <td class="tasks-number-column">{{ $tasks->firstItem() + $loop->index }}</td>
+                            <td class="tasks-title-cell">
                                 <a class="pm-link fw-semibold" href="{{ route('tasks.show', $task->id) }}">
                                     {{ $task->title }}
                                 </a>
+                                @if ($task->description)
+                                    <small>{{ \Illuminate\Support\Str::limit(strip_tags($task->description), 100) }}</small>
+                                @endif
                             </td>
-                            <td>{{ $task->project?->name ?: '—' }}</td>
-                            <td class="text-nowrap">{{ $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('d M Y') : '—' }}</td>
+                            <td class="tasks-related-cell">
+                                @if ($task->story)
+                                    <a href="{{ route('stories.show', $task->story) }}" class="tasks-related-link">{{ $task->story->title }}</a>
+                                @else
+                                    <span class="tasks-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="tasks-related-cell">
+                                @if ($task->deliveryProject)
+                                    <a href="{{ route('projects.show', $task->deliveryProject) }}" class="tasks-related-link">{{ $task->deliveryProject->name }}</a>
+                                @else
+                                    <span class="tasks-muted">—</span>
+                                @endif
+                            </td>
+                            <td>{{ $task->project?->name ?: ($task->deliveryProject?->client?->name ?: '—') }}</td>
                             <td class="text-nowrap">{{ $task->user->name ?? '—' }}</td>
-                            <td class="text-nowrap font-monospace small">{{ $task->getTotalElapsedTime() }}</td>
-                            <td>
+                            <td class="text-nowrap tasks-date-cell">
+                                @if ($task->due_date)
+                                    <span class="tasks-date {{ \Carbon\Carbon::parse($task->due_date)->isPast() && !\Carbon\Carbon::parse($task->due_date)->isToday() ? 'is-overdue' : '' }}">
+                                        <i class="bi bi-calendar3"></i>{{ \Carbon\Carbon::parse($task->due_date)->format('d M Y') }}
+                                    </span>
+                                @else
+                                    <span class="tasks-muted">—</span>
+                                @endif
+                            </td>
+                            <td class="text-nowrap tasks-time-cell">{{ $task->getTotalElapsedTime() }}</td>
+                            <td class="tasks-status-cell">
+                                @if ($task->status === 'completed' || $task->story?->status === 'completed')
+                                    {!! $task->status_badge !!}
+                                @else
                                 <div class="dropdown">
-                                    <button class="task-status-btn dropdown-toggle" type="button" id="dropdownMenuButton{{ $task->id }}"
+                                    <button class="task-status-btn tasks-status-toggle" type="button" id="dropdownMenuButton{{ $task->id }}"
                                         data-bs-toggle="dropdown" aria-expanded="false">
                                         {!! $task->status_badge !!}
+                                        <i class="bi bi-chevron-down" aria-hidden="true"></i>
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="dropdownMenuButton{{ $task->id }}">
+                                    <ul class="dropdown-menu dropdown-menu-end story-status-menu" aria-labelledby="dropdownMenuButton{{ $task->id }}">
                                         @foreach (config('site.tasks.status') as $key => $value)
                                             @if ($key != 'closed')
                                                 <li>
                                                     <form action="{{ route('tasks.status.update', $task->id) }}" method="POST" class="mb-0">
                                                         @csrf
                                                         <input type="hidden" name="status" value="{{ $key }}">
-                                                        <button type="submit" class="dropdown-item {{ $task->status === $key ? 'active' : '' }}">
+                                                        <button type="submit" class="dropdown-item story-status-option {{ $task->status === $key ? 'active' : '' }}">
                                                             {{ $value }}
                                                         </button>
                                                     </form>
@@ -472,11 +309,12 @@
                                         @endforeach
                                     </ul>
                                 </div>
+                                @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ optional(auth()->user())->can('tasks-bulk-complete') ? 8 : 7 }}" class="text-center py-5 text-muted">
+                            <td colspan="{{ optional(auth()->user())->can('tasks-bulk-complete') ? 10 : 9 }}" class="text-center py-5 text-muted">
                                 No tasks match your criteria.
                             </td>
                         </tr>
@@ -490,8 +328,6 @@
     </div>
 
     {{-- Task Create Modal --}}
-    <x-task-modal :project="$project" />
-
     {{-- Export Modal --}}
     @can('tasks-export')
         <div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
@@ -531,23 +367,80 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            const $filterForm = $('#tasksFilterForm');
-            const $topbarSearch = $('#topbarSearchInput');
-            const $hiddenSearch = $('#filterHiddenSearch');
+            const filterProjects = @json($filterProjects);
+            const allFilterUsers = Array.from(document.querySelectorAll('#filter_user option'))
+                .filter(option => option.value !== '')
+                .map(option => ({id: String(option.value), name: option.textContent.trim()}));
 
-            // Sync topbar search to filter form
-            $topbarSearch.on('keypress', function(e) {
-                if (e.which === 13) {
-                    e.preventDefault();
-                    $hiddenSearch.val($(this).val());
-                    $filterForm.submit();
+            function replaceFilterOptions(select, items, emptyLabel, selectedValue) {
+                const currentValue = String(selectedValue ?? '');
+                select.innerHTML = '';
+                select.add(new Option(emptyLabel, ''));
+                items.forEach(item => select.add(new Option(item.name, String(item.id))));
+                select.value = items.some(item => String(item.id) === currentValue) ? currentValue : '';
+                $(select).trigger('change.select2');
+            }
+
+            function refreshTaskFilterOptions(changedFilter = null) {
+                const clientSelect = document.getElementById('filter_client');
+                const userSelect = document.getElementById('filter_user');
+                const projectSelect = document.getElementById('filter_project');
+                let clientId = String(clientSelect.value || '');
+                let userId = String(userSelect.value || '');
+                let projectId = String(projectSelect.value || '');
+                let selectedProject = filterProjects.find(project => project.id === projectId);
+
+                if (selectedProject && !clientSelect.disabled && (!clientId || changedFilter === 'project')) {
+                    clientId = selectedProject.client_id;
+                    clientSelect.value = clientId;
+                    $(clientSelect).trigger('change.select2');
                 }
-            });
 
-            $('#topbarSearchBtn').on('click', function() {
-                $hiddenSearch.val($topbarSearch.val());
-                $filterForm.submit();
-            });
+                let projectsForClient = filterProjects.filter(project => !clientId || project.client_id === clientId);
+                const clientUserIds = new Set(projectsForClient.flatMap(project => project.members));
+
+                if (userId && clientId && !clientUserIds.has(userId)) {
+                    userId = '';
+                    userSelect.value = '';
+                    $(userSelect).trigger('change.select2');
+                }
+
+                if (projectId) {
+                    const projectMatchesFilters = projectsForClient.some(project =>
+                        project.id === projectId && (!userId || project.members.includes(userId))
+                    );
+                    if (!projectMatchesFilters) {
+                        projectId = '';
+                        projectSelect.value = '';
+                        selectedProject = null;
+                    }
+                }
+
+                const projectOptions = filterProjects.filter(project =>
+                    (!clientId || project.client_id === clientId) &&
+                    (!userId || project.members.includes(userId))
+                );
+                const userProjectSet = projectId
+                    ? filterProjects.filter(project => project.id === projectId)
+                    : projectsForClient;
+                const allowedUserIds = clientId || projectId
+                    ? new Set(userProjectSet.flatMap(project => project.members))
+                    : new Set(allFilterUsers.map(user => user.id));
+                const userOptions = allFilterUsers.filter(user => allowedUserIds.has(user.id));
+
+                if (userId && !allowedUserIds.has(userId)) {
+                    userId = '';
+                    userSelect.value = '';
+                }
+
+                replaceFilterOptions(projectSelect, projectOptions, 'All Projects', projectId);
+                replaceFilterOptions(userSelect, userOptions, 'All Employees', userId);
+            }
+
+            refreshTaskFilterOptions();
+            $('#filter_client').on('change', function() { refreshTaskFilterOptions('client'); });
+            $('#filter_user').on('change', function() { refreshTaskFilterOptions('user'); });
+            $('#filter_project').on('change', function() { refreshTaskFilterOptions('project'); });
 
             @can('tasks-bulk-complete')
                 $('.check').on('change', function() {

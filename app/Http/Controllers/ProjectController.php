@@ -11,6 +11,7 @@ use App\Models\Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -89,6 +90,7 @@ class ProjectController extends Controller
         $projects = $projects->with(['users' => function ($query) {
             $query->withTrashed();
         }])
+            ->with(['services.frontResource'])
             ->withSum([
                 'services as current_month_hours' => function ($query) {
                     $query->where('month', now()->month)
@@ -117,8 +119,22 @@ class ProjectController extends Controller
                 ->unique()
                 ->values());
 
+        $latestServiceSets = $projects->getCollection()->mapWithKeys(function ($client) {
+            return [$client->id => $this->latestServicesThroughCurrentMonth($client->services)];
+        });
+        Service::loadWorkingUsers($latestServiceSets->flatten(1));
+
         foreach ($projects as $project) {
             $project->setAttribute('assigned_resource_names', $assignedResourcesByClient->get($project->id, collect()));
+            $latestServices = $latestServiceSets->get($project->id, collect());
+            $latestService = $latestServices->sortByDesc('id')->first();
+            $project->setAttribute('latest_service_start_date', $latestService?->start_date);
+            $project->setAttribute('billable_resource_names', $latestServices
+                ->flatMap(fn ($service) => $service->working_users->pluck('name'))
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values());
         }
 
         return view('clients.index', compact('projects', 'performances'));
@@ -156,9 +172,74 @@ class ProjectController extends Controller
         $this->authorize('clients-show');
         $this->authorizeClientAccess($client);
 
-        $teamMembers = $client->allUsers()->get();
-        $users = User::withTrashed()->ofRole(\App\Support\Roles::RESOURCE)->get();
-        return view('clients.show', compact('client', 'teamMembers', 'users'));
+        $projects = \App\Models\Project::with([
+            'members:id,name',
+            'stories' => function ($query) {
+                $query->with([
+                    'tasks' => function ($tasks) {
+                        $tasks->with('user:id,name')->withSum('trackerHistories', 'elapsed_time');
+                    },
+                ])->orderBy('id');
+            },
+            'tasks' => function ($query) {
+                $query->whereNull('story_id')->with('user:id,name')->withSum('trackerHistories', 'elapsed_time');
+            },
+        ])->where('client_id', $client->id)->orderByDesc('created_at')->get();
+
+        $assignedUsers = $projects->flatMap(function ($project) {
+            return $project->members->concat(
+                $project->stories->flatMap(fn ($story) => $story->tasks->pluck('user'))
+            )->concat($project->tasks->pluck('user'));
+        })->filter()->unique('id')->sortBy('name')->values();
+
+        $allServices = $client->services()->with('frontResource:id,name')->get();
+        $services = $this->latestServicesThroughCurrentMonth($allServices);
+        \App\Models\Service::loadWorkingUsers($services);
+        $billableUsers = $services->flatMap(fn ($service) => $service->working_users)
+            ->filter()->unique('id')->sortBy('name')->values();
+        $frontUsers = $services->pluck('frontResource')->filter()->unique('id')->sortBy('name')->values();
+        $currentService = $services->firstWhere('service_status', 'in_progress') ?? $services->sortByDesc('id')->first();
+
+        return view('clients.show', compact(
+            'client', 'projects', 'assignedUsers',
+            'services', 'billableUsers', 'frontUsers', 'currentService'
+        ));
+    }
+
+    /**
+     * Return all service rows from the newest available month up to the current month.
+     * Keeping every row in that month preserves multiple service IDs while ignoring
+     * older history and any future-dated service records.
+     */
+    private function latestServicesThroughCurrentMonth(Collection $services): Collection
+    {
+        $currentPeriod = now()->year * 100 + now()->month;
+        $eligible = $services->filter(function (Service $service) use ($currentPeriod) {
+            $period = $this->servicePeriodKey($service);
+            return $period !== null && $period <= $currentPeriod;
+        });
+
+        if ($eligible->isEmpty()) {
+            return collect();
+        }
+
+        $latestPeriod = $eligible->max(fn (Service $service) => $this->servicePeriodKey($service));
+
+        return $eligible
+            ->filter(fn (Service $service) => $this->servicePeriodKey($service) === $latestPeriod)
+            ->values();
+    }
+
+    private function servicePeriodKey(Service $service): ?int
+    {
+        $year = (int) ($service->year ?: $service->created_at?->format('Y'));
+        $month = (int) ($service->month ?: $service->created_at?->format('n'));
+
+        if ($year < 2000 || $month < 1 || $month > 12) {
+            return null;
+        }
+
+        return $year * 100 + $month;
     }
     public function edit(Client $client)
     {
