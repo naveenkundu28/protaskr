@@ -8,11 +8,6 @@
         <a href="{{ route('task.files.create', $task->id) }}" class="btn btn-primary">Upload File</a>
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
 
     <div class="row">
         @foreach($files as $file)

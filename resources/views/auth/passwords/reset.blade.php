@@ -489,19 +489,6 @@
                 <h2>Set new password</h2>
                 <p class="lg-sub">Enter your email and choose a secure new password.</p>
 
-                @if (session('status'))
-                    <div class="lg-alert is-ok">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <div>{{ session('status') }}</div>
-                    </div>
-                @endif
-                @if ($errors->any() && !$errors->has('email') && !$errors->has('password') && !$errors->has('password_confirmation'))
-                    <div class="lg-alert is-error">
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                        <div>{{ $errors->first() }}</div>
-                    </div>
-                @endif
-
                 <form method="POST" action="{{ route('password.update') }}" id="resetPasswordForm">
                     @csrf
                     <input type="hidden" name="token" value="{{ $token }}">

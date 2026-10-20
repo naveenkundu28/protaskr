@@ -498,13 +498,6 @@
                 <h2>Confirm password</h2>
                 <p class="lg-sub">Please confirm your password before continuing.</p>
 
-                @if ($errors->any() && !$errors->has('password'))
-                    <div class="lg-alert is-error">
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                        <div>{{ $errors->first() }}</div>
-                    </div>
-                @endif
-
                 <form method="POST" action="{{ route('password.confirm') }}" id="confirmForm">
                     @csrf
 

@@ -1042,16 +1042,6 @@
             </div>
         @endif
 
-        @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
-        @if (session('error'))
-            <div class="alert alert-danger">
-                {{ session('error') }}
-            </div>
-        @endif
         @if ($readOnly)
             <div class="alert alert-info d-flex align-items-center gap-2" role="status">
                 <i class="bi bi-lock-fill" aria-hidden="true"></i>
@@ -1060,15 +1050,6 @@
                 @else
                     <span>This task is completed and locked. Completed tasks cannot be changed.</span>
                 @endif
-            </div>
-        @endif
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <ul class="mb-0">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
             </div>
         @endif
         <div class="alert alert-warning alert-dismissible fade show" role="alert" id="jsresp" style="display: none">
@@ -1696,7 +1677,7 @@
                             }
                             showStatus(status, option.dataset.label);
                         }).catch(function () {
-                            alert('Could not update the task status. Please try again.');
+                            toast('Could not update the task status. Please try again.', 'error');
                         }).finally(function () {
                             toggle.classList.remove('is-saving');
                         });

@@ -6,11 +6,6 @@
     <div class="container-fluid mt-80">
         <h2>Hourly Report</h2>
 
-        @if (session('success'))
-            <div class="alert alert-success" role="alert">
-                {{ session('success') }}
-            </div>
-        @endif
 
         <div class="row mb-3">
 

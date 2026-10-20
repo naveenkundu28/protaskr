@@ -13,9 +13,6 @@
     @endphp
 
     <main class="container-fluid mt-80 client-show-page">
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
 
         <header class="client-show-heading">
             <div class="client-show-heading-copy">

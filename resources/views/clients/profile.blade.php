@@ -6,16 +6,6 @@
     <div class="container-fluid mt-80">
         <h2 class="mb-4 shadow-sm p-3 rounded bg-white text-center"> {{ $client->name }} - Profile</h2>
 
-        @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
-        @if (session('error'))
-            <div class="alert alert-danger">
-                {{ session('error') }}
-            </div>
-        @endif
         @if (session('generated_password'))
             <div class="alert alert-warning">
                 <strong>Password:</strong> <code>{{ session('generated_password') }}</code>

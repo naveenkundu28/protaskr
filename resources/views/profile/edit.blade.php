@@ -18,17 +18,6 @@
             <a class="profile-back" href="{{ route('dashboard') }}"><i class="bi bi-arrow-left"></i> Back to dashboard</a>
         </header>
 
-        @if ($errors->any())
-            <div class="profile-errors" role="alert">
-                <strong>Please check the highlighted details.</strong>
-                <ul class="mb-0 mt-2">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-
         <form class="profile-form" method="POST" action="{{ route('profile.update') }}">
             @csrf
             @method('PUT')

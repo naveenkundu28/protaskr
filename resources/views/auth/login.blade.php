@@ -507,13 +507,6 @@
                 <h2>Welcome back</h2>
                 <p class="lg-sub">Sign in to continue to your dashboard.</p>
 
-                @if (session('status'))
-                    <div class="lg-alert is-ok"><i class="bi bi-check-circle-fill"></i> {{ session('status') }}</div>
-                @endif
-                @if ($errors->any() && !$errors->has('email') && !$errors->has('password'))
-                    <div class="lg-alert is-error"><i class="bi bi-exclamation-circle-fill"></i> {{ $errors->first() }}</div>
-                @endif
-
                 <form method="POST" action="{{ route('login') }}" id="loginForm">
                     @csrf
 

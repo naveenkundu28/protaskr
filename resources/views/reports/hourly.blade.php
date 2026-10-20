@@ -16,11 +16,6 @@
             </div>
         </div>
 
-        @if (session('success'))
-            <div class="alert alert-success" role="alert">
-                {{ session('success') }}
-            </div>
-        @endif
 
         <div class="hourly-report-toolbar">
             <form method="GET" class="hourly-report-filter" action="{{ route('reports.hourly.index') }}">

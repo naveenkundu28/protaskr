@@ -6,11 +6,6 @@
 @section('content')
     <div class="container-fluid">
         
-        @session('success')
-            <div class="alert alert-success" role="alert">
-                {{ $value }}
-            </div>
-        @endsession
 
         @if (Auth::user()->hasRole('Admin'))
             <div class="row">

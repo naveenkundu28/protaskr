@@ -194,7 +194,7 @@
                             });
                         },
                         error: function(xhr) {
-                            alert('Error fetching users');
+                            toast('Error fetching users', 'error');
                         }
                     });
                 } else {

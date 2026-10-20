@@ -19,11 +19,6 @@
         </div>
     </div>
 
-@session('success')
-    <div class="alert alert-success" role="alert"> 
-        {{ $value }}
-    </div>
-@endsession
 
 <div id="tableSearchResults">
     <table class="table table-bordered">

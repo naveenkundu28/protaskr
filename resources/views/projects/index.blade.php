@@ -291,15 +291,6 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeProjectModal()"></button>
             </div>
             <div class="modal-body">
-                    @if($errors->any())
-                        <div class="alert alert-danger mb-3">
-                            <ul class="mb-0">
-                                @foreach($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
                     <div class="row g-3">
                         {{-- Row 1: Project Name, Project Type, Client (external only) --}}
                         <div class="col-md-6">

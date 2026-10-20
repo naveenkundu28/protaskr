@@ -10,12 +10,6 @@
 @section('content')
 <div class="container-fluid mt-80 tasks-page">
     {{-- Alerts --}}
-    @session('success')
-        <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i> {{ $value }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endsession
 
     @php
         $taskListFilters = array_filter([
@@ -469,7 +463,7 @@
                     });
 
                     if (selectedTasks.length === 0) {
-                        alert('Please select at least one task.');
+                        toast('Please select at least one task.', 'warning');
                         return;
                     }
 
@@ -481,7 +475,7 @@
                             task_ids: selectedTasks,
                         },
                         success: function(response) {
-                            alert('Tasks marked as complete successfully!');
+                            toast('Tasks marked as complete successfully!', 'success');
                             location.reload();
                         },
                         error: function(xhr) {

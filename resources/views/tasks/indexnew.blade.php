@@ -15,11 +15,6 @@
                     </div>
             </div>
         </div>
-        @session('success')
-            <div class="alert alert-success" role="alert">
-                {{ $value }}
-            </div>
-        @endsession
         @if (request('filter'))
         <form class="card" id="filter">
             <div class="card-body">

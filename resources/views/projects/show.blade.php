@@ -14,18 +14,6 @@
 
     <div class="container-fluid mt-80">
 
-        @if (session('success'))
-            <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
-                {{ session('success') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-        @if (session('error'))
-            <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert">
-                {{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
 
         {{-- Breadcrumb --}}
         <div class="pm-crumb">
@@ -697,15 +685,6 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeStoryModal()"></button>
                             </div>
                             <div class="modal-body p-4">
-                                @if($errors->any())
-                                    <div class="alert alert-danger mb-4">
-                                        <ul class="mb-0">
-                                            @foreach($errors->all() as $error)
-                                                <li>{{ $error }}</li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
-                                @endif
                                 <div class="row g-3">
                                     {{-- Row 1: Project & Story Title --}}
                                     <div class="col-md-6">

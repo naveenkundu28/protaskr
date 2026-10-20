@@ -484,13 +484,6 @@
                 <h2>Create account</h2>
                 <p class="lg-sub">Sign up to get started with ProTasker.</p>
 
-                @if ($errors->any() && !$errors->has('name') && !$errors->has('email') && !$errors->has('password'))
-                    <div class="lg-alert is-error">
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                        <div>{{ $errors->first() }}</div>
-                    </div>
-                @endif
-
                 <form method="POST" action="{{ route('register') }}" id="registerForm">
                     @csrf
 

@@ -216,6 +216,8 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="{{ asset('assets/script.js') }}"></script>
+    <script src="{{ asset('assets/toaster.js') }}"></script>
+    <x-toaster />
     @push('scripts')
         <script>
             $(document).ready(function() {

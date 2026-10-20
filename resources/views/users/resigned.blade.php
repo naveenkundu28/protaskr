@@ -27,12 +27,6 @@
             <a class="active" href="{{ route('users.resigned') }}">Resigned Users <span class="users-tab-count">({{ number_format($resignedCount) }})</span></a>
         </div>
 
-        @session('success')
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                {{ $value }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endsession
 
         <section class="pm-card users-table-card">
             <div id="tableSearchResults">

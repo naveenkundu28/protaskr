@@ -433,13 +433,6 @@
                 <h2>Verify your email</h2>
                 <p class="lg-sub">Before proceeding, please check your inbox for a verification link to confirm your account.</p>
 
-                @if (session('resent'))
-                    <div class="lg-alert is-ok">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <div>A fresh verification link has been sent to your email address.</div>
-                    </div>
-                @endif
-
                 <div class="lg-info-card">
                     <i class="bi bi-info-circle-fill text-primary me-1"></i>
                     Didn't receive the email? Please check your spam or junk folder. If you still don't see it, request another one below.

@@ -52,17 +52,6 @@
             </div>
         </div>
 
-        @if (session('success'))
-            <div class="alert alert-success">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if ($errors->has('services_file'))
-            <div class="alert alert-danger">
-                {!! nl2br(e($errors->first('services_file'))) !!}
-            </div>
-        @endif
 
         {{-- ================= TABLE ================= --}}
         <ul class="nav nav-pills service-tabs mb-3">

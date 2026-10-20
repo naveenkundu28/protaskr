@@ -465,19 +465,6 @@
                 <h2>Forgot password?</h2>
                 <p class="lg-sub">Enter your email and we'll send you a link to reset your password.</p>
 
-                @if (session('status'))
-                    <div class="lg-alert is-ok">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <div>{{ session('status') }}</div>
-                    </div>
-                @endif
-                @if ($errors->any() && !$errors->has('email'))
-                    <div class="lg-alert is-error">
-                        <i class="bi bi-exclamation-circle-fill"></i>
-                        <div>{{ $errors->first() }}</div>
-                    </div>
-                @endif
-
                 <form method="POST" action="{{ route('password.email') }}" id="forgotForm">
                     @csrf
 
