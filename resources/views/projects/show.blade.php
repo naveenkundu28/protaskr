@@ -25,8 +25,11 @@
                 const nextCard = nextDocument.querySelector('.pm-detail-tabs + .pm-card');
                 const nextNav = nextDocument.querySelector(navSelector);
                 if (!nextCard || !nextNav) throw new Error('Project tab content is missing');
+                // The story filter nav lives inside the card, so replacing the card already updates it.
+                if (!card.contains(nav)) {
+                    nav.replaceWith(nextNav);
+                }
                 card.replaceWith(nextCard);
-                nav.replaceWith(nextNav);
                 history.pushState({}, '', link.href);
             } catch (error) {
                 window.location.assign(link.href);
