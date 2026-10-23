@@ -82,7 +82,7 @@
                                             <tr>
                                                 <td>{{ $label }}</td>
                                                 <td class="fw-semibold text-primary">
-                                                    <a href="{{ route('users.listing', ['work_type' => $label]) }}"
+                                                    <a href="{{ route('users.index', ['work_type' => $label, 'month' => $now->month, 'year' => $now->year]) }}"
                                                         class="text-decoration-none">
                                                         {{ $count }}
                                                     </a>
@@ -173,56 +173,49 @@
                             <h2>Pro Taskr Tracker</h2>
                             <p>Track resources, skills, utilization and profitability in one place.</p>
                         </div>
-                        <div class="col-md-7">
-                            <div class="icon_with_content">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="100%" height="100%" fill="none">
-                                    <defs>
-                                        <!-- Bar 1 (Shortest - Sky/Blue) -->
-                                        <linearGradient id="bar1Grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" stop-color="#4B8CFF"/>
-                                        <stop offset="100%" stop-color="#2563EB"/>
-                                        </linearGradient>
-
-                                        <!-- Bar 2 (Middle - Vibrant Blue) -->
-                                        <linearGradient id="bar2Grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" stop-color="#3B82F6"/>
-                                        <stop offset="100%" stop-color="#1D4ED8"/>
-                                        </linearGradient>
-
-                                        <!-- Bar 3 (Tallest - Blue to Deep Violet/Purple) -->
-                                        <linearGradient id="bar3Grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" stop-color="#4F46E5"/>
-                                        <stop offset="50%" stop-color="#6366F1"/>
-                                        <stop offset="100%" stop-color="#7C3AED"/>
-                                        </linearGradient>
-
-                                        <!-- Trending Growth Line / Rocket Arrow -->
-                                        <linearGradient id="lineGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                                        <stop offset="0%" stop-color="#2563EB"/>
-                                        <stop offset="50%" stop-color="#4F46E5"/>
-                                        <stop offset="100%" stop-color="#7C3AED"/>
-                                        </linearGradient>
-                                    </defs>
-                                    <rect x="15" y="38" width="8" height="14" rx="3.5" fill="url(#bar1Grad)"/>
-                                    <rect x="28" y="27" width="8.5" height="25" rx="4" fill="url(#bar2Grad)"/>
-                                    <rect x="42" y="16" width="9" height="36" rx="4.5" fill="url(#bar3Grad)"/>
-                                    <path d="M12 52C12 50.8954 12.8954 50 14 50H51C52.1046 50 53 50.8954 53 52C53 53.1046 52.1046 54 51 54H14C12.8954 54 12 53.1046 12 52Z" fill="#3B82F6" fill-opacity="0.35"/>
-                                    <path d="M17 41.5 C21 40, 24 35, 28 32 C31.5 29.5, 33 21, 37 17.5 C40 15, 43 14, 46.5 10.5" 
-                                            stroke="url(#lineGrad)" 
-                                            stroke-width="3" 
-                                            stroke-linecap="round" 
-                                            stroke-linejoin="round"/>
-                                    <path d="M43.5 9L49 8L48 13.5Z" fill="#6366F1"/>
-                                    <circle cx="16.5" cy="41.5" r="2.5" fill="#3B82F6"/>
-                                    </svg>
-
-                                <span>Plan Better<br>Utilize Smarter<br>Grow Faster</span>
+                        <div class="col-md-7 dashboard-date-picker">
+                            @php
+                                $dashboardActiveDate = $now;
+                                $dashboardMonthOptions = [];
+                                for ($offset = -6; $offset <= 6; $offset++) {
+                                    $dashboardMonthOptions[] = now()->startOfMonth()->addMonths($offset);
+                                }
+                                if (!collect($dashboardMonthOptions)->contains(fn ($option) => $option->isSameMonth($dashboardActiveDate))) {
+                                    $dashboardMonthOptions[] = $dashboardActiveDate->copy()->startOfMonth();
+                                    usort($dashboardMonthOptions, fn ($a, $b) => $a->timestamp <=> $b->timestamp);
+                                }
+                            @endphp
+                            <div class="dropdown dashboard-date-dropdown">
+                                <button class="dashboard-date-picker-button dropdown-toggle" type="button" id="dashboardDatePickerBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-calendar-date"></i>
+                                    <span>{{ $dashboardActiveDate->format('F Y') }}</span>
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow header-date-menu" aria-labelledby="dashboardDatePickerBtn">
+                                    <li class="dropdown-header text-uppercase fw-bold text-muted small px-3 py-2">Select Month &amp; Year</li>
+                                    @foreach ($dashboardMonthOptions as $optionDate)
+                                        @php
+                                            $isSelected = $optionDate->isSameMonth($dashboardActiveDate);
+                                            $isRealCurrent = $optionDate->isSameMonth(now());
+                                        @endphp
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center justify-content-between px-3 py-2 {{ $isSelected ? 'active fw-bold' : '' }}" href="{{ route('dashboard', ['month' => $optionDate->month, 'year' => $optionDate->year]) }}">
+                                                <span><i class="bi bi-calendar3 me-2 {{ $isSelected ? 'text-white' : 'text-primary' }}"></i>{{ $optionDate->format('F Y') }}</span>
+                                                @if ($isSelected)
+                                                    <i class="bi bi-check-lg ms-2 text-white"></i>
+                                                @elseif ($isRealCurrent)
+                                                    <span class="badge bg-secondary-subtle text-secondary ms-2" style="font-size: 10px;">Current</span>
+                                                @endif
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ul>
                             </div>
                         </div>
                     </div>
                     <div class="row header_count_row">
-                        <div class="col-md-3">
-                            <div class="report-box resources">
+                        <div class="col-count-card col-md-3">
+                            <a href="{{ route('users.index') }}" class="report-box resources" style="text-decoration:none;color:inherit">
                                 <div class="icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
                                         <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
@@ -272,14 +265,14 @@
                                         </g>
                                         </svg>
                                 </div>
-                            </div>
+                            </a>
                         </div>
-                        <div class="col-md-3">
-                            <div class="report-box clients">
+                        <div class="col-count-card col-md-3">
+                            <a href="{{ route('clients.index') }}" class="report-box clients" style="text-decoration:none;color:inherit">
                                 <div class="icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-buildings" viewBox="0 0 16 16">
                                         <path d="M14.763.075A.5.5 0 0 1 15 .5v15a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5V14h-1v1.5a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5V10a.5.5 0 0 1 .342-.474L6 7.64V4.5a.5.5 0 0 1 .276-.447l8-4a.5.5 0 0 1 .487.022M6 8.694 1 10.36V15h5zM7 15h2v-1.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5V15h2V1.309l-7 3.5z"/>
-                                        <path d="M2 11h1v1H2zm2 0h1v1H4zm-2 2h1v1H2zm2 0h1v1H4zm4-4h1v1H8zm2 0h1v1h-1zm-2 2h1v1H8zm2 0h1v1h-1zm2-2h1v1h-1zm0 2h1v1h-1zM8 7h1v1H8zm2 0h1v1h-1zm2 0h1v1h-1zM8 5h1v1H8zm2 0h1v1h-1zm2 0h1v1h-1zm0-2h1v1h-1z"/>
+                                        <path d="M2 11h1v1H2zm2 0h1v1H4zm-2 2h1v1H2zm2 0h1v1H4zm4-4h1v1H8zm2 0h1v1h-1zm-2 2h1v1H8zm2 0h1v1h-1zm2-2h1v1h-1zm0 2h1v1h-1zM8 7h1v1H8zm2 0h1v1h-1zm2 0h1v1h-1zM8 5h1v1H8zm2 0h1v1h-1zm2 0h1v1h-1zM0-2h1v1h-1z"/>
                                     </svg>
                                 </div>
                                 <div class="report_content">
@@ -304,12 +297,12 @@
                                         
                                         <!-- Bar 4 -->
                                         <path d="M 19 22 V 3.75 A 1.75 1.75 0 0 1 22.5 3.75 V 22 Z" fill="#9d66fd" />
-                                        </svg>
+                                    </svg>
                                 </div>
-                            </div>
+                            </a>
                         </div>
-                        <div class="col-md-3">
-                            <div class="report-box total-hours">
+                        <div class="col-count-card col-md-3">
+                            <a href="{{ route('services.listing.index', ['month' => $now->format('Y-m')]) }}" class="report-box total-hours" style="text-decoration:none;color:inherit">
                                 <div class="icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
                                         <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
@@ -357,10 +350,50 @@
                                         </g>
                                     </svg>
                                 </div>
-                            </div>
+                            </a>
                         </div>
-                        <div class="col-md-3">
-                            <div class="report-box free-hours">
+                        <div class="col-count-card col-md-3">
+                            <a href="{{ route('services.listing.index', ['month' => $now->format('Y-m')]) }}" class="report-box assigned-hours" style="text-decoration:none;color:inherit">
+                                <div class="icon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-briefcase-fill" viewBox="0 0 16 16">
+                                        <path d="M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v1.384l7.614 2.03a1.5 1.5 0 0 0 .772 0L16 5.884V4.5A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5"/>
+                                        <path d="M0 12.5A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5V6.85L8.129 8.947a.5.5 0 0 1-.258 0L0 6.85z"/>
+                                    </svg>
+                                </div>
+                                <div class="report_content">
+                                    <span class="report_title">Assigned Hours</span>
+                                    <h4>{{ $assignedHours }} Hrs</h4>
+                                    <span class="rating rating-up"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-up-short" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 12a.5.5 0 0 0 .5-.5V5.707l2.146 2.147a.5.5 0 0 0 .708-.708l-3-3a.5.5 0 0 0-.708 0l-3 3a.5.5 0 1 0 .708.708L7.5 5.707V11.5a.5.5 0 0 0 .5.5"/></svg>
+                                    15% </span>
+                                    <span class="report_time">vs last month</span>
+                                </div>
+                                <div class="graph_svg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 110" width="100%" height="100%">
+                                        <defs>
+                                            <linearGradient id="assignedBarGrad" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stop-color="#818cf8" />
+                                                <stop offset="100%" stop-color="#4f46e5" />
+                                            </linearGradient>
+                                            <filter id="softGlowAssigned" x="-20%" y="-20%" width="140%" height="140%">
+                                                <feGaussianBlur stdDeviation="1.5" result="blur" />
+                                                <feMerge>
+                                                    <feMergeNode in="blur" />
+                                                    <feMergeNode in="SourceGraphic" />
+                                                </feMerge>
+                                            </filter>
+                                        </defs>
+                                        <g filter="url(#softGlowAssigned)" fill="url(#assignedBarGrad)">
+                                            <path d="M 4,104 L 4,60 A 8,8 0 0 1 20,60 L 20,104 Z" />
+                                            <path d="M 28,104 L 28,42 A 8,8 0 0 1 44,42 L 44,104 Z" />
+                                            <path d="M 52,104 L 52,70 A 8,8 0 0 1 68,70 L 68,104 Z" />
+                                            <path d="M 76,104 L 76,24 A 8,8 0 0 1 92,24 L 92,104 Z" />
+                                        </g>
+                                    </svg>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-count-card col-md-3">
+                            <a href="{{ route('services.listing.index', ['month' => $now->format('Y-m')]) }}" class="report-box free-hours" style="text-decoration:none;color:inherit">
                                 <div class="icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-lightning-charge-fill" viewBox="0 0 16 16">
                                         <path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/>
@@ -409,7 +442,7 @@
                                         </g>
                                     </svg>
                                 </div>
-                            </div>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -520,7 +553,7 @@
                                                             <tr>
                                                                 <td class="{{ $workTypeClass }}">{{ $label }}</td>
                                                                 <td>
-                                                                    <a href="{{ route('users.listing', ['work_type' => $label]) }}">{{ $count }}</a>
+                                                                    <a href="{{ route('users.index', ['work_type' => $label, 'month' => $now->month, 'year' => $now->year]) }}">{{ $count }}</a>
                                                                 </td>
                                                                 <td class="d-flex align-items-center justify-content-end gap-2">
                                                                     <progress id="file" class="{{ $workTypeBarClass }}" value="{{ $workTypePercentage }}" max="100">{{ number_format($workTypePercentage, 0) }}%</progress><span>{{ number_format($workTypePercentage, 0) }}%</span>
@@ -539,104 +572,31 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="card shadow-sm w-100 h-100">
-                                        <div class="card-body profit_loss_summery">
+                                        <div class="card-body recent_history">
                                             <div class="summery_header">
-                                                <h5><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M256 144C256 117.5 277.5 96 304 96L336 96C362.5 96 384 117.5 384 144L384 496C384 522.5 362.5 544 336 544L304 544C277.5 544 256 522.5 256 496L256 144zM64 336C64 309.5 85.5 288 112 288L144 288C170.5 288 192 309.5 192 336L192 496C192 522.5 170.5 544 144 544L112 544C85.5 544 64 522.5 64 496L64 336zM496 160L528 160C554.5 160 576 181.5 576 208L576 496C576 522.5 554.5 544 528 544L496 544C469.5 544 448 522.5 448 496L448 208C448 181.5 469.5 160 496 160z"/></svg>
-                                                Profit / Loss Summary</h5>
+                                                <h5><i class="bi bi-clock-history" aria-hidden="true"></i> Recent History</h5>
                                             </div>
-                                            <ul class="profit_loss_list">
-                                                <li class="total_hours">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M192 160L192 144C192 99.8 278 64 384 64C490 64 576 99.8 576 144L576 160C576 190.6 534.7 217.2 474 230.7C471.6 227.9 469.1 225.2 466.6 222.7C451.1 207.4 431.1 195.8 410.2 187.2C368.3 169.7 313.7 160.1 256 160.1C234.1 160.1 212.7 161.5 192.2 164.2C192 162.9 192 161.5 192 160.1zM496 417L496 370.8C511.1 366.9 525.3 362.3 538.2 356.9C551.4 351.4 564.3 344.7 576 336.6L576 352C576 378.8 544.5 402.5 496 417zM496 321L496 288C496 283.5 495.6 279.2 495 275C510.5 271.1 525 266.4 538.2 260.8C551.4 255.2 564.3 248.6 576 240.5L576 255.9C576 282.7 544.5 306.4 496 320.9zM64 304L64 288C64 243.8 150 208 256 208C362 208 448 243.8 448 288L448 304C448 348.2 362 384 256 384C150 384 64 348.2 64 304zM448 400C448 444.2 362 480 256 480C150 480 64 444.2 64 400L64 384.6C75.6 392.7 88.5 399.3 101.8 404.9C143.7 422.4 198.3 432 256 432C313.7 432 368.3 422.3 410.2 404.9C423.4 399.4 436.3 392.7 448 384.6L448 400zM448 480.6L448 496C448 540.2 362 576 256 576C150 576 64 540.2 64 496L64 480.6C75.6 488.7 88.5 495.3 101.8 500.9C143.7 518.4 198.3 528 256 528C313.7 528 368.3 518.3 410.2 500.9C423.4 495.4 436.3 488.7 448 480.6z"/></svg>
-                                                    <span>
-                                                        <div class="title">Total Hours</div>
-                                                        <div class="count">{{ number_format($profitLossSummary['total_hours'], 0) }}</div>
-                                                        <div class="discription">{{ $profitLossSummary['internal_users_count'] }}
-                                                            Internal Users</div>
-                                                    </span>
-                                                </li>
-                                                <li class="assigned_hours">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path d="M256 144C256 117.5 277.5 96 304 96L336 96C362.5 96 384 117.5 384 144L384 496C384 522.5 362.5 544 336 544L304 544C277.5 544 256 522.5 256 496L256 144zM64 336C64 309.5 85.5 288 112 288L144 288C170.5 288 192 309.5 192 336L192 496C192 522.5 170.5 544 144 544L112 544C85.5 544 64 522.5 64 496L64 336zM496 160L528 160C554.5 160 576 181.5 576 208L576 496C576 522.5 554.5 544 528 544L496 544C469.5 544 448 522.5 448 496L448 208C448 181.5 469.5 160 496 160z"/></svg>
-                                                    <span>
-                                                        <div class="title">Assigned Hours</div>
-                                                        <div class="count">{{ number_format($profitLossSummary['assigned_hours'], 0) }}</div>
-                                                        <div class="discription">Current Month Services</div>
-                                                    </span>
-                                                </li>
-                                            </ul>
-
-                                            <div class="stat-card">
-                                                <!-- Stat Information -->
-                                                <div class="stat-header">
-                                                <div class="stat-value-row">
-                                                    <!-- Trending Arrow Icon -->
-                                                    <svg class="trend-icon" viewBox="0 0 24 24">
-                                                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                                                    <polyline points="17 6 23 6 23 12"></polyline>
-                                                    </svg>
-                                                    <span class="percentage">0%</span>
+                                            @if ($recentActivity)
+                                                <div class="recent-history-timeline">
+                                                    <div class="recent-history-item {{ $recentActivity['type'] }}">
+                                                        <span class="recent-history-marker" aria-hidden="true">
+                                                            <i class="bi {{ $recentActivity['type'] === 'client' ? 'bi-person-plus' : 'bi-briefcase' }}"></i>
+                                                        </span>
+                                                        <div class="recent-history-content">
+                                                            <div class="recent-history-title">{{ $recentActivity['title'] }}</div>
+                                                            <div class="recent-history-name">{{ $recentActivity['name'] }}</div>
+                                                            @if ($recentActivity['type'] === 'service' && $recentActivity['client'])
+                                                                <div class="recent-history-client">For {{ $recentActivity['client'] }}</div>
+                                                            @endif
+                                                            <time class="recent-history-date" datetime="{{ $recentActivity['created_at']->toIso8601String() }}">
+                                                                {{ $recentActivity['created_at']->format('d M Y, h:i A') }}
+                                                            </time>
+                                                        </div>
+                                                    </div>
                                                 </div>
-
-                                                <div class="stat-label-group">
-                                                    <span class="stat-label">Profit</span>
-                                                    <span class="stat-sublabel">0 hrs</span>
-                                                </div>
-                                                </div>
-
-                                                <!-- Tooltip Badge -->
-                                                <div class="tooltip-badge">0 hrs</div>
-
-                                                <!-- Chart -->
-                                                <div class="chart-container">
-                                                <svg class="chart-svg" viewBox="0 0 480 150" preserveAspectRatio="none">
-                                                    <defs>
-                                                    <!-- Soft Gradient Fill Under Wave -->
-                                                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                                                        <stop offset="0%" stop-color="#00ba55" stop-opacity="0.28" />
-                                                        <stop offset="100%" stop-color="#00ba55" stop-opacity="0.0" />
-                                                    </linearGradient>
-                                                    </defs>
-
-                                                    <!-- Area fill under the line -->
-                                                    <path 
-                                                    d="M 94,120 
-                                                        C 140,118 160,110 178,107 
-                                                        C 220,100 245,68 268,68 
-                                                        C 305,68 335,92 355,92 
-                                                        C 390,92 410,72 426,68 
-                                                        C 438,65 444,63 450,62 
-                                                        L 450,150 L 94,150 Z" 
-                                                    fill="url(#chartGradient)" 
-                                                    />
-
-                                                    <!-- Smooth Curve Stroke -->
-                                                    <path 
-                                                    d="M 94,120 
-                                                        C 140,118 160,110 178,107 
-                                                        C 220,100 245,68 268,68 
-                                                        C 305,68 335,92 355,92 
-                                                        C 390,92 410,72 426,68 
-                                                        C 438,65 444,63 450,62" 
-                                                    fill="none" 
-                                                    stroke="#00ba55" 
-                                                    stroke-width="2.5" 
-                                                    stroke-linecap="round"
-                                                    />
-
-                                                    <!-- Data Dots -->
-                                                    <circle cx="94" cy="120" r="3.5" fill="#00ba55" />
-                                                    <circle cx="178" cy="107" r="3.5" fill="#00ba55" />
-                                                    <circle cx="268" cy="68" r="3.5" fill="#00ba55" />
-                                                    <circle cx="355" cy="92" r="3.5" fill="#00ba55" />
-                                                    <circle cx="426" cy="68" r="3.5" fill="#00ba55" />
-                                                    <circle cx="448" cy="62" r="3.5" fill="#00ba55" />
-                                                </svg>
-                                                </div>
-                                            </div>
-                                            
-                                            
-                                            <p class="text-muted f-12 mb-0 mt-1">
-                                                Based on {{ $now->format('F Y') }} master hours and internal user capacity.
-                                            </p>
+                                            @else
+                                                <div class="recent-history-empty">No clients or services have been added yet.</div>
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
@@ -651,7 +611,7 @@
                                                     </svg>
                                                     <span>
                                                         <h4>Bench</h4>
-                                                        <p>Internal users with 20 or more free hours in September 2026.   </p>
+                                                        <p>Internal users with 20 or more free hours in {{ $now->format('F Y') }}.</p>
                                                     </span>
                                                 </div>
                                                 <div class="right_header">
@@ -808,7 +768,7 @@
                                                                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people" viewBox="0 0 16 16">
                                                                                 <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/>
                                                                             </svg>
-                                                                        <p><strong>No bench users found</strong>Bench shows internal users with 20 or more free hours in September 2026.   </p>
+                                                                        <p><strong>No bench users found</strong>Bench shows internal users with 20 or more free hours in {{ $now->format('F Y') }}.</p>
                                                                         </td>
                                                                     </tr>
                                                                 @endforelse

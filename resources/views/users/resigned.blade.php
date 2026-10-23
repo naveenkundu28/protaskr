@@ -2,6 +2,27 @@
 @push('styles')
     <link rel="stylesheet" href="{{ asset('assets/project-module.css') }}">
 @endpush
+@push('scripts')
+<script>
+    jQuery(function ($) {
+        $(document).on('click', '.users-page .users-tabs a', async function (event) {
+            event.preventDefault();
+            const link = this;
+            const current = document.querySelector('.users-page');
+            if (!current) return;
+            try {
+                const response = await fetch(link.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!response.ok) throw new Error('Unable to load users');
+                const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+                const next = doc.querySelector('.users-page');
+                if (!next) throw new Error('User list is missing');
+                current.replaceWith(next);
+                history.pushState({}, '', link.href);
+            } catch (error) { window.location.assign(link.href); }
+        });
+    });
+</script>
+@endpush
 @section('content')
     <div class="container-fluid mt-80 users-page">
         <div class="pm-heading users-module-heading">
@@ -10,7 +31,6 @@
                 <div class="right_search_box">
                     <form method="GET" action="{{ route('users.resigned') }}" class="users-search auto-search-form" data-search-target="#tableSearchResults">
                         <div class="search_box">
-                            <button type="submit" aria-label="Search"><i class="bi bi-search"></i></button>
                             <input type="search" name="search" value="{{ request('search') }}" placeholder="Search resigned users..." aria-label="Search resigned users">
                             @if(request('search'))
                                 <a href="{{ route('users.resigned') }}" class="search_clear_link" aria-label="Clear search"><i class="bi bi-x-lg"></i></a>

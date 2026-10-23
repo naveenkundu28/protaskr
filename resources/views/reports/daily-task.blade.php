@@ -12,13 +12,9 @@
             <div class="daily-task-report-controls">
                 <div class="daily-task-report-date-filter">
                     <label for="tasksDate">Report date</label>
-                    <div class="input-group">
-                        <input type="date" class="form-control" id="tasksDate" name="tasksDate"
-                            max="{{ now()->format('Y-m-d') }}" value="{{ now()->subDay()->format('Y-m-d') }}">
-                        <button type="button" id="tasksDateButton" class="btn btn-primary">
-                            <i class="bi bi-funnel me-1"></i> Filter
-                        </button>
-                    </div>
+                    <input type="date" class="form-control" id="tasksDate" name="tasksDate"
+                        max="{{ now()->format('Y-m-d') }}" value="{{ now()->subDay()->format('Y-m-d') }}"
+                        aria-label="Choose report date" onkeydown="return false" onpaste="return false">
                 </div>
                 <div class="daily-task-report-user-filter">
                     <label for="dailyTaskUserFilter">Team member</label>
@@ -121,9 +117,10 @@
             // On load
             loadTasks('dailyTasksAccordion-all');
 
-            // On filter change
-            $('#tasksDateButton').on('click', function() {
-                loadTasks('dailyTasksAccordion-all');
+            // Reload the currently selected tag report immediately after choosing a date.
+            $('#tasksDate').on('change', function() {
+                const $activeTab = $('#tagsTabs .nav-link.active');
+                loadTasks($activeTab.data('accordion') || 'dailyTasksAccordion-all', $activeTab.data('tag-id') || '');
             });
 
             $('#dailyTaskUserFilter').on('change', function() {

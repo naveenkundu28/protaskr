@@ -55,15 +55,7 @@
                                     <i class="bi bi-house-door-fill"></i> Dashboard
                                 </a>
                             </li>
-                            @can('projects-access')
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('projects*') || request()->is('stories*') ? 'active' : '' }}"
-                                        href="{{ route('projects.index') }}">
-                                        <i class="bi bi-kanban"></i> Projects
-                                    </a>
-                                </li>
-                                @endcan
-                                @can('clients-access')
+                            @can('clients-access')
                                 @php($clientsMenuOpen = request()->is('clients*') || request()->routeIs('services.listing.index', 'services.bulk.edit'))
                                 <li class="nav-item sidebar-nav-item has-submenu {{ $clientsMenuOpen ? 'is-open is-active-route' : '' }}">
                                     <div class="sidebar-parent-row">
@@ -106,6 +98,15 @@
                                 </li>
                                 @endcan
 
+                            @can('projects-access')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('projects*') || request()->is('stories*') ? 'active' : '' }}"
+                                        href="{{ route('projects.index') }}">
+                                        <i class="bi bi-kanban"></i> Projects
+                                    </a>
+                                </li>
+                            @endcan
+
                             @can('leads-access')
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('leads*') ? 'active' : '' }}"
@@ -118,7 +119,7 @@
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('tasks*') ? 'active' : '' }}"
                                         href="{{ route('tasks.index') }}">
-                                        <i class="bi bi-check2-square"></i> My Tasks
+                                        <i class="bi bi-check2-square"></i> Team Tasks
                                     </a>
                                 </li>
                             @endcan

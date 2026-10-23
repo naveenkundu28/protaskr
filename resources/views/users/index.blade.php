@@ -2,6 +2,28 @@
 @push('styles')
     <link rel="stylesheet" href="{{ asset('assets/project-module.css') }}">
 @endpush
+@push('scripts')
+<script>
+    jQuery(function ($) {
+        $(document).on('click', '.users-page .users-tabs a', async function (event) {
+            event.preventDefault();
+            const link = this;
+            const current = document.querySelector('.users-page');
+            if (!current) return;
+            current.classList.add('is-loading');
+            try {
+                const response = await fetch(link.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!response.ok) throw new Error('Unable to load users');
+                const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+                const next = doc.querySelector('.users-page');
+                if (!next) throw new Error('User list is missing');
+                current.replaceWith(next);
+                history.pushState({}, '', link.href);
+            } catch (error) { window.location.assign(link.href); }
+        });
+    });
+</script>
+@endpush
 @section('content')
     <div class="container-fluid mt-80 users-page">
         <div class="pm-heading users-module-heading">
@@ -12,7 +34,6 @@
                         <input type="hidden" name="group" value="{{ $group }}">
                         @if(request('tag_id')) <input type="hidden" name="tag_id" value="{{ request('tag_id') }}"> @endif
                         <div class="search_box">
-                            <button type="submit" aria-label="Search"><i class="bi bi-search"></i></button>
                             <input type="search" name="search" value="{{ request('search') }}" placeholder="Search users..." aria-label="Search users">
                             @if(request('search'))
                                 <a href="{{ route('users.index', array_filter(['group' => $group, 'tag_id' => request('tag_id')])) }}" class="search_clear_link" aria-label="Clear search"><i class="bi bi-x-lg"></i></a>
@@ -47,6 +68,7 @@
                                 <th class="users-col-exp">Exp.</th>
                                 <th class="users-col-skills">Primary skills</th>
                                 <th class="users-col-tags">Tags</th>
+                                <th class="users-col-hours">Hours</th>
                                 @if(request('work_type')) <th class="users-col-hours">Total hours</th> @endif
                                 <th class="users-col-action"><span class="visually-hidden">Actions</span><i class="bi bi-three-dots"></i></th>
                             </tr>
@@ -89,6 +111,7 @@
                                             @empty <span class="user-empty-value">—</span> @endforelse
                                         </div>
                                     </td>
+                                    <td class="users-experience">{{ number_format((float) ($hoursByUser[$user->id] ?? 0), 2) }}</td>
                                     @if(request('work_type'))
                                         <td class="users-experience">{{ isset($hoursByUser[$user->id]) ? number_format($hoursByUser[$user->id], 2) : '0.00' }}</td>
                                     @endif
@@ -116,7 +139,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ request('work_type') ? 10 : 9 }}" class="users-empty-row">
+                                    <td colspan="{{ request('work_type') ? 11 : 10 }}" class="users-empty-row">
                                         <span class="users-empty-icon"><i class="bi bi-person-search"></i></span>
                                         <strong>No users found</strong>
                                         <span>Try a different name, email, skill, or role.</span>

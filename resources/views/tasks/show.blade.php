@@ -273,6 +273,16 @@
             color: #fff;
         }
 
+        /* Keep the compact task menu aligned with the first line of the title. */
+        .task-detail .pm-project-head.track_timer { align-items:flex-start; }
+        .task-detail .pm-project-head.track_timer > .right_action_btn { align-self:flex-start; }
+        .task-detail .task-action-dropdown .task-tool-btn.is-more {
+            width:36px;
+            height:36px;
+            padding:0;
+            font-size:15px;
+        }
+
         .task-detail .task-action-dropdown {
             position: relative;
         }
@@ -361,7 +371,7 @@
             padding: 16px 20px;
         }
 
-        .task-detail .task-chat-box {
+        .task-detail .task-chat-box { position: relative;
             background: #fff;
             border: 1px solid #d5deeb;
             border-radius: 10px;
@@ -399,9 +409,9 @@
         .task-detail .task-chat-box textarea {
             display: block;
             width: 100%;
-            min-height: 0;
-            height: 74px;
-            max-height: 220px;
+            min-height: 150px;
+            height: 150px;
+            max-height: 320px;
             border: 0;
             border-radius: 0 0 10px 10px;
             padding: 12px 14px;
@@ -411,6 +421,16 @@
             line-height: 1.5;
             text-align: left;
         }
+        .task-detail .mention-suggestions { position:fixed; z-index:2000; width:min(340px, calc(100vw - 48px)); max-height:280px; overflow:auto; scrollbar-width:none; -ms-overflow-style:none; padding:7px; border:1px solid #dce5f0; border-radius:14px; background:#fff; box-shadow:0 14px 36px rgba(25,48,80,.18); }
+        .task-detail .mention-suggestions::-webkit-scrollbar { display:none; }
+        .task-detail .mention-suggestions-heading { display:flex; justify-content:space-between; padding:6px 9px 8px; color:#7b8aa1; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+        .task-detail .mention-suggestions-heading span { color:#9aa7b9; }
+        .task-detail .mention-suggestions button { display:flex; align-items:center; gap:10px; width:100%; padding:8px 9px; border:0; border-radius:9px; background:transparent; text-align:left; color:#203451; transition:background .12s ease, transform .12s ease; }
+        .task-detail .mention-suggestions button:hover,
+        .task-detail .mention-suggestions button:focus { outline:0; background:#f1f6ff; transform:translateX(2px); }
+        .task-detail .mention-avatar { display:grid; place-items:center; flex:0 0 34px; width:34px; height:34px; border-radius:50%; background:var(--mention-avatar-color); color:#fff; font-size:12px; font-weight:700; box-shadow:0 2px 5px color-mix(in srgb, var(--mention-avatar-color), transparent 72%); }
+        .task-detail .mention-user-name { flex:1; font-size:13px; font-weight:600; }
+        .task-detail .mention-at-icon { color:#9aa9bd; font-size:14px; }
 
         .task-detail .task-chat-body ul,
         .task-detail .task-chat-body ol {
@@ -807,6 +827,8 @@
             gap: 14px;
         }
 
+        .task-detail .task-dashboard-main > .task-due-date-history-card { margin:0; padding:16px 20px; }
+
         .task-detail .bottom_tab_section {
             margin-top: 24px;
         }
@@ -834,9 +856,66 @@
             box-shadow: 0 3px 12px rgba(34, 73, 125, .025);
         }
 
+        .task-detail .task-dashboard-grid { display:grid; grid-template-columns:minmax(0, 1fr) minmax(340px, 395px); align-items:stretch; gap:18px; width:100%; max-width:100%; min-width:0; margin-top:20px; }
+        .task-detail .task-dashboard-main { display:grid; align-content:start; gap:14px; width:100%; max-width:100%; min-width:0; padding:0; }
+        .task-detail .task-dashboard-side { display:grid; grid-template-rows:auto minmax(0, 1fr); align-content:stretch; gap:14px; width:100%; max-width:100%; min-width:0; min-height:calc(100vh - 205px); }
+        .task-detail .card_tracker { margin-top:0; }
+        .task-detail .card_tracker .grid { grid-template-columns:repeat(5, minmax(0, 1fr)); gap:12px; }
+        .task-detail .card_tracker .card { min-height:82px; padding:12px 14px; }
+        .task-detail .task-content-card { min-width:0; padding:16px; border:1px solid var(--task-detail-line); border-radius:12px; background:#fff; box-shadow:0 4px 14px rgba(34,73,125,.035); scroll-margin-top:90px; }
+        .task-detail .task-section-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:30px; margin-bottom:12px; }
+        .task-detail .task-section-heading h2 { display:flex; align-items:center; gap:9px; min-width:0; margin:0; color:#14213d; font-size:16px; font-weight:700; }
+        .task-detail .task-section-heading h2 > .bi { font-size:19px; }
+        .task-detail .task-section-count { color:var(--task-detail-muted); font-size:12px; font-weight:500; }
+        .task-detail .task-section-edit { display:inline-flex; align-items:center; gap:6px; padding:7px 11px; border:1px solid #bed6ff; border-radius:7px; background:#f7faff; color:#1769e8; font-size:12px; }
+        .task-detail .task-section-edit:hover { background:#eaf3ff; }
+        .task-detail .task-description-card .task-description { min-height:0; padding:0; border:0; border-radius:0; box-shadow:none; font-size:14px; line-height:1.6; }
+        .task-detail .task-content-card .project_table { border-radius:8px; }
+        .task-detail .task-time-log-card .table-responsive,.task-detail .task-files-card .table-responsive { margin:0; }
+        .task-detail .task-time-log-card .pm-table thead th,
+        .task-detail .task-files-card .pm-table thead th {
+            height:42px;
+            padding:8px 14px;
+            line-height:1.25;
+            vertical-align:middle;
+        }
+        .task-detail .task-time-tracking-card { padding:16px 18px; }
+        .task-detail .task-time-tracking-heading { flex-wrap:wrap; }
+        .task-detail .task-time-tracking-heading h2 { margin-right:auto; }
+        .task-detail .task-time-tracking-card .start_btn,.task-detail .task-time-tracking-card .stop_btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:34px; padding:6px 10px; border:1px solid #b9d3ff; border-radius:7px; background:#f5f9ff; color:#1769e8; font-size:12px; font-weight:600; white-space:nowrap; }
+        .task-detail .task-time-tracking-card .stop_btn { border-color:#ffc7c7; background:#fff5f5; color:#d33; }
+        .task-detail .task-live-timer { display:flex; justify-content:space-between; gap:10px; padding:9px 0 12px; border-bottom:1px solid #edf1f6; color:#74849b; font-size:12px; }
+        .task-detail .task-live-timer strong { color:#1769e8; font-variant-numeric:tabular-nums; }
+        .task-detail .task-time-metrics { display:flex; justify-content:space-between; gap:14px; padding:14px 0 10px; }
+        .task-detail .task-time-metrics > div { display:grid; gap:2px; min-width:0; }
+        .task-detail .task-time-metrics strong { overflow-wrap:anywhere; color:#14213d; font-size:19px; font-weight:750; line-height:1.2; }
+        .task-detail .task-time-metrics span { color:var(--task-detail-muted); font-size:12px; }
+        .task-detail .task-time-progress-row { display:flex; align-items:center; gap:10px; }
+        .task-detail .task-time-progress-row > strong { color:#14213d; font-size:12px; }
+        .task-detail .task-time-progress { height:9px; flex:1; overflow:hidden; border-radius:999px; background:#e4eaf2; }
+        .task-detail .task-time-progress span { display:block; height:100%; border-radius:inherit; background:linear-gradient(90deg,#168df1,#1269ec); }
+        .task-detail .task-chat-panel { display:flex; flex-direction:column; min-height:0; padding:16px; }
+        .task-detail .task-chat-heading { margin-bottom:10px; }
+        .task-detail .task-chat-order { padding:5px 9px; border:1px solid #e2e8f0; border-radius:7px; background:#fff; color:#526783; font-size:11px; white-space:nowrap; }
+        .task-detail .task-chat-card { display:flex; flex:1 1 auto; flex-direction:column; min-height:0; border:0; border-radius:0; box-shadow:none; }
+        .task-detail .task-chat-list { flex:1 1 auto; min-height:180px; max-height:none; padding:8px 0 14px; }
+        .task-detail .task-chat-item { max-width:100%; gap:9px; }
+        .task-detail .task-chat-avatar { flex-basis:34px; width:34px; height:34px; }
+        .task-detail .task-chat-bubble { padding:9px 11px; }
+        .task-detail .task-chat-meta { gap:7px; flex-wrap:wrap; }
+        .task-detail .task-chat-meta strong { font-size:12px; }
+        .task-detail .task-chat-meta span,.task-detail .task-chat-composer .task-chat-hint { font-size:10px; }
+        .task-detail .task-chat-body { font-size:12px; }
+        .task-detail .task-chat-composer { margin:0 -16px -16px; padding:12px 16px; }
+        .task-detail .task-chat-toolbar { gap:1px; padding:4px; }
+        .task-detail .task-chat-toolbar button { width:28px; height:28px; }
+        .task-detail .task-chat-box textarea { min-height:150px; height:150px; max-height:320px; padding:10px; font-size:12px; }
+        .task-detail .task-chat-composer .task-primary-btn { padding:8px 12px; font-size:12px; }
+
         @media (max-width: 1199.98px) {
+            .task-detail .task-dashboard-grid { grid-template-columns:minmax(0, 1fr) minmax(310px, 350px); gap:14px; }
             .task-detail .card_tracker .grid {
-                grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
             }
         }
 
@@ -845,6 +924,16 @@
                 padding-right: 14px;
                 padding-left: 14px;
             }
+
+            .task-detail .task-dashboard-grid { grid-template-columns:1fr; }
+            .task-detail .task-dashboard-main { grid-row:1; }
+            .task-detail .task-dashboard-side { grid-row:2; grid-template-rows:auto auto; min-height:0; }
+            .task-detail .task-chat-panel { min-height:560px; }
+            .task-detail .task-chat-card { flex:1 1 auto; }
+            .task-detail .task-chat-list { min-height:180px; max-height:360px; }
+            .task-detail .card_tracker .grid { grid-template-columns:repeat(auto-fit, minmax(145px, 1fr)); }
+            .task-detail .task-content-card { padding:14px; }
+            .task-detail .task-chat-composer { margin:0 -14px -14px; padding:11px 14px; }
 
             .task-detail .pm-project-head.track_timer {
                 padding: 20px;
@@ -874,11 +963,6 @@
             .task-detail .task-due-date-history-card .story-date-timeline {
                 margin-top: 12px;
                 flex-wrap: wrap;
-            }
-
-            .task-detail .bottom_tab_section .nav-link {
-                padding-right: 16px;
-                padding-left: 16px;
             }
 
             .task-detail .task-description {
@@ -1057,7 +1141,9 @@
             <button type="button" class="btn-close" aria-label="Close" onclick="document.getElementById('jsresp').style.display = 'none'"></button>
         </div>
 
-        {{-- Title, status and time tracker --}}
+        <div class="task-dashboard-grid">
+        <div class="task-dashboard-main">
+        {{-- Title and status --}}
         <div class="pm-project-head track_timer">
             <div class="left_action_btn">
                 <div class="pm-project-icon">
@@ -1099,20 +1185,7 @@
                 </div>
             </div>
             <div class="right_action_btn">
-                @if ($canControlTimer)
-                    <p class="timer">Time Tracker ( <span id="time-display">00:00:00</span> )</p>
-                @endif
                 <div class="right_action_btn">
-                    @if(!Auth::user()->hasRole(\App\Support\Roles::CLIENT))
-                        @if ($canControlTimer)
-                            <button type="button" class="start_btn" id="start-btn" @if ($timerRunning) style="display: none" @endif>
-                                <i class="bi bi-play-circle"></i> Start Timer <span><i class="bi bi-arrow-right"></i></span>
-                            </button>
-                            <button type="button" class="stop_btn" id="stop-btn" @unless ($timerRunning) style="display: none" @endunless>
-                                <i class="bi bi-stop-circle"></i> Stop Timer <span><i class="bi bi-arrow-right"></i></span>
-                            </button>
-                        @endif
-                    @endif
                     <div class="dropdown task-action-dropdown">
                         <button type="button" class="task-tool-btn is-more dropdown-toggle" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false" title="More options" aria-label="More task options">
                             <i class="bi bi-three-dots-vertical"></i>
@@ -1200,7 +1273,7 @@
                     <span class="card-label">Time Spent</span>
                     <div class="card-value">
                         <svg class="icon-blue" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                        <span id="tracked_hours">{{ $totalTime }}</span>
+                        <span class="tracked_hours">{{ $totalTime }}</span>
                     </div>
                 </div>
                 @endif
@@ -1246,40 +1319,14 @@
             </div>
         @endif
 
-        {{-- Tabs --}}
-        <div class="bottom_tab_section">
-            <ul class="nav nav-pills mb-3" id="task-tabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="tab-description-btn" data-bs-toggle="pill"
-                        data-bs-target="#tab-description" type="button" role="tab" aria-controls="tab-description"
-                        aria-selected="true">Description</button>
-                </li>
-                @if(!Auth::user()->hasRole(\App\Support\Roles::CLIENT))
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tab-time-log-btn" data-bs-toggle="pill" data-bs-target="#tab-time-log"
-                        type="button" role="tab" aria-controls="tab-time-log" aria-selected="false">
-                        Time Log <span class="count" id="timeLogCount">({{ $taskHistories->count() }})</span>
-                    </button>
-                </li>
-                @endif
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tab-files-btn" data-bs-toggle="pill" data-bs-target="#tab-files"
-                        type="button" role="tab" aria-controls="tab-files" aria-selected="false">
-                        Files <span class="count">({{ $files->count() }})</span>
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tab-chat-btn" data-bs-toggle="pill" data-bs-target="#tab-chat"
-                        type="button" role="tab" aria-controls="tab-chat" aria-selected="false">
-                        Chat <span class="count">({{ $chats->count() }})</span>
-                    </button>
-                </li>
-            </ul>
-
-            <div class="tab-content" id="task-tabs-content">
                 {{-- Description --}}
-                <div class="tab-pane fade show active" id="tab-description" role="tabpanel"
-                    aria-labelledby="tab-description-btn">
+                <section class="task-content-card task-description-card" id="tab-description">
+                    <div class="task-section-heading">
+                        <h2><i class="bi bi-file-earmark-text" aria-hidden="true"></i>Description</h2>
+                        @if($canUpdate)
+                            <button type="button" class="task-section-edit" data-bs-toggle="modal" data-bs-target="#editTaskModal"><i class="bi bi-pencil"></i> Edit</button>
+                        @endif
+                    </div>
                     <div class="task-description">
                         @if (filled(trim(strip_tags((string) $task->description))))
                             {!! $task->description !!}
@@ -1287,10 +1334,14 @@
                             <span class="text-muted">No description has been added.</span>
                         @endif
                     </div>
-                </div>
+                </section>
 
                 {{-- Time log --}}
-                <div class="tab-pane fade" id="tab-time-log" role="tabpanel" aria-labelledby="tab-time-log-btn">
+                @if(!Auth::user()->hasRole(\App\Support\Roles::CLIENT))
+                <section class="task-content-card task-time-log-card" id="tab-time-log">
+                    <div class="task-section-heading">
+                        <h2><i class="bi bi-clock-history" aria-hidden="true"></i>Time Log <span class="task-section-count" id="timeLogCount">({{ $taskHistories->count() }})</span></h2>
+                    </div>
                     <div class="table-responsive project_table">
                         <table class="table pm-table mb-0 align-middle">
                             <thead>
@@ -1306,21 +1357,20 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
+                </section>
+                @endif
 
                 {{-- Files --}}
-                <div class="tab-pane fade" id="tab-files" role="tabpanel" aria-labelledby="tab-files-btn">
+                <section class="task-content-card task-files-card" id="tab-files">
+                    <div class="task-section-heading">
+                        <h2><i class="bi bi-paperclip" aria-hidden="true"></i>Attachments <span class="task-section-count" id="taskFilesCount">({{ $files->count() }})</span></h2>
+                        @if ($canUpdate)
+                            <button type="button" class="task-section-edit" data-bs-toggle="collapse" data-bs-target="#uploadFilesPanel" aria-expanded="{{ $errors->files->any() ? 'true' : 'false' }}" aria-controls="uploadFilesPanel"><i class="bi bi-upload"></i> Upload File</button>
+                        @endif
+                    </div>
                     <div class="alert alert-success d-none" id="taskFilesAlert"></div>
 
                     @if ($canUpdate)
-                        <div class="d-flex justify-content-end mb-3">
-                            <button type="button" class="task-primary-btn" data-bs-toggle="collapse"
-                                data-bs-target="#uploadFilesPanel" aria-expanded="{{ $errors->files->any() ? 'true' : 'false' }}"
-                                aria-controls="uploadFilesPanel">
-                                <i class="bi bi-upload"></i> Upload Files
-                            </button>
-                        </div>
-
                         <div class="collapse {{ $errors->files->any() ? 'show' : '' }}" id="uploadFilesPanel">
                             <form class="task-upload-panel" action="{{ route('tasks.files.store', $task->id) }}" method="POST"
                                 enctype="multipart/form-data" id="uploadFilesForm">
@@ -1364,24 +1414,54 @@
 
                     <div class="table-responsive project_table">
                         <table class="table pm-table mb-0 align-middle">
-                            <tbody>
-                                <tr>
-                                    <th>No</th>
-                                    <th>Name</th>
-                                    <th>Type</th>
-                                    <th>Uploaded</th>
-                                    <th>Action</th>
-                                </tr>
-                            </tbody>
+                            <thead><tr><th>No</th><th>Name</th><th>Type</th><th>Uploaded</th><th>Action</th></tr></thead>
                             <tbody id="taskFilesBody">
                                 @include('tasks.files.rows', ['files' => $files, 'task' => $task])
                             </tbody>
                         </table>
                     </div>
+                </section>
+        </div>
+
+        <aside class="task-dashboard-side">
+            @php
+                $trackedSeconds = (int) $taskHistories->sum('elapsed_time');
+                $estimatedSeconds = (float) $task->estimated_hours * 3600;
+                $trackedPercent = $estimatedSeconds > 0 ? min(100, (int) round((($trackedSeconds + (int) ($runningSeconds ?? 0)) / $estimatedSeconds) * 100)) : 0;
+            @endphp
+            <section class="task-content-card task-time-tracking-card">
+                <div class="task-section-heading task-time-tracking-heading">
+                    <h2><i class="bi bi-clock" aria-hidden="true"></i>Time Tracking</h2>
+                    @if($canControlTimer)
+                        <button type="button" class="start_btn task-start-timer" id="start-btn" @if ($timerRunning) style="display:none" @endif><i class="bi bi-play-circle"></i> Start Timer</button>
+                        <button type="button" class="stop_btn task-stop-timer" id="stop-btn" @unless ($timerRunning) style="display:none" @endunless><i class="bi bi-stop-circle"></i> Stop Timer</button>
+                    @elseif(!Auth::user()->hasRole(\App\Support\Roles::CLIENT))
+                        <button type="button" class="start_btn task-start-timer" disabled aria-disabled="true" title="Only the assigned user can start or stop this task timer"><i class="bi bi-play-circle"></i> Start Timer</button>
+                    @endif
                 </div>
-                {{-- Chat --}}
-                <div class="tab-pane fade" id="tab-chat" role="tabpanel" aria-labelledby="tab-chat-btn">
-                    <div class="task-chat-card">
+                @if($canControlTimer)
+                    <div class="task-live-timer">Current session <strong id="time-display">00:00:00</strong></div>
+                @endif
+                <div class="task-time-metrics">
+                    <div><strong id="tracked_hours">{{ $totalTime }}</strong><span>Tracked</span></div>
+                    <div class="text-end"><strong>{{ \App\Support\DurationFormatter::fromHours($task->estimated_hours, 'Not set') }}</strong><span>Estimated</span></div>
+                </div>
+                @if($estimatedSeconds > 0)
+                    <div class="task-time-progress-row"><div class="task-time-progress"><span id="taskTimeProgressBar" style="width:{{ $trackedPercent }}%"></span></div><strong id="taskTimeProgressLabel">{{ $trackedPercent }}%</strong></div>
+                @endif
+            </section>
+
+            {{-- Chat / activity --}}
+            <section class="task-content-card task-chat-panel" id="tab-chat">
+                <div class="task-section-heading task-chat-heading">
+                    <h2><i class="bi bi-chat-square-text" aria-hidden="true"></i>Activity &amp; Comments <span class="task-section-count" id="taskChatCount">({{ $chats->count() }})</span></h2>
+                    <label class="visually-hidden" for="taskChatOrder">Comment display order</label>
+                    <select class="task-chat-order" id="taskChatOrder" aria-label="Comment display order">
+                        <option value="oldest">Older Posts First</option>
+                        <option value="newest">Newer Posts First</option>
+                    </select>
+                </div>
+                <div class="task-chat-card">
                     <div class="task-chat-list" id="taskChatList">
                         @forelse ($chats as $chat)
                             @include('tasks.chat-message', ['chat' => $chat])
@@ -1408,7 +1488,9 @@
                             </div>
                             <textarea id="chatMessage" name="message" maxlength="5000"
                                 placeholder="Write a message…"></textarea>
+                            <div id="mentionSuggestions" class="mention-suggestions d-none" role="listbox"></div>
                         </div>
+                        <div id="chatMentionIds"></div>
                         <div class="task-chat-actions">
                             <span class="task-chat-hint">**bold** &nbsp; *italic* &nbsp; __underline__ &nbsp; - list &nbsp;&middot;&nbsp; Ctrl+Enter to send</span>
                             <button class="task-primary-btn" type="submit" id="chatSend">
@@ -1425,9 +1507,9 @@
                             @endif
                         </p>
                     @endif
-                    </div>
                 </div>
-            </div>
+            </section>
+        </aside>
         </div>
 
         {{-- Edit task --}}
@@ -1689,17 +1771,12 @@
 
     @push('scripts')
         <script>
-            // Open the tab named in the URL (#tab-files) and keep the URL in step with the open tab
+            // Keep notification links such as #tab-chat pointing at the visible section.
             (function() {
-                const hash = /^#tab-[a-z-]+$/.test(window.location.hash) ? window.location.hash : '';
-                const hashTab = hash ? document.querySelector('[data-bs-target="' + hash + '"]') : null;
-                if (hashTab) {
-                    bootstrap.Tab.getOrCreateInstance(hashTab).show();
-                }
-                document.querySelectorAll('#task-tabs [data-bs-toggle="pill"]').forEach(function(button) {
-                    button.addEventListener('shown.bs.tab', function() {
-                        history.replaceState(null, '', button.dataset.bsTarget);
-                    });
+                const hash = /^#tab-(description|time-log|files|chat)$/.test(window.location.hash) ? window.location.hash : '';
+                if (!hash) return;
+                requestAnimationFrame(function() {
+                    document.querySelector(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 });
             })();
 
@@ -1848,7 +1925,7 @@
 
                         if (xhr.status >= 200 && xhr.status < 300 && body.rows !== undefined) {
                             document.getElementById('taskFilesBody').innerHTML = body.rows;
-                            document.querySelector('#tab-files-btn .count').textContent = '(' + body.count + ')';
+                            document.getElementById('taskFilesCount').textContent = '(' + body.count + ')';
                             successBox.textContent = body.message;
                             successBox.classList.remove('d-none');
                             bootstrap.Collapse.getOrCreateInstance(document.getElementById('uploadFilesPanel')).hide();
@@ -1879,10 +1956,64 @@
             (function() {
                 const form = document.getElementById('chatForm');
                 const list = document.getElementById('taskChatList');
+                const orderSelect = document.getElementById('taskChatOrder');
+                const orderStorageKey = 'task-chat-order-{{ $task->id }}';
+                const savedOrder = localStorage.getItem(orderStorageKey);
+                if (savedOrder === 'newest' || savedOrder === 'oldest') orderSelect.value = savedOrder;
+
+                function sortChatMessages() {
+                    const items = Array.from(list.querySelectorAll('.task-chat-item'));
+                    items.sort(function(a, b) {
+                        const difference = Number(a.dataset.createdAt || 0) - Number(b.dataset.createdAt || 0);
+                        return orderSelect.value === 'newest' ? -difference : difference;
+                    }).forEach(item => list.appendChild(item));
+                }
+                sortChatMessages();
+                orderSelect.addEventListener('change', function() {
+                    localStorage.setItem(orderStorageKey, orderSelect.value);
+                    sortChatMessages();
+                    scrollToLatest();
+                });
+
                 const errorBox = document.getElementById('chatError');
                 const send = document.getElementById('chatSend');
                 const sendLabel = send.querySelector('span');
                 const box = document.getElementById('chatMessage');
+                const mentionMenu = document.getElementById('mentionSuggestions');
+                const mentionIds = document.getElementById('chatMentionIds');
+                const projectMembers = @json($mentionUsers->map(fn ($member) => ['id' => $member->id, 'name' => $member->name])->values());
+                let mentionMatches = [];
+                let mentionStart = -1;
+                box.addEventListener('input', function () {
+                    const cursor = box.selectionStart;
+                    const prefix = box.value.slice(0, cursor);
+                    const match = prefix.match(/(?:^|\s)@([\w .'-]*)$/u);
+                    if (!match) { mentionMenu.classList.add('d-none'); return; }
+                    mentionStart = cursor - match[1].length - 1;
+                    const query = match[1].toLowerCase();
+                    mentionMatches = projectMembers.filter(member => member.name.toLowerCase().includes(query)).slice(0, 8);
+                    const avatarColors = ['#2563eb', '#7c3aed', '#0891b2', '#ea580c', '#059669', '#db2777'];
+                    mentionMenu.innerHTML = `<div class="mention-suggestions-heading">Project members <span>${mentionMatches.length}</span></div>` + mentionMatches.map((member, index) => {
+                        const initials = member.name.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('');
+                        const color = avatarColors[index % avatarColors.length];
+                        return `<button type="button" role="option" data-index="${index}"><span class="mention-avatar" style="--mention-avatar-color:${color}">${initials}</span><span class="mention-user-name">${member.name}</span><i class="bi bi-at mention-at-icon" aria-hidden="true"></i></button>`;
+                    }).join('');
+                    mentionMenu.classList.toggle('d-none', mentionMatches.length === 0);
+                    const inputRect = box.getBoundingClientRect();
+                    mentionMenu.style.left = Math.max(12, inputRect.left) + 'px';
+                    mentionMenu.style.top = Math.max(12, inputRect.top - Math.min(mentionMenu.offsetHeight || 250, 280) - 8) + 'px';
+                });
+                mentionMenu.addEventListener('click', function (event) {
+                    const button = event.target.closest('button[data-index]');
+                    if (!button) return;
+                    const member = mentionMatches[Number(button.dataset.index)];
+                    const cursor = box.selectionStart;
+                    box.setRangeText('@' + member.name + ' ', mentionStart, cursor, 'end');
+                    if (!mentionIds.querySelector(`[value="${member.id}"]`)) {
+                        mentionIds.insertAdjacentHTML('beforeend', `<input type="hidden" name="mentioned_user_ids[]" value="${member.id}">`);
+                    }
+                    mentionMenu.classList.add('d-none'); box.focus();
+                });
 
                 // grow with the text, up to the height set in the styles
                 function fitBox() {
@@ -1945,7 +2076,7 @@
                 });
 
                 function scrollToLatest() {
-                    list.scrollTop = list.scrollHeight;
+                    list.scrollTop = orderSelect.value === 'newest' ? 0 : list.scrollHeight;
                 }
 
                 function showError(message) {
@@ -1953,8 +2084,6 @@
                     errorBox.classList.toggle('d-none', !message);
                 }
 
-                // the list has no height while its tab is hidden, so scroll when the tab opens
-                document.getElementById('tab-chat-btn').addEventListener('shown.bs.tab', scrollToLatest);
                 scrollToLatest();
 
                 form.addEventListener('submit', function(event) {
@@ -1972,6 +2101,7 @@
                         dataType: 'json',
                         data: {
                             message: box.value,
+                            mentioned_user_ids: Array.from(mentionIds.querySelectorAll('input')).map(input => input.value),
                             _token: '{{ csrf_token() }}'
                         },
                         success: function(response) {
@@ -1980,8 +2110,10 @@
                                 empty.remove();
                             }
                             list.insertAdjacentHTML('beforeend', response.message);
-                            document.querySelector('#tab-chat-btn .count').textContent = '(' + response.count + ')';
+                            sortChatMessages();
+                            document.getElementById('taskChatCount').textContent = '(' + response.count + ')';
                             box.value = '';
+                            mentionIds.innerHTML = '';
                             fitBox();
                             box.focus();
                             scrollToLatest();
@@ -2010,6 +2142,8 @@
             let lastSavedAt = 0;
             let seconds = {{ (int) ($runningSeconds ?? 0) }};
             let isRunning = {{ $timerRunning ? 'true' : 'false' }};
+            const completedTrackedSeconds = {{ (int) $taskHistories->sum('elapsed_time') }};
+            const estimatedTaskSeconds = {{ (int) ((float) $task->estimated_hours * 3600) }};
 
             function formatTime(sec) {
                 let hours = Math.floor(sec / 3600);
@@ -2020,6 +2154,19 @@
 
             function updateTimeDisplay() {
                 $('#time-display').text(formatTime(seconds));
+                if (isRunning) updateTaskTimeProgress(completedTrackedSeconds + seconds);
+            }
+
+            function updateTaskTimeProgress(totalSeconds) {
+                if (!estimatedTaskSeconds) return;
+                const percent = Math.min(100, Math.round((totalSeconds / estimatedTaskSeconds) * 100));
+                $('#taskTimeProgressBar').css('width', percent + '%');
+                $('#taskTimeProgressLabel').text(percent + '%');
+            }
+
+            function updateTaskTimeProgressFromTotal(totalTime) {
+                const match = /^(\d+):(\d{2}):(\d{2})$/.exec(totalTime || '');
+                if (match) updateTaskTimeProgress(Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]));
             }
 
             // Point the clock at a known elapsed value (from the server) and redraw it
@@ -2123,7 +2270,8 @@
             document.addEventListener('task:timer-stopped', function(event) {
                 resetTimerUi();
                 if (event.detail && event.detail.total_time) {
-                    $('#tracked_hours').text(event.detail.total_time);
+                    $('.tracked_hours, #tracked_hours').text(event.detail.total_time);
+                    updateTaskTimeProgressFromTotal(event.detail.total_time);
                 }
                 refreshTimeLog(event.detail || {});
             });
@@ -2234,7 +2382,8 @@
                         _token: '{{ csrf_token() }}'
                     },
                     success: function(response) {
-                        $('#tracked_hours').text(response.total_time);
+                        $('.tracked_hours, #tracked_hours').text(response.total_time);
+                        updateTaskTimeProgressFromTotal(response.total_time);
                         refreshTimeLog(response);
                         resetTimerUi();
                     },
@@ -2415,7 +2564,8 @@
                         setSavedValue(endInput, res.end_time ? res.end_time.replace(' ', 'T') : '');
                         setSavedValue(durationInput, res.elapsed_formatted);
 
-                        $('#tracked_hours').text(res.total_time);
+                        $('.tracked_hours, #tracked_hours').text(res.total_time);
+                        updateTaskTimeProgressFromTotal(res.total_time);
                         closeTimeEdit(row);
                     },
                     error: function(xhr) {

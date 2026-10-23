@@ -29,7 +29,10 @@ class ProjectController extends Controller
         if (is_string($rawTypeFilter)) {
             $rawTypeFilter = $rawTypeFilter !== '' ? [$rawTypeFilter] : [];
         }
-        $typeFilter = array_values(array_filter((array) $rawTypeFilter));
+        $typeFilter = array_values(array_intersect(
+            array_filter((array) $rawTypeFilter),
+            ['client', 'outsourced']
+        ));
         $search = trim((string) $request->input('search'));
 
         $projectQuery = $user->can('clients-access') ? $user->projects() : $user->projectMembers();
@@ -68,7 +71,13 @@ class ProjectController extends Controller
             });
         })
             ->when(!empty($typeFilter), function ($query) use ($typeFilter) {
-                $query->whereIn('type', $typeFilter);
+                $storedTypes = collect($typeFilter)
+                    ->flatMap(fn ($type) => $type === 'outsourced'
+                        ? ['outsourced', 'external_team']
+                        : ['client', 'internal_team', 'project'])
+                    ->unique()
+                    ->all();
+                $query->whereIn('type', $storedTypes);
             });
 
         $projects = $projects->withCount([
@@ -84,7 +93,12 @@ class ProjectController extends Controller
 
             'tasks as completed_tasks' => function ($query) {
                 $query->where('status', 'completed');
-            }
+            },
+            'services as current_month_active_services_count' => function ($query) {
+                $query->where('year', now()->year)
+                    ->where('month', now()->month)
+                    ->whereIn('service_status', ['new', 'in_progress']);
+            },
         ]);
 
         $projects = $projects->with(['users' => function ($query) {
@@ -97,7 +111,14 @@ class ProjectController extends Controller
                         ->where('year', now()->year);
                 }
             ], 'hours')
-            ->latest()
+            ->orderByRaw('(
+                select min(services.start_date)
+                from services
+                where services.client_id = clients.id
+                    and services.deleted_at is null
+                    and services.start_date is not null
+            ) desc')
+            ->orderByDesc('clients.id')
             ->paginate(50)
             ->withQueryString();
         // dd($projects);
@@ -127,8 +148,11 @@ class ProjectController extends Controller
         foreach ($projects as $project) {
             $project->setAttribute('assigned_resource_names', $assignedResourcesByClient->get($project->id, collect()));
             $latestServices = $latestServiceSets->get($project->id, collect());
-            $latestService = $latestServices->sortByDesc('id')->first();
-            $project->setAttribute('latest_service_start_date', $latestService?->start_date);
+            $firstService = $project->services
+                ->filter(fn ($service) => $service->start_date)
+                ->sortBy(fn ($service) => Carbon::parse($service->start_date)->timestamp)
+                ->first();
+            $project->setAttribute('first_service_start_date', $firstService?->start_date);
             $project->setAttribute('billable_resource_names', $latestServices
                 ->flatMap(fn ($service) => $service->working_users->pluck('name'))
                 ->filter()
@@ -157,7 +181,7 @@ class ProjectController extends Controller
             'client_email' => 'required|email',
             // 'client_code' => 'required',
             'company_name' => 'required|string|max:255',
-            'type' => 'required|in:internal_team,external_team,client,project',
+            'type' => 'required|in:client,outsourced',
             'status' => 'required|in:not_started,in_progress,completed',
         ]);
 
@@ -193,8 +217,37 @@ class ProjectController extends Controller
         })->filter()->unique('id')->sortBy('name')->values();
 
         $allServices = $client->services()->with('frontResource:id,name')->get();
+        Service::loadWorkingUsers($allServices);
+        $currentServicePeriod = now()->year * 100 + now()->month;
+        $groupedServices = $allServices
+            ->filter(fn (Service $service) => $this->servicePeriodKey($service) !== null)
+            ->groupBy(fn (Service $service) => $this->servicePeriodKey($service));
+        $groupedServices->put($currentServicePeriod, $groupedServices->get($currentServicePeriod, collect()));
+        $orderedServicePeriods = $groupedServices->keys()->sort(function ($left, $right) use ($currentServicePeriod) {
+            $leftIsCurrentOrFuture = $left >= $currentServicePeriod;
+            $rightIsCurrentOrFuture = $right >= $currentServicePeriod;
+
+            if ($leftIsCurrentOrFuture !== $rightIsCurrentOrFuture) {
+                return $leftIsCurrentOrFuture ? -1 : 1;
+            }
+
+            return $leftIsCurrentOrFuture ? $left <=> $right : $right <=> $left;
+        })->values();
+        $serviceMonths = $orderedServicePeriods->mapWithKeys(function ($period) use ($groupedServices) {
+            $monthServices = $groupedServices->get($period, collect());
+            $year = intdiv((int) $period, 100);
+            $month = (int) $period % 100;
+
+            return [$period => [
+                'label' => Carbon::createFromDate($year, $month, 1)->format('F Y'),
+                'services' => $monthServices
+                    ->sortBy(fn (Service $service) => $service->start_date
+                        ? Carbon::parse($service->start_date)->timestamp
+                        : PHP_INT_MAX)
+                    ->values(),
+            ]];
+        });
         $services = $this->latestServicesThroughCurrentMonth($allServices);
-        \App\Models\Service::loadWorkingUsers($services);
         $billableUsers = $services->flatMap(fn ($service) => $service->working_users)
             ->filter()->unique('id')->sortBy('name')->values();
         $frontUsers = $services->pluck('frontResource')->filter()->unique('id')->sortBy('name')->values();
@@ -202,7 +255,7 @@ class ProjectController extends Controller
 
         return view('clients.show', compact(
             'client', 'projects', 'assignedUsers',
-            'services', 'billableUsers', 'frontUsers', 'currentService'
+            'services', 'billableUsers', 'frontUsers', 'currentService', 'serviceMonths'
         ));
     }
 
@@ -265,7 +318,7 @@ class ProjectController extends Controller
             'client_email' => 'required|email',
             // 'client_code' => 'required',
             'company_name' => 'required|string|max:255',
-            'type' => 'required|in:internal_team,external_team,client,project',
+            'type' => 'required|in:client,outsourced',
             'status' => 'required|in:not_started,in_progress,completed',
         ]);
 

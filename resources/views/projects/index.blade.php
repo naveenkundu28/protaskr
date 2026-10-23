@@ -79,6 +79,50 @@
     </style>
 @endpush
 
+@push('scripts')
+<script>
+    jQuery(function ($) {
+        const $form = $('.projects-filter-form');
+        if (!$form.length) return;
+        let searchTimer;
+        $form.on('change', 'select[name="client_id"], select[name="assigned_user_id"]', function () {
+            $form.find('input[name="page"]').remove();
+            $form[0].submit();
+        });
+        $form.on('input', 'input[name="search"]', function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(function () {
+                $form.find('input[name="page"]').remove();
+                $form[0].submit();
+            }, 500);
+        });
+        $(document).on('click', '.pm-tabs a', async function (event) {
+            event.preventDefault();
+            const link = this;
+            const tabs = document.querySelector('.pm-tabs');
+            const card = document.querySelector('.pm-card');
+            if (!tabs || !card) return;
+            tabs.classList.add('is-loading');
+            try {
+                const response = await fetch(link.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!response.ok) throw new Error('Unable to load projects');
+                const html = await response.text();
+                const nextDocument = new DOMParser().parseFromString(html, 'text/html');
+                const nextTabs = nextDocument.querySelector('.pm-tabs');
+                const nextCard = nextDocument.querySelector('.pm-card');
+                if (nextTabs && nextCard) {
+                    tabs.replaceWith(nextTabs);
+                    card.replaceWith(nextCard);
+                    history.pushState({}, '', link.href);
+                }
+            } catch (error) {
+                window.location.assign(link.href);
+            }
+        });
+    });
+</script>
+@endpush
+
 @section('content')
 <div class="container-fluid mt-80">
     <div class="pm-heading">
@@ -115,14 +159,6 @@
                         </a>
                     @endif
 
-                    <button type="submit" aria-label="Search">
-                        <svg xmlns="http://www.w3.org/2000/svg"
-                             width="16" height="16" fill="currentColor"
-                             class="bi bi-search" viewBox="0 0 16 16">
-                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"></path>
-                        </svg>
-                    </button>
-
                     @if(
     request()->filled('client_id') ||
     request()->filled('assigned_user_id') ||
@@ -154,13 +190,14 @@
     <div class="pm-tabs">
         @foreach([
             'all' => 'All (' . $counts->total .')',
-            'active' => 'In Progress (' . $counts->active .')',
+            'not_started' => 'Not Started (' . $counts->not_started .')',
+            'in_progress' => 'In Progress (' . $counts->in_progress .')',
             'completed' => 'Completed (' . $counts->completed.')',
             'on_hold' => 'On Hold (' . $counts->on_hold.')'
         ] as $key => $label)
             <a 
                 class="pm-tab-{{ $key }} {{ $status === $key ? 'active' : '' }}" 
-                href="{{ route('projects.index', array_filter(['status' => $key, 'search' => request('search')])) }}"
+                href="{{ route('projects.index', array_merge(request()->except(['status', 'page']), ['status' => $key])) }}"
             >
                 {{ $label }}
             </a>
@@ -184,6 +221,11 @@
                 </thead>
                 <tbody>
                     @forelse($projects as $project)
+                        @php
+                            $displayStatus = in_array($project->status, ['completed', 'on_hold'], true)
+                                ? $project->status
+                                : ((int) $project->project_tracked_seconds > 0 ? 'in_progress' : 'not_started');
+                        @endphp
                         <tr>
                             <td>{{ $projects->firstItem() + $loop->index }}</td>
                             <td>
@@ -204,8 +246,8 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="pm-badge pm-status-{{ $project->status }} {{ $project->status }}">
-                                    {{ str_replace('_', ' ', ucfirst($project->status)) }}
+                                <span class="pm-badge pm-status-{{ $displayStatus }} {{ $displayStatus }}">
+                                    {{ str_replace('_', ' ', ucfirst($displayStatus)) }}
                                 </span>
                                 
                             </td>
@@ -329,14 +371,16 @@
                             <label class="form-label">End Date</label>
                             <input type="date" class="form-control" name="end_date" value="{{ old('end_date', optional($formProject->end_date)->format('Y-m-d')) }}">
                         </div>
+                        @if($formProject->exists)
                         <div class="col-md-3">
                             <label class="form-label">Status <span class="text-danger">*</span></label>
                             <select class="form-select" name="status">
-                                @foreach(['not_started' => 'Not Started', 'active' => 'In Progress', 'on_hold' => 'On Hold', 'completed' => 'Completed'] as $v => $l)
+                                @foreach(['completed' => 'Completed', 'on_hold' => 'On Hold'] as $v => $l)
                                     <option value="{{ $v }}" @selected(old('status', $formProject->status ?: 'not_started') === $v)>{{ $l }}</option>
                                 @endforeach
                             </select>
                         </div>
+                        @endif
                         <div class="col-md-3">
                             <label class="form-label">Priority <span class="text-danger">*</span></label>
                             <select class="form-select" name="priority">

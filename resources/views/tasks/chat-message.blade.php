@@ -1,6 +1,6 @@
 {{-- One message in the Chat tab of the task page. Also returned after sending, to add it without a reload. --}}
 @php($isOwn = $chat->user_id === auth()->id())
-<div class="task-chat-item {{ $isOwn ? 'is-own' : '' }}">
+<div class="task-chat-item {{ $isOwn ? 'is-own' : '' }}" data-created-at="{{ $chat->created_at?->timestamp ?? 0 }}">
     <div class="task-chat-avatar">{{ strtoupper(mb_substr($chat->user?->name ?? '?', 0, 1)) }}</div>
     <div class="task-chat-bubble">
         <div class="task-chat-meta">

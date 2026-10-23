@@ -284,6 +284,18 @@
 .tasks-page .task-tab-in_review:not(.active) { background: #f1eaff; color: #7842c5; }
 .tasks-page .task-tab-on_hold:not(.active) { background: #ffe8ec; color: #c43f52; }
 .tasks-page .task-tab-completed:not(.active) { background: #e3f7ee; color: #0c8a61; }
+.tasks-page .task-tab-overdue:not(.active) { background: #f5222d; color: #fff; }
+.tasks-page .task-tab-overdue:not(.active),
+.tasks-page .task-tab-overdue.active { background: #ffe1e3; color: #bd2530; border-color: #f4c3c6; }
+.tasks-page .pm-tabs a.task-tab-in_review,
+.tasks-page .pm-tabs a.task-tab-in_review:not(.active),
+.tasks-page .pm-tabs a.task-tab-in_review.active { background: #e5f1ff !important; color: #2768b2 !important; border-color: #c8ddf8 !important; }
+.tasks-page .pm-tabs a.task-tab-on_hold,
+.tasks-page .pm-tabs a.task-tab-on_hold:not(.active),
+.tasks-page .pm-tabs a.task-tab-on_hold.active { background: #eee7ff !important; color: #7042b8 !important; border-color: #d9ccfa !important; }
+.tasks-page .tasks-filter-clear { display: inline-grid; place-items: center; width: 39px; height: 39px; border: 1px solid #f0b8bd; border-radius: 8px; background: #fff; color: #d12d3a; font-size: 16px; text-decoration: none; }
+.tasks-page .tasks-filter-clear:hover { background: #fff0f1; }
+.tasks-page.is-loading { opacity: .55; pointer-events: none; transition: opacity .15s ease; }
 
 .tasks-page .tasks-table-card {
     overflow: visible;
@@ -354,11 +366,26 @@
 .tasks-page .tasks-status-cell { width: 116px; }
 .tasks-page .tasks-status-cell .task-status-btn { display: inline-flex; align-items: center; gap: 6px; }
 .tasks-page .tasks-status-cell .task-status { padding: 5px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; white-space: nowrap; }
-.tasks-page .tasks-status-cell .task-status-to_do { background: #edf1f6 !important; color: #596b82 !important; }
+.tasks-page .tasks-status-cell .task-status-to_do { background: #f0f2f5 !important; color: #596b82 !important; }
 .tasks-page .tasks-status-cell .task-status-in_progress { background: #fff0db !important; color: #b85e00 !important; }
-.tasks-page .tasks-status-cell .task-status-in_review { background: #f0eaff !important; color: #7445bf !important; }
-.tasks-page .tasks-status-cell .task-status-on_hold { background: #ffe8ec !important; color: #c13f51 !important; }
-.tasks-page .tasks-status-cell .task-status-completed { background: #e0f7ee !important; color: #07805b !important; }
+.tasks-page .tasks-status-cell .task-status-in_review { background: #e5f1ff !important; color: #2768b2 !important; }
+.tasks-page .tasks-status-cell .task-status-on_hold { background: #eee7ff !important; color: #7042b8 !important; }
+.tasks-page .tasks-status-cell .task-status-completed { background: #e3f7ee !important; color: #0c8a61 !important; }
+.tasks-page .story-status-menu .status-option-to_do,
+.tasks-page .story-status-menu .status-option-to_do:hover,
+.tasks-page .story-status-menu .status-option-to_do.active { background: #f0f2f5 !important; color: #596b82 !important; }
+.tasks-page .story-status-menu .status-option-in_progress,
+.tasks-page .story-status-menu .status-option-in_progress:hover,
+.tasks-page .story-status-menu .status-option-in_progress.active { background: #fff0db !important; color: #b85e00 !important; }
+.tasks-page .story-status-menu .status-option-in_review,
+.tasks-page .story-status-menu .status-option-in_review:hover,
+.tasks-page .story-status-menu .status-option-in_review.active { background: #e5f1ff !important; color: #2768b2 !important; }
+.tasks-page .story-status-menu .status-option-on_hold,
+.tasks-page .story-status-menu .status-option-on_hold:hover,
+.tasks-page .story-status-menu .status-option-on_hold.active { background: #eee7ff !important; color: #7042b8 !important; }
+.tasks-page .story-status-menu .status-option-completed,
+.tasks-page .story-status-menu .status-option-completed:hover,
+.tasks-page .story-status-menu .status-option-completed.active { background: #e3f7ee !important; color: #0c8a61 !important; }
 .tasks-page .tasks-status-cell .dropdown-menu { min-width: 155px; padding: 5px; border: 1px solid #e1e9f3; border-radius: 9px; }
 .tasks-page .tasks-status-cell .dropdown-item { border-radius: 6px; color: #405672; font-size: 12px; }
 .tasks-page .tasks-status-cell .dropdown-item:hover { background: #f2f7ff; color: #1769e0; }

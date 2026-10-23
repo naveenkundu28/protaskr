@@ -22,6 +22,7 @@ class StoryController extends Controller {
 
         $tasks = $story->tasks()
             ->with('user')
+            ->withSum('trackerHistories as tracked_seconds', 'elapsed_time')
             ->when($status !== 'all', fn ($query) => $query->where('status', $status))
             ->when($request->filled('search'), fn ($query) => $query->where('title', 'like', '%' . $request->search . '%'))
             ->latest()

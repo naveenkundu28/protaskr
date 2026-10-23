@@ -20,7 +20,7 @@ class ProjectModuleController extends Controller
             'project_manager_id' => 'nullable|exists:users,id',
             'member_ids' => 'nullable|array',
             'member_ids.*' => 'exists:users,id',
-            'status' => 'required|in:active,completed,on_hold,not_started',
+            'status' => 'sometimes|required|in:completed,on_hold',
         ]);
 
         // An internal project must not keep a client selected before the type changed.
@@ -36,7 +36,10 @@ class ProjectModuleController extends Controller
         $this->authorize('projects-access');
 
         $status = $request->get('status', 'all');
+        $trackedSecondsSql = '(select COALESCE(SUM(th.elapsed_time), 0) from tracker_histories th inner join tasks t on t.id = th.task_id where t.project_id = projects.id)';
         $projects = Project::with(['client', 'manager'])
+            ->select('projects.*')
+            ->selectRaw($trackedSecondsSql . ' as project_tracked_seconds')
             ->withCount('tasks')
             ->when(
                 Auth::user()->hasRole(\App\Support\Roles::CLIENT),
@@ -46,10 +49,9 @@ class ProjectModuleController extends Controller
                 Auth::user()->hasRole(\App\Support\Roles::RESOURCE),
                 fn ($q) => $q->whereHas('members', fn ($m) => $m->where('users.id', Auth::id()))
             )
-            ->when(
-                $status !== 'all',
-                fn ($q) => $q->where('status', $status)
-            )
+            ->when($status === 'not_started', fn ($q) => $q->whereNotIn('status', ['completed', 'on_hold'])->whereRaw($trackedSecondsSql . ' = 0'))
+            ->when($status === 'in_progress', fn ($q) => $q->whereNotIn('status', ['completed', 'on_hold'])->whereRaw($trackedSecondsSql . ' > 0'))
+            ->when(in_array($status, ['completed', 'on_hold'], true), fn ($q) => $q->where('status', $status))
             ->when(
                 $request->filled('client_id'),
                 fn ($q) => $q->where('client_id', $request->integer('client_id'))
@@ -63,27 +65,17 @@ class ProjectModuleController extends Controller
             )
             ->when(
                 $request->filled('search'),
-                fn ($q) => $q->where(function ($x) use ($request) {
-                    $x->where('name', 'like', '%' . $request->search . '%')
-                        ->orWhereHas('client', function ($c) use ($request) {
-                            $c->where(
-                                'name',
-                                'like',
-                                '%' . $request->search . '%'
-                            );
-                        });
-                })
+                fn ($q) => $q->where('name', 'like', '%' . trim($request->search) . '%')
             )
             ->latest()
             ->paginate(12)
             ->withQueryString();
 
-        $counts = Project::selectRaw(
-            "count(*) total,
-             sum(status = 'active') active,
+        $counts = Project::selectRaw("count(*) total,
+             sum(status NOT IN ('completed','on_hold') AND $trackedSecondsSql = 0) not_started,
+             sum(status NOT IN ('completed','on_hold') AND $trackedSecondsSql > 0) in_progress,
              sum(status = 'completed') completed,
-             sum(status = 'on_hold') on_hold"
-        )->when(
+             sum(status = 'on_hold') on_hold")->when(
             Auth::user()->hasRole(\App\Support\Roles::CLIENT),
             fn ($q) => $q->whereHas('client', fn ($c) => $c->where('profile_user_id', Auth::id()))
         )->when(
@@ -131,6 +123,7 @@ class ProjectModuleController extends Controller
         $this->authorize('projects-create');
 
         $data = $this->data($request);
+        $data['status'] = 'not_started';
 
         DB::transaction(function () use (&$project, $data) {
             $members = $data['member_ids'] ?? [];
@@ -174,10 +167,6 @@ class ProjectModuleController extends Controller
             ->selectRaw('status, count(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
-        $taskStatuses = $project->tasks()
-            ->selectRaw('status, count(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
         $trackedSeconds = (int) DB::table('tracker_histories')
             ->join('tasks', 'tracker_histories.task_id', '=', 'tasks.id')
             ->where('tasks.project_id', $project->id)
@@ -185,9 +174,7 @@ class ProjectModuleController extends Controller
 
         $overview = [
             'stories' => $storyStatuses,
-            'tasks' => $taskStatuses,
             'story_total' => $storyStatuses->sum(),
-            'task_total' => $taskStatuses->sum(),
             'tracked_seconds' => $trackedSeconds,
             'estimated_hours' => (float) $project->tasks()->sum('estimated_hours'),
         ];

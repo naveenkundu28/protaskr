@@ -5,6 +5,31 @@
     <link rel="stylesheet" href="{{ asset('assets/project-module.css') }}?v={{ filemtime(public_path('assets/project-module.css')) }}">
 @endpush
 
+@push('scripts')
+<script>
+    jQuery(function ($) {
+        $(document).on('click', '.task_tabs .pm-tabs a', async function (event) {
+            event.preventDefault();
+            const link = this;
+            const current = document.querySelector('.container-fluid.mt-80');
+            if (!current) return;
+            try {
+                const response = await fetch(link.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!response.ok) throw new Error('Unable to load tasks');
+                const html = await response.text();
+                const nextDocument = new DOMParser().parseFromString(html, 'text/html');
+                const next = nextDocument.querySelector('.container-fluid.mt-80');
+                if (!next) throw new Error('Task content is missing');
+                current.replaceWith(next);
+                history.pushState({}, '', link.href);
+            } catch (error) {
+                window.location.assign(link.href);
+            }
+        });
+    });
+</script>
+@endpush
+
 @section('content')
 
 <div class="container-fluid mt-80">
@@ -441,8 +466,12 @@
                 <tbody>
 
                     @forelse ($tasks as $task)
-
-                        <tr>
+                        @php
+                            $taskEstimateSeconds = (float) ($task->estimated_hours ?? 0) * 3600;
+                            $taskTrackedSeconds = (int) ($task->tracked_seconds ?? 0);
+                            $isOverEstimate = $taskTrackedSeconds > $taskEstimateSeconds;
+                        @endphp
+                        <tr class="{{ $isOverEstimate ? 'task-row-over-estimate' : '' }}">
 
                             <td>
                                 {{ $tasks->firstItem() + $loop->index }}
@@ -500,7 +529,7 @@
                             </td>
 
                             @if(!Auth::user()->hasRole(\App\Support\Roles::CLIENT))
-                            <td>
+                            <td class="task-tracked-time">
                                 {{ $task->getTotalElapsedTime() }}
                             </td>
                             @endif

@@ -4,7 +4,39 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('assets/project-module.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/tasks.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/tasks.css') }}?v={{ filemtime(public_path('assets/tasks.css')) }}">
+@endpush
+
+@push('scripts')
+<script>
+    jQuery(function ($) {
+        const loadTaskResults = async (url) => {
+            const current = document.querySelector('.tasks-page');
+            if (!current) return;
+            current.classList.add('is-loading');
+            try {
+                const response = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!response.ok) throw new Error('Unable to load tasks');
+                const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
+                const next = doc.querySelector('.tasks-page');
+                if (!next) throw new Error('Task results are missing');
+                current.replaceWith(next);
+                history.pushState({}, '', url);
+                $(next).find('.select2').select2({ width: '100%', allowClear: true });
+            } catch (error) { window.location.assign(url); }
+        };
+        $(document).on('click', '.tasks-page .pm-tabs a', function (event) {
+            if (this.href.includes('tab=completed')) return;
+            event.preventDefault();
+            loadTaskResults(this.href);
+        });
+        $(document).on('change', '#tasksFilterForm select, #tasksFilterForm input[type="date"]', function () {
+            const form = document.getElementById('tasksFilterForm');
+            form.querySelector('[name="page"]')?.remove();
+            loadTaskResults(form.action + '?' + new URLSearchParams(new FormData(form)).toString());
+        });
+    });
+</script>
 @endpush
 
 @section('content')
@@ -130,12 +162,9 @@
 
                     {{-- Action Buttons --}}
                     <div class="col-lg-2 col-md-6 tasks-filter-actions">
-                        <button type="submit" id="applyTasksFilterBtn" class="btn btn-primary pm-button">
-                            <i class="bi bi-funnel"></i> Apply
-                        </button>
                         @if ($hasFilters)
-                            <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'project_id' => optional($project)->id])) }}" class="btn btn-light border text-danger pm-button px-3" title="Clear Filters">
-                                Reset
+                            <a href="{{ route('tasks.index', array_filter(['tab' => $currentTab, 'project_id' => optional($project)->id])) }}" class="tasks-filter-clear" title="Clear filters" aria-label="Clear filters">
+                                <i class="bi bi-x-lg" aria-hidden="true"></i>
                             </a>
                         @endif
                     </div>
@@ -143,13 +172,14 @@
         </form>
     </div>
 
-    {{-- Tabs (Active, To Do, In Progress, In Review, On Hold, Completed) --}}
+    {{-- Task status tabs --}}
     <div class="pm-tabs">
         @php
             $tabList = [
-                'active' => 'Active' . (isset($tabCounts['active']) ? ' (' . $tabCounts['active'] . ')' : ''),
+                'all' => 'All Tasks' . (isset($tabCounts['all']) ? ' (' . $tabCounts['all'] . ')' : ''),
                 'to_do' => 'To Do' . (isset($tabCounts['to_do']) ? ' (' . $tabCounts['to_do'] . ')' : ''),
                 'in_progress' => 'In Progress' . (isset($tabCounts['in_progress']) ? ' (' . $tabCounts['in_progress'] . ')' : ''),
+                'overdue' => 'Overdue' . (isset($tabCounts['overdue']) ? ' (' . $tabCounts['overdue'] . ')' : ''),
                 'in_review' => 'In Review' . (isset($tabCounts['in_review']) ? ' (' . $tabCounts['in_review'] . ')' : ''),
                 'on_hold' => 'On Hold' . (isset($tabCounts['on_hold']) ? ' (' . $tabCounts['on_hold'] . ')' : ''),
                 'completed' => 'Completed' . (isset($tabCounts['completed']) ? ' (' . $tabCounts['completed'] . ')' : ''),
@@ -294,7 +324,7 @@
                                                     <form action="{{ route('tasks.status.update', $task->id) }}" method="POST" class="mb-0">
                                                         @csrf
                                                         <input type="hidden" name="status" value="{{ $key }}">
-                                                        <button type="submit" class="dropdown-item story-status-option {{ $task->status === $key ? 'active' : '' }}">
+                                                        <button type="submit" class="dropdown-item story-status-option status-option-{{ $key }} {{ $task->status === $key ? 'active' : '' }}">
                                                             {{ $value }}
                                                         </button>
                                                     </form>

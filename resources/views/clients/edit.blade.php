@@ -42,17 +42,13 @@
                                     Type <span class="text-danger">*</span>
                                 </label>
                                 <select name="type" id="type" class="form-select" required>
-                                    <option value="">Select Type</option>
-                                    <option value="internal_team"
-                                        {{ old('type', $client->type) == 'internal_team' ? 'selected' : '' }}>Internal Team
-                                    </option>
-                                    <option value="external_team"
-                                        {{ old('type', $client->type) == 'external_team' ? 'selected' : '' }}>External Team
-                                    </option>
-                                    <option value="client" {{ old('type', $client->type) == 'client' ? 'selected' : '' }}>
-                                        Client</option>
-                                    <option value="project" {{ old('type', $client->type) == 'project' ? 'selected' : '' }}>
-                                        Project</option>
+                                    @php
+                                        $clientTypeValue = old('type', in_array($client->type, ['client', 'outsourced'], true)
+                                            ? $client->type
+                                            : 'client');
+                                    @endphp
+                                    <option value="client" @selected($clientTypeValue === 'client')>Client</option>
+                                    <option value="outsourced" @selected($clientTypeValue === 'outsourced')>Outsourced</option>
                                 </select>
 
                                 @error('type')

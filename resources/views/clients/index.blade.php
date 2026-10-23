@@ -211,7 +211,7 @@
 @endpush
 
 @section('content')
-<div class="container-fluid mt-80">
+<div class="container-fluid mt-80" id="clientsIndexContent">
     {{-- Alerts --}}
 
     {{-- Top heading & search bar --}}
@@ -226,11 +226,6 @@
 
                     {{-- Search Input (Identical to Projects listing) --}}
                     <div class="search_box">
-                        <button type="submit" aria-label="Search">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"></path>
-                            </svg>
-                        </button>
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Search Clients...">
                         @if (request('search'))
                             <a href="{{ route('clients.index', array_filter(['type' => request('type'), 'type_filter' => request('type_filter')])) }}" class="search_clear_link" title="Clear search">
@@ -243,11 +238,10 @@
                     @php
                         $activeTypes = array_values(array_filter((array) request('type_filter', [])));
                         $typeMap = [
-                            'internal_team' => 'Internal Team',
-                            'external_team' => 'External Team',
                             'client' => 'Client',
-                            'project' => 'Project',
+                            'outsourced' => 'Outsourced',
                         ];
+                        $activeTypes = array_values(array_intersect($activeTypes, array_keys($typeMap)));
                     @endphp
                     <div class="dropdown filter-dropdown">
                         <button class="filter-dropdown-btn {{ !empty($activeTypes) ? 'has-filter' : '' }}" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
@@ -281,11 +275,6 @@
                                         <span class="filter-tag-pill filter-tag-{{ $val }}">{{ str_replace('_', ' ', $val) }}</span>
                                     </label>
                                 @endforeach
-                            </div>
-                            <div class="filter-menu-footer">
-                                <button type="submit" class="btn btn-primary btn-sm w-100 filter-apply-btn">
-                                    Apply Filter
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -350,11 +339,12 @@
                 <thead>
                     <tr>
                         <th>#</th>
+                        <th>Client Type</th>
                         <th>Client / Company</th>
                         <th>Assigned Resources</th>
                         <th>Billable Users</th>
-                        <th class="clients-table-nowrap">Service Start Date</th>
-                        <th class="clients-table-nowrap">Status</th>
+                        <th class="clients-table-nowrap">Client Start Date</th>
+                        <th class="clients-table-nowrap">Services</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -367,15 +357,11 @@
                         @endphp
                         <tr class="{{ $rowTypeClass }}">
                             <td>{{ $projects->firstItem() + $loop->index }}</td>
+                            <td>{{ in_array($project->type, ['outsourced', 'external_team'], true) ? 'Outsourced' : 'Client' }}</td>
                             <td>
                                 <a class="pm-link fw-semibold" href="{{ route('clients.show', $project->id) }}">
                                     {{ $project->name }}{{ $project->company_name ? ' (' . $project->company_name . ')' : '' }}
                                 </a>
-                                @if ($project->type)
-                                    <small class="client-type-tag">
-                                        {{ str_replace('_', ' ', $project->type) }}
-                                    </small>
-                                @endif
                             </td>
                             <td>
                                 @if ($project->assigned_resource_names->isNotEmpty())
@@ -455,14 +441,12 @@
                                 <span class="fw-semibold">{{ number_format((float) ($project->current_month_hours ?? 0), 2) }}</span>
                             </td> --}}
                             <td class="clients-table-nowrap">
-                                {{ $project->latest_service_start_date
-                                    ? \Carbon\Carbon::parse($project->latest_service_start_date)->format('j F Y')
+                                {{ $project->first_service_start_date
+                                    ? \Carbon\Carbon::parse($project->first_service_start_date)->format('j F Y')
                                     : '—' }}
                             </td>
                             <td class="clients-table-nowrap">
-                                <span class="pm-badge pm-status-{{ $project->status }} {{ $project->status }}">
-                                    {{ str_replace('_', ' ', ucfirst($project->status)) }}
-                                </span>
+                                <span class="fw-semibold">{{ $project->current_month_active_services_count }}</span>
                             </td>
                             <td>
                                 <div class="project-actions">
@@ -563,7 +547,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
+                            <td colspan="8" class="text-center py-5 text-muted">
                                 No clients match your filters.
                             </td>
                         </tr>
@@ -579,9 +563,7 @@
     {{-- Type Legend --}}
     <div class="d-flex align-items-center gap-2 flex-wrap mt-3 mb-4 ps-1">
         <span class="text-muted small fw-semibold">Legend:</span>
-        <span class="badge px-2 py-1" style="background: #f1f3f5; color: #495057; border: 1px solid #ced4da;">Internal Team</span>
-        <span class="badge px-2 py-1" style="background: #f1f3f5; color: #495057; border: 1px solid #ced4da;">External Team</span>
-        <span class="badge px-2 py-1" style="background: #fff3e0; color: #8a4b08; border: 1px solid #ffd8a8;">Project</span>
+        <span class="badge px-2 py-1" style="background: #f1f3f5; color: #495057; border: 1px solid #ced4da;">Outsourced</span>
         <span class="badge bg-white text-dark px-2 py-1" style="border: 1px solid #ced4da;">Client</span>
     </div>
 </div>
@@ -613,6 +595,57 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        let searchTimer;
+        const listContent = document.getElementById('clientsIndexContent');
+
+        document.addEventListener('input', function(event) {
+            if (!event.target.matches('#clientsFilterForm input[name="search"]')) return;
+            window.clearTimeout(searchTimer);
+            const form = event.target.form;
+            searchTimer = window.setTimeout(() => form.requestSubmit(), 300);
+        });
+
+        document.addEventListener('change', function(event) {
+            if (event.target.matches('#clientsFilterForm input[name="type_filter[]"]')) {
+                event.target.form.requestSubmit();
+            }
+        });
+
+        async function loadClientTab(url, updateHistory) {
+            if (!listContent) return;
+            listContent.setAttribute('aria-busy', 'true');
+
+            try {
+                const response = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                if (!response.ok) throw new Error('Unable to load clients');
+
+                const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+                const nextContent = page.getElementById('clientsIndexContent');
+                if (!nextContent) throw new Error('Client list was not returned');
+
+                listContent.innerHTML = nextContent.innerHTML;
+                if (updateHistory) history.pushState({}, '', url);
+            } catch (error) {
+                window.location.assign(url);
+            } finally {
+                listContent.removeAttribute('aria-busy');
+            }
+        }
+
+        document.addEventListener('click', function(event) {
+            const tabLink = event.target.closest('#clientsIndexContent .pm-tabs a');
+            if (!tabLink || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+            event.preventDefault();
+            loadClientTab(tabLink.href, true);
+        });
+
+        window.addEventListener('popstate', function() {
+            loadClientTab(window.location.href, false);
+        });
+
         const modal = document.getElementById('completeClientModal');
         if (modal) {
             modal.addEventListener('show.bs.modal', function(event) {

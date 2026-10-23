@@ -6,6 +6,36 @@
     <link rel="stylesheet" href="{{ asset('assets/project-module.css') }}?v={{ filemtime(public_path('assets/project-module.css')) }}">
 @endpush
 
+@push('scripts')
+<script>
+    jQuery(function ($) {
+        $(document).on('click', '.pm-detail-tabs a, .story-list-filters a', async function (event) {
+            event.preventDefault();
+            const link = this;
+            const navSelector = link.closest('.story-list-filters') ? '.story-list-filters' : '.pm-detail-tabs';
+            const card = document.querySelector('.pm-detail-tabs + .pm-card');
+            if (!card) return;
+            const nav = document.querySelector(navSelector);
+            nav?.classList.add('is-loading');
+            try {
+                const response = await fetch(link.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!response.ok) throw new Error('Unable to load project tab');
+                const html = await response.text();
+                const nextDocument = new DOMParser().parseFromString(html, 'text/html');
+                const nextCard = nextDocument.querySelector('.pm-detail-tabs + .pm-card');
+                const nextNav = nextDocument.querySelector(navSelector);
+                if (!nextCard || !nextNav) throw new Error('Project tab content is missing');
+                card.replaceWith(nextCard);
+                nav.replaceWith(nextNav);
+                history.pushState({}, '', link.href);
+            } catch (error) {
+                window.location.assign(link.href);
+            }
+        });
+    });
+</script>
+@endpush
+
 @section('content')
 
     @php
@@ -91,20 +121,18 @@
             @if ($tab === 'overview')
                 @php
                     $storyTotal = $overview['story_total'];
-                    $taskTotal = $overview['task_total'];
                     $trackedHours = intdiv($overview['tracked_seconds'], 3600);
                     $trackedMinutes = intdiv($overview['tracked_seconds'] % 3600, 60);
                     $estimatedHours = \App\Support\DurationFormatter::fromHours($overview['estimated_hours']);
-                    $taskStatusCounts = $overview['tasks'];
+                    $storyStatusCounts = $overview['stories'];
                     $teamMembers = $project->members->unique('id')->values();
-                    $taskPercent = fn ($status) => $taskTotal ? round(($taskStatusCounts->get($status, 0) / $taskTotal) * 100) : 0;
-                    
-                    $taskPercentExact = fn ($status) => $taskTotal ? ($taskStatusCounts->get($status, 0) / $taskTotal) * 100 : 0;
-                    $todoEnd = $taskPercentExact('to_do');
-                    $inProgressEnd = $todoEnd + $taskPercentExact('in_progress');
-                    $inReviewEnd = $inProgressEnd + $taskPercentExact('in_review');
-                    $completedEnd = $inReviewEnd + $taskPercentExact('completed');
-               
+                    $storyPercent = fn ($status) => $storyTotal ? round(($storyStatusCounts->get($status, 0) / $storyTotal) * 100) : 0;
+                    $storyPercentExact = fn ($status) => $storyTotal ? ($storyStatusCounts->get($status, 0) / $storyTotal) * 100 : 0;
+                    $todoEnd = $storyPercentExact('to_do');
+                    $inProgressEnd = $todoEnd + $storyPercentExact('in_progress');
+                    $inReviewEnd = $inProgressEnd + $storyPercentExact('in_review');
+                    $onHoldEnd = $inReviewEnd + $storyPercentExact('blocked');
+                    $storyProgress = $storyPercent('completed');
                 @endphp
 
                 <div class="row g-4 p-4">
@@ -141,49 +169,17 @@
                                 <div class="value">{{ $storyTotal }}</div>
                                 <div class="card-bottom">
                                 <div class="status-list">
-                                <div class="status-item"><span class="dot dot-green"></span> {{ $overview['stories']->get('completed', 0) }} Completed</div>
-                                <div class="status-item"><span class="dot dot-blue"></span> {{ $overview['stories']->get('in_progress', 0) }} In Progress</div>
-                                <div class="status-item"><span class="dot dot-gray"></span> {{ $overview['stories']->get('to_do', 0) }} To Do</div>
+                                <div class="status-item"><span class="dot dot-green"></span> {{ $storyStatusCounts->get('completed', 0) }} Completed</div>
+                                <div class="status-item"><span class="dot dot-orange"></span> {{ $storyStatusCounts->get('in_progress', 0) }} In Progress</div>
+                                <div class="status-item"><span class="dot dot-purple"></span> {{ $storyStatusCounts->get('to_do', 0) }} To Do</div>
+                                <div class="status-item"><span class="dot dot-gray"></span> {{ $storyStatusCounts->get('in_review', 0) }} In Review</div>
+                                <div class="status-item"><span class="dot dot-red"></span> {{ $storyStatusCounts->get('blocked', 0) }} On Hold</div>
                             </div>
                                 </div>
                             </div>
 
                             
                             </div>
-                            </div>
-
-                            <!-- Card 2: Total Tasks -->
-                            <div class="card card-blue">
-                            <!-- Wave Graphic -->
-                            <svg class="card-wave" viewBox="0 0 160 120" preserveAspectRatio="none">
-                                <path d="M 0,90 Q 50,85 80,45 T 160,25 L 160,120 L 0,120 Z" fill="url(#grad-blue)" opacity="0.18"/>
-                                <path d="M 0,90 Q 50,85 80,45 T 160,25" fill="none" stroke="#60a5fa" stroke-width="1.8" opacity="0.5"/>
-                                <defs>
-                                <linearGradient id="grad-blue" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stop-color="#60a5fa"/>
-                                    <stop offset="100%" stop-color="#ffffff"/>
-                                </linearGradient>
-                                </defs>
-                            </svg>
-
-                            <div class="card-top">
-                                <div class="icon-bubble icon-blue">
-                                <i class="bi bi-check-square"></i>
-                                </div>
-                                <div class="metric-info">
-                                <h3>Total Tasks</h3>
-                                <div class="value">{{ $taskTotal }}</div>
-                                <div class="card-bottom">
-                                <div class="status-list">
-                                <div class="status-item"><span class="dot dot-green"></span> {{ $taskStatusCounts->get('completed', 0) }} Completed</div>
-                                <div class="status-item"><span class="dot dot-blue"></span> {{ $taskStatusCounts->get('in_progress', 0) }} In Progress</div>
-                                <div class="status-item"><span class="dot dot-gray"></span> {{ $taskStatusCounts->get('to_do', 0) }} To Do</div>
-                                </div>
-                            </div>
-                                </div>
-                            </div>
-
-                            
                             </div>
 
                             <!-- Card 3: Total Hours / Estimated Hours for clients -->
@@ -266,27 +262,32 @@
 
                         <div class="col-md-12">
                             <div class="task_status_container">
-                                <!-- Task Status Card -->
+                                <!-- Story Status Card -->
                                 <div class="card">
                                 <div class="card-header">
-                                    <h2 class="card-title">Task Status</h2>
+                                    <h2 class="card-title">Story Status</h2>
                                 </div>
                                 <div class="project-progress">
-                                    <div class="progress" role="progressbar" aria-label="Project progress" aria-valuenow="{{ $project->progress }}" aria-valuemin="0" aria-valuemax="100">
-                                        <div class="progress-bar {{ $project->progress_color_class }}" style="width: {{ $project->progress }}%"></div>
+                                    <div class="progress" role="progressbar" aria-label="Completed stories" aria-valuenow="{{ $storyProgress }}" aria-valuemin="0" aria-valuemax="100">
+                                        <div class="progress-bar bg-primary" style="width: {{ $storyProgress }}%"></div>
                                     </div>
-                                    <span class="project-progress-text">Progress <strong>{{ $project->progress }}%</strong></span>
+                                    <span class="project-progress-text">Stories completed <strong>{{ $storyProgress }}%</strong></span>
                                 </div>
                                 <div class="task-content">
                                     <div class="donut-chart" style="background: conic-gradient(
-    #9333ea 0% {{ $todoEnd }}%,
-    #f59e0b {{ $todoEnd }}% {{ $inProgressEnd }}%,
-    #6b7280 {{ $inProgressEnd }}% {{ $inReviewEnd }}%,
-    #22c55e {{ $inReviewEnd }}% 100%
+    @if ($storyTotal > 0)
+        #9333ea 0% {{ $todoEnd }}%,
+        #f59e0b {{ $todoEnd }}% {{ $inProgressEnd }}%,
+        #6b7280 {{ $inProgressEnd }}% {{ $inReviewEnd }}%,
+        #ef4444 {{ $inReviewEnd }}% {{ $onHoldEnd }}%,
+        #22c55e {{ $onHoldEnd }}% 100%
+    @else
+        #e2e8f0 0% 100%
+    @endif
 );">
                                     <div class="donut-inner">
-                                        <span class="donut-count">{{ $taskTotal }}</span>
-                                        <span class="donut-label">Total Tasks</span>
+                                        <span class="donut-count">{{ $storyTotal }}</span>
+                                        <span class="donut-label">Total Stories</span>
                                     </div>
                                     </div>
 
@@ -294,26 +295,32 @@
                                     <li class="status-item">
                                         <span class="status-dot dot-purple"></span>
                                         <span class="status-name">To Do</span>
-                                        <span class="status-count">{{ $taskStatusCounts->get('to_do', 0) }}</span>
-                                        <span class="status-percent">{{ $taskPercent('to_do') }}%</span>
+                                        <span class="status-count">{{ $storyStatusCounts->get('to_do', 0) }}</span>
+                                        <span class="status-percent">{{ $storyPercent('to_do') }}%</span>
                                     </li>
                                     <li class="status-item">
                                         <span class="status-dot dot-orange"></span>
                                         <span class="status-name">In Progress</span>
-                                        <span class="status-count">{{ $taskStatusCounts->get('in_progress', 0) }}</span>
-                                        <span class="status-percent">{{ $taskPercent('in_progress') }}%</span>
+                                        <span class="status-count">{{ $storyStatusCounts->get('in_progress', 0) }}</span>
+                                        <span class="status-percent">{{ $storyPercent('in_progress') }}%</span>
                                     </li>
                                     <li class="status-item">
                                         <span class="status-dot dot-gray"></span>
                                         <span class="status-name">In Review</span>
-                                        <span class="status-count">{{ $taskStatusCounts->get('in_review', 0) }}</span>
-                                        <span class="status-percent">{{ $taskPercent('in_review') }}%</span>
+                                        <span class="status-count">{{ $storyStatusCounts->get('in_review', 0) }}</span>
+                                        <span class="status-percent">{{ $storyPercent('in_review') }}%</span>
+                                    </li>
+                                    <li class="status-item">
+                                        <span class="status-dot dot-red"></span>
+                                        <span class="status-name">On Hold</span>
+                                        <span class="status-count">{{ $storyStatusCounts->get('blocked', 0) }}</span>
+                                        <span class="status-percent">{{ $storyPercent('blocked') }}%</span>
                                     </li>
                                     <li class="status-item">
                                         <span class="status-dot dot-green"></span>
                                         <span class="status-name">Completed</span>
-                                        <span class="status-count">{{ $taskStatusCounts->get('completed', 0) }}</span>
-                                        <span class="status-percent">{{ $taskPercent('completed') }}%</span>
+                                        <span class="status-count">{{ $storyStatusCounts->get('completed', 0) }}</span>
+                                        <span class="status-percent">{{ $storyPercent('completed') }}%</span>
                                     </li>
                                     </ul>
                                 </div>

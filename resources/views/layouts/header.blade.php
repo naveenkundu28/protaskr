@@ -6,32 +6,46 @@
                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
                     </svg>
                 </button>
-                @php($globalSearchPlaceholder = Auth::user()?->isAdmin() ? 'Search clients, users, projects, tasks...' : 'Search projects, tasks...')
+                <?php $globalSearchPlaceholder = Auth::user()?->isAdmin() ? 'Search clients, users, projects, tasks...' : 'Search projects, tasks...'; ?>
                 <input type="search" id="globalSearchInput" autocomplete="off" placeholder="{{ $globalSearchPlaceholder }}" aria-label="{{ $globalSearchPlaceholder }}">
                 <div class="global-search-results" id="globalSearchResults" role="listbox" aria-label="Search results" hidden></div>
             </div>  
             <div class="right_profile_notification">
-                <button class="date-picker-button" type="button">
-                    <!-- Calendar Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-date" viewBox="0 0 16 16">
-                        <path d="M6.445 11.688V6.354h-.633A13 13 0 0 0 4.5 7.16v.695c.375-.257.969-.62 1.258-.777h.012v4.61zm1.188-1.305c.047.64.594 1.406 1.703 1.406 1.258 0 2-1.066 2-2.871 0-1.934-.781-2.668-1.953-2.668-.926 0-1.797.672-1.797 1.809 0 1.16.824 1.77 1.676 1.77.746 0 1.23-.376 1.383-.79h.027c-.004 1.316-.461 2.164-1.305 2.164-.664 0-1.008-.45-1.05-.82zm2.953-2.317c0 .696-.559 1.18-1.184 1.18-.601 0-1.144-.383-1.144-1.2 0-.823.582-1.21 1.168-1.21.633 0 1.16.398 1.16 1.23"/>
-                        <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
-                    </svg>
-
-                    <!-- Text Label -->
-                    <span class="date-label">{{ now()->format('F Y') }}</span>
-
-                    <!-- Chevron Down Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
-                        <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"/>
-                    </svg>
-                </button>
-                <span class="notification">
+                @php($mentionNotifications = \App\Models\TaskMentionNotification::with(['task', 'sender'])->where('user_id', Auth::id())->latest()->limit(8)->get())
+                @php($unreadMentionCount = \App\Models\TaskMentionNotification::where('user_id', Auth::id())->whereNull('read_at')->count())
+                <div class="dropdown notification-dropdown">
+                <button type="button" class="notification dropdown-toggle" id="mentionNotificationBell" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bell" viewBox="0 0 16 16">
                     <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2M8 1.918l-.797.161A4 4 0 0 0 4 6c0 .628-.134 2.197-.459 3.742-.16.767-.376 1.566-.663 2.258h10.244c-.287-.692-.502-1.49-.663-2.258C12.134 8.197 12 6.628 12 6a4 4 0 0 0-3.203-3.92zM14.22 12c.223.447.481.801.78 1H1c.299-.199.557-.553.78-1C2.68 10.2 3 6.88 3 6c0-2.42 1.72-4.44 4.005-4.901a1 1 0 1 1 1.99 0A5 5 0 0 1 13 6c0 .88.32 4.2 1.22 6"/>
                     </svg>
-                    <em>2</em>
-                </span>
+                    <em id="mentionNotificationCount" class="{{ $unreadMentionCount ? '' : 'd-none' }}">{{ $unreadMentionCount }}</em>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end notification-menu">
+                    <li class="notification-menu-heading">
+                        <strong>Notifications</strong>
+                        <form id="markAllMentionsReadForm" method="POST" action="{{ route('notifications.mark-all-read') }}">
+                            @csrf
+                            <button type="submit" class="notification-mark-all">Mark all as read</button>
+                        </form>
+                    </li>
+                    @forelse($mentionNotifications as $notice)
+                        @php($senderName = $notice->sender?->name ?? 'Someone')
+                        @php($senderInitials = collect(preg_split('/\s+/', trim($senderName)))->filter()->take(2)->map(fn ($part) => mb_substr($part, 0, 1))->implode(''))
+                        <li>
+                            <a class="notification-menu-item {{ $notice->read_at ? 'is-read' : 'is-unread' }}" href="{{ route('tasks.mentions.open', $notice) }}">
+                                <span class="notification-menu-avatar avatar-tone-{{ $notice->mentioned_by % 5 }}" aria-hidden="true">{{ mb_strtoupper($senderInitials) }}</span>
+                                <span class="notification-menu-body">
+                                    <span class="notification-menu-copy"><strong>{{ $senderName }}</strong> mentioned you in a comment</span>
+                                    <time>{{ $notice->created_at->diffForHumans() }}</time>
+                                    <small>{{ $notice->message_excerpt }}</small>
+                                    <span class="notification-menu-task"><i class="bi bi-calendar3" aria-hidden="true"></i>{{ $notice->task?->title ?? 'Task unavailable' }}</span>
+                                </span>
+                                @if(!$notice->read_at)<i class="notification-unread-dot" aria-label="Unread"></i>@endif
+                            </a>
+                        </li>
+                    @empty<li class="notification-menu-empty">No notifications</li>@endforelse
+                    <li class="notification-menu-footer"><a class="notification-see-all" href="{{ route('notifications.index') }}">See All Notifications <i class="bi bi-chevron-right" aria-hidden="true"></i></a></li>
+                </ul></div>
                 <div class="task-navbar-meta ms-lg-auto d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3">
                     <ul class="navbar-nav">
                         <li class="nav-item dropdown">
@@ -118,6 +132,75 @@
         </div>
     </div>
 </div>
+@push('scripts')
+<script>
+    (function () {
+        const count = document.getElementById('mentionNotificationCount');
+        const bell = document.getElementById('mentionNotificationBell');
+        const menu = bell?.closest('.notification-dropdown')?.querySelector('.notification-menu');
+        const markAllForm = document.getElementById('markAllMentionsReadForm');
+        const positionMenu = () => {
+            if (!bell || !menu) return;
+            const rect = bell.getBoundingClientRect();
+            const width = Math.min(420, window.innerWidth - 24);
+            const left = Math.max(12, Math.min(rect.right - width, window.innerWidth - width - 12));
+            const menuHeight = menu.getBoundingClientRect().height;
+            const maxTop = Math.max(12, window.innerHeight - menuHeight - 12);
+            const belowTop = rect.bottom + 8;
+            const top = belowTop <= maxTop ? belowTop : Math.max(12, Math.min(rect.top - menuHeight - 8, maxTop));
+            menu.style.setProperty('position', 'fixed', 'important');
+            menu.style.setProperty('width', width + 'px', 'important');
+            menu.style.setProperty('max-width', 'calc(100vw - 24px)', 'important');
+            menu.style.setProperty('left', left + 'px', 'important');
+            menu.style.setProperty('right', 'auto', 'important');
+            menu.style.setProperty('top', top + 'px', 'important');
+            menu.style.setProperty('transform', 'none', 'important');
+        };
+        const dropdown = bell?.closest('.notification-dropdown');
+        dropdown?.addEventListener('shown.bs.dropdown', () => requestAnimationFrame(positionMenu));
+        bell?.addEventListener('click', () => { positionMenu(); window.setTimeout(positionMenu, 50); });
+        window.addEventListener('resize', positionMenu);
+        window.addEventListener('scroll', positionMenu, true);
+        markAllForm?.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const button = markAllForm.querySelector('button[type="submit"]');
+            if (button) button.disabled = true;
+            try {
+                const response = await fetch(markAllForm.action, {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: new FormData(markAllForm)
+                });
+                if (!response.ok) throw new Error('Unable to update notifications');
+                menu?.querySelectorAll('.notification-menu-item.is-unread').forEach((item) => {
+                    item.classList.remove('is-unread');
+                    item.classList.add('is-read');
+                    item.querySelector('.notification-unread-dot')?.remove();
+                });
+                if (count) {
+                    count.textContent = '0';
+                    count.classList.add('d-none');
+                }
+            } catch (_) {
+                window.location.reload();
+            } finally {
+                if (button) button.disabled = false;
+            }
+        });
+        if (!count) return;
+        const refresh = async () => {
+            try {
+                const response = await fetch('{{ route('notifications.unread-count') }}', { headers: { 'Accept': 'application/json' } });
+                if (!response.ok) return;
+                const data = await response.json();
+                count.textContent = data.count;
+                count.classList.toggle('d-none', Number(data.count) === 0);
+            } catch (_) {}
+        };
+        window.setInterval(refresh, 15000);
+    })();
+</script>
+@endpush
 
 @push('scripts')
     <script>

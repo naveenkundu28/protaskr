@@ -49,22 +49,30 @@
 }
 .pm-tabs {
     display: flex;
-    gap: 0px;
-    border-bottom: 1px solid #dfdfdf;
-    margin-bottom: 22px;
+    gap: 8px;
+    padding: 7px;
+    border: 1px solid #e6ebf3;
+    border-radius: 14px;
+    background: #f7f9fc;
+    margin-bottom: 18px;
     overflow-x: auto;
+    transition: opacity .15s ease;
 }
+.pm-tabs.is-loading { opacity: .55; pointer-events: none; }
 .pm-tabs a {
-    padding: 0 30px 10px;
+    padding: 10px 16px;
     color: #60708b;
     font-weight: 600;
     text-decoration: none;
     white-space: nowrap;
-    border-bottom: 3px solid transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
 }
 .pm-tabs a.active {
-    color: var(--pm-blue);
-    border-color: var(--pm-blue);
+    background: #fff;
+    border-color: #e5eaf2;
+    box-shadow: 0 2px 7px rgba(30, 55, 90, .08);
 }
 .pm-filter {
     padding: 18px;
@@ -1031,16 +1039,53 @@
 }
 
 /* Project status text colours: in progress = orange, completed = green, on hold = red */
-.pm-badge.pm-status-active { background: transparent; color: #e07b12; }
+.pm-badge.pm-status-active,
+.pm-badge.pm-status-in_progress { background: #fff1dc; color: #bd6c08; }
+.pm-badge.pm-status-not_started { background: #eaf3ff; color: #2878d0; }
+.pm-table tr.task-row-over-estimate > td { background: #fff0f0 !important; }
+.pm-table tr.task-row-over-estimate > td.task-tracked-time { color: #111827 !important; }
 .pm-badge.pm-status-completed { background: transparent; color: #168657; }
 .pm-badge.pm-status-on_hold { background: transparent; color: #d64555; }
 
-.pm-tabs a.pm-tab-active { color: #e07b12; }
+.pm-tabs a.pm-tab-not_started { color: #2878d0; }
+.pm-tabs a.pm-tab-in_progress { color: #bd6c08; }
 .pm-tabs a.pm-tab-completed { color: #168657; }
 .pm-tabs a.pm-tab-on_hold { color: #d64555; }
-.pm-tabs a.pm-tab-active.active { border-color: #e07b12; }
+.pm-tabs a.pm-tab-not_started.active { border-color: #2878d0; }
+.pm-tabs a.pm-tab-in_progress.active { border-color: #e7a13b; }
 .pm-tabs a.pm-tab-completed.active { border-color: #168657; }
 .pm-tabs a.pm-tab-on_hold.active { border-color: #d64555; }
+
+/* Story task status tabs use the same compact pill treatment as project tabs. */
+.task_tabs { margin: 18px 0; }
+.task_tabs .pm-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px;
+    margin: 0;
+    overflow-x: auto;
+    border: 1px solid #e6ebf3;
+    border-radius: 14px;
+    background: #f7f9fc;
+}
+.task_tabs .pm-tabs a {
+    flex: 0 0 auto;
+    padding: 10px 16px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: #60708b;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.task_tabs .pm-tabs a.active {
+    color: #1769e8;
+    background: #fff;
+    border-color: #e5eaf2;
+    box-shadow: 0 2px 7px rgba(30, 55, 90, .08);
+}
 
 /* small green dot before the title of a task whose timer is running */
 .pm-running-dot {

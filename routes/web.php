@@ -123,6 +123,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.status.update');
     Route::post('tasks/{task}/chat', [TaskController::class, 'sendChat'])->name('tasks.chat.store');
+    Route::get('task-mention-notifications/{notification}', [TaskController::class, 'openMentionNotification'])->name('tasks.mentions.open');
+    Route::get('notifications', [TaskController::class, 'mentionNotifications'])->name('notifications.index');
+    Route::get('notifications/unread-count', [TaskController::class, 'unreadMentionCount'])->name('notifications.unread-count');
+    Route::post('notifications/mark-all-read', [TaskController::class, 'markAllMentionsRead'])->name('notifications.mark-all-read');
     Route::put('tasks/{task}/manual-time', [TaskController::class, 'mnanualTrack'])->name('tasks.manual-time.update');
     Route::post('tasks/{task}/timer/start', [TaskController::class, 'startTimer'])->name('tasks.timer.start');
     Route::post('tasks/{task}/timer/stop', [TaskController::class, 'stopTimer'])->name('tasks.timer.stop');

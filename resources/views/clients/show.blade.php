@@ -31,7 +31,7 @@
                 <strong title="Email address masked for privacy">{{ $maskedEmail }}</strong>
             </article>
             <article class="client-summary-item">
-                <span class="client-summary-label"><i class="bi bi-calendar3"></i> Service start date</span>
+                <span class="client-summary-label"><i class="bi bi-calendar3"></i> Client start date</span>
                 <strong>{{ $currentService?->start_date ? \Carbon\Carbon::parse($currentService->start_date)->format('d M Y') : '—' }}</strong>
             </article>
             <article class="client-summary-item">
@@ -252,6 +252,53 @@
                 </div>
             @endforelse
         </section>
+
+        <section class="client-services-section" aria-label="Client services by month">
+            <div class="client-projects-heading">
+                <div>
+                    <span class="client-show-eyebrow">SERVICE HISTORY</span>
+                    <h2>Services <span>{{ $serviceMonths->sum(fn ($month) => $month['services']->count()) }}</span></h2>
+                </div>
+            </div>
+
+            <div class="table-responsive client-service-report-wrap">
+                <table class="table client-task-table client-service-table align-middle mb-0">
+                    <thead>
+                        <tr><th>Month</th><th>Service ID</th><th>Number of Services</th><th>Hours</th><th>Front Resource</th><th>Working Resources</th><th>Start Date</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($serviceMonths as $month)
+                            @php
+                                $monthServices = $month['services'];
+                            @endphp
+                            @forelse ($monthServices as $service)
+                                <tr class="{{ $loop->first ? 'client-service-month-start' : '' }}">
+                                    <td class="client-service-month-name">{{ $month['label'] }}</td>
+                                    <td>{{ $service->service_id ?: '—' }}</td>
+                                    @if ($loop->first)
+                                        <td rowspan="{{ $monthServices->count() }}" class="client-service-count-cell">
+                                            <span class="client-service-month-count">{{ $monthServices->count() }} {{ \Illuminate\Support\Str::plural('service', $monthServices->count()) }}</span>
+                                        </td>
+                                    @endif
+                                    <td class="client-service-hours">{{ number_format((float) $service->hours, 2) }} hrs</td>
+                                    <td>{{ $service->frontResource?->name ?? '—' }}</td>
+                                    <td>{{ $service->working_users->pluck('name')->filter()->join(', ') ?: '—' }}</td>
+                                    <td>{{ $service->start_date ? \Carbon\Carbon::parse($service->start_date)->format('d M Y') : '—' }}</td>
+                                </tr>
+                            @empty
+                                <tr class="client-service-month-start">
+                                    <td class="client-service-month-name">{{ $month['label'] }}</td>
+                                    <td>—</td>
+                                    <td class="client-service-count-cell"><span class="client-service-month-count">0 services</span></td>
+                                    <td class="client-service-hours">—</td>
+                                    <td colspan="3" class="client-service-no-rows">No services recorded for this month.</td>
+                                </tr>
+                            @endforelse
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </main>
 
 @endsection
@@ -293,6 +340,25 @@
         .client-front-users { display:flex; flex-wrap:wrap; align-items:center; gap:7px; border-top:1px solid #edf1f6; margin-top:14px; padding-top:11px; color:#71839d; font-size:11px; }
         .client-front-user { display:inline-flex; align-items:center; gap:5px; color:#37516e; font-weight:600; }
         .client-front-user i { color:#6e54d8; }
+        .client-services-section { margin-bottom:28px; }
+        .client-service-report-wrap { overflow-x:auto; border:1px solid #dce6f3; border-radius:10px; background:#fff; box-shadow:0 3px 10px rgba(24,55,92,.045); }
+        .client-service-table { width:100%; min-width:1050px; table-layout:fixed; }
+        .client-service-table thead th:nth-child(1),.client-service-table tbody td:nth-child(1) { width:13%; }
+        .client-service-table thead th:nth-child(2),.client-service-table tbody td:nth-child(2) { width:17%; }
+        .client-service-table thead th:nth-child(3),.client-service-table tbody td:nth-child(3) { width:14%; }
+        .client-service-table thead th:nth-child(4),.client-service-table tbody td:nth-child(4) { width:11%; }
+        .client-service-table thead th:nth-child(5),.client-service-table tbody td:nth-child(5) { width:15%; }
+        .client-service-table thead th:nth-child(6),.client-service-table tbody td:nth-child(6) { width:18%; }
+        .client-service-table thead th:nth-child(7),.client-service-table tbody td:nth-child(7) { width:12%; }
+        .client-service-table thead th { padding:10px 14px; }
+        .client-service-table tbody td { padding:11px 14px; color:#405771; font-size:12px; font-weight:400; line-height:1.45; vertical-align:middle; }
+        .client-service-table tbody td:first-child { min-width:130px; color:#173454; font-size:13px; font-weight:700; }
+        .client-service-table tbody td:nth-child(6) { min-width:190px; }
+        .client-service-table tbody tr.client-service-month-start td { border-top:1px solid #dce6f3; }
+        .client-service-count-cell { vertical-align:middle !important; }
+        .client-service-month-count { display:inline-block; border:1px solid #d9e8fb; border-radius:20px; padding:5px 9px; color:#2867aa; background:#f4f8fd; font-size:11px; font-weight:650; white-space:nowrap; }
+        .client-service-hours { color:#1769d2 !important; font-weight:700 !important; white-space:nowrap; }
+        .client-service-no-rows { color:#8593a7 !important; text-align:center; font-style:italic; }
         .client-projects-heading { display:flex; align-items:end; justify-content:space-between; margin-bottom:12px; }
         .client-projects-heading h2 { margin:3px 0 0; color:#173454; font-size:21px; font-weight:700; }
         .client-projects-heading h2 span { margin-left:5px; border-radius:15px; padding:3px 8px; color:#3671bc; background:#eaf3ff; font-size:11px; vertical-align:middle; }

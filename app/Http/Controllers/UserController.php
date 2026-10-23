@@ -38,11 +38,101 @@ class UserController extends Controller
         $outsourceCount = (clone $baseUsers)->where('user_type', 'External')->count();
         $resignedCount = User::onlyTrashed()->count();
 
+        $workType = trim((string) $request->input('work_type'));
+        $workTypeUserIds = null;
+        if ($workType !== '') {
+            $selectedYear = (int) $request->input('year', session('selected_year', Carbon::now()->year));
+            $selectedMonth = (int) $request->input('month', session('selected_month', Carbon::now()->month));
+            try {
+                $workTypeDate = Carbon::createFromDate($selectedYear, $selectedMonth, 1);
+            } catch (\Throwable $e) {
+                $workTypeDate = Carbon::now();
+            }
+
+            $masterHours = (float) (Hour::where('year', $workTypeDate->year)
+                ->where('month', $workTypeDate->format('F'))
+                ->value('hours') ?? 0);
+            $internalUsers = User::where('user_type', 'Internal')
+                ->whereDoesntHave('role', function ($query) {
+                    $query->where('name', \App\Support\Roles::ADMIN);
+                })->get(['id']);
+            $services = Service::where('year', $workTypeDate->year)
+                ->where(function ($query) use ($workTypeDate) {
+                    $query->where('month', $workTypeDate->month)
+                        ->orWhere('month', (string) $workTypeDate->month)
+                        ->orWhere('month', $workTypeDate->format('m'));
+                })
+                ->where('service_type', '!=', 'external')
+                ->get(['service_type', 'hours', 'working_resource', 'cancel_reason']);
+            $allUsersById = User::withTrashed()->get(['id', 'employee_id'])->keyBy('id');
+            $hoursByAssignedUser = [];
+
+            foreach ($services as $service) {
+                $workingIds = $service->working_resource_ids;
+                if (!$workingIds) {
+                    continue;
+                }
+
+                if ($service->service_type === 'direct') {
+                    foreach ($workingIds as $assignedUserId) {
+                        $hoursByAssignedUser[$assignedUserId] = ($hoursByAssignedUser[$assignedUserId] ?? 0) + (float) $service->hours;
+                    }
+                } elseif ($service->service_type === 'proxy') {
+                    foreach ($workingIds as $assignedUserId) {
+                        $employeeId = trim((string) ($allUsersById->get($assignedUserId)?->employee_id ?? ''));
+                        $parsedHours = null;
+                        if ($employeeId !== '' && preg_match('/(?:^|[,\\s])' . preg_quote($employeeId, '/') . '\\s*-\\s*([0-9]+(?:\\.[0-9]+)?)/i', (string) $service->cancel_reason, $matches)) {
+                            $parsedHours = (float) $matches[1];
+                        } elseif (preg_match('/(?:^|[,\\s])' . preg_quote((string) $assignedUserId, '/') . '\\s*-\\s*([0-9]+(?:\\.[0-9]+)?)/i', (string) $service->cancel_reason, $matches)) {
+                            $parsedHours = (float) $matches[1];
+                        } else {
+                            $parsedHours = (float) $service->hours / count($workingIds);
+                        }
+                        $hoursByAssignedUser[$assignedUserId] = ($hoursByAssignedUser[$assignedUserId] ?? 0) + $parsedHours;
+                    }
+                } else {
+                    foreach ($workingIds as $assignedUserId) {
+                        $hoursByAssignedUser[$assignedUserId] = ($hoursByAssignedUser[$assignedUserId] ?? 0) + ((float) $service->hours / count($workingIds));
+                    }
+                }
+            }
+
+            $workTypeUserIds = [];
+            $halfHours = $masterHours / 2;
+            foreach ($internalUsers as $employee) {
+                $assignedHours = (float) ($hoursByAssignedUser[$employee->id] ?? 0);
+                if ($assignedHours <= 0) {
+                    $bucket = 'Bench';
+                } elseif ($masterHours <= 0 || $assignedHours > $masterHours) {
+                    $bucket = 'FULL +';
+                } elseif ($assignedHours == $masterHours) {
+                    $bucket = 'FULL';
+                } elseif ($assignedHours == $halfHours) {
+                    $bucket = 'HALF';
+                } elseif ($assignedHours > $halfHours) {
+                    $bucket = 'HALF +';
+                } else {
+                    $bucket = 'ADHOC';
+                }
+
+                if ($bucket === $workType) {
+                    $workTypeUserIds[] = $employee->id;
+                }
+            }
+        }
+
         $data = User::with(['primarySkills', 'secondarySkills', 'tags'])
             ->whereDoesntHave('role', function ($q) {
                 $q->where('name', \App\Support\Roles::ADMIN);
             })
             ->where('user_type', $group === 'team' ? 'Internal' : 'External')
+            ->when($workType !== '', function ($query) use ($workTypeUserIds) {
+                if ($workTypeUserIds) {
+                    $query->whereIn('id', $workTypeUserIds);
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            })
             ->when($request->filled('tag_id'), function ($query) use ($request) {
                 $query->whereHas('tags', function ($tagQuery) use ($request) {
                     $tagQuery->where('tags.id', $request->input('tag_id'));
@@ -76,7 +166,99 @@ class UserController extends Controller
             ->paginate(50)
             ->withQueryString();
 
-        return view('users.index', compact('data', 'group', 'teamCount', 'outsourceCount', 'resignedCount'))
+        $now = Carbon::now();
+        $hoursByUser = [];
+        $services = Service::where('year', $now->year)
+            ->where(function ($query) use ($now) {
+                $query->where('month', $now->month)
+                    ->orWhere('month', (string) $now->month)
+                    ->orWhere('month', $now->format('m'));
+            })
+            ->whereIn('service_type', ['direct', 'proxy'])
+            ->get(['service_type', 'hours', 'front_resource', 'working_resource', 'cancel_reason']);
+        $assignedUserIds = $services->flatMap(fn ($service) => $service->service_type === 'direct'
+            ? ((int) $service->front_resource ? [(int) $service->front_resource] : $service->working_resource_ids)
+            : $service->working_resource_ids)->filter()->unique();
+        $assignedUsers = User::withTrashed()->get(['id', 'employee_id', 'name'])->keyBy('id');
+
+        foreach ($services as $service) {
+            $assignedIds = $service->service_type === 'direct'
+                ? ((int) $service->front_resource ? [(int) $service->front_resource] : [])
+                : $service->working_resource_ids;
+
+            if ($service->service_type === 'proxy') {
+                $reason = (string) $service->cancel_reason;
+                preg_match_all('/(?<![A-Za-z0-9])([A-Za-z]+[0-9]+)\s*-\s*([0-9]+(?:\.[0-9]+)?)/i', $reason, $pairs, PREG_SET_ORDER);
+                foreach ($assignedIds as $userId) {
+                    $employeeId = trim((string) ($assignedUsers->get($userId)?->employee_id ?? ''));
+                    foreach ($pairs as $pair) {
+                        if ($employeeId !== '' && strcasecmp($employeeId, trim($pair[1])) === 0) {
+                            $hoursByUser[$userId] = ($hoursByUser[$userId] ?? 0) + (float) $pair[2];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            foreach ($assignedIds as $userId) {
+                if ($service->service_type === 'direct') {
+                    $hoursByUser[$userId] = ($hoursByUser[$userId] ?? 0) + (float) ($service->hours ?? 0);
+                    continue;
+                }
+
+                if ($service->service_type === 'proxy') {
+                    continue;
+                }
+
+                $employeeId = trim((string) ($assignedUsers->get($userId)?->employee_id ?? ''));
+                $reason = (string) $service->cancel_reason;
+                $matchedHours = false;
+                if ($employeeId !== '' && preg_match(
+                    '/(?<![A-Za-z0-9])' . preg_quote($employeeId, '/') . '\\s*-\\s*([0-9]+(?:\\.[0-9]+)?)(?![0-9])/i',
+                    $reason,
+                    $matches
+                )) {
+                    $matchedHours = true;
+                } elseif (preg_match(
+                    '/(?<![A-Za-z0-9])' . preg_quote((string) $userId, '/') . '\\s*-\\s*([0-9]+(?:\\.[0-9]+)?)(?![0-9])/i',
+                    $reason,
+                    $matches
+                )) {
+                    $matchedHours = true;
+                } else {
+                    $assignedName = trim((string) ($assignedUsers->get($userId)?->name ?? ''));
+                    $firstName = explode(' ', $assignedName, 2)[0] ?? '';
+                    $aliases = array_filter(array_unique([$assignedName, $firstName]));
+                    $sameFirstNameCount = $firstName === '' ? 0 : $assignedUsers
+                        ->only($service->working_resource_ids)
+                        ->filter(fn ($candidate) => strcasecmp(explode(' ', trim((string) $candidate->name), 2)[0] ?? '', $firstName) === 0)
+                        ->count();
+                    if ($sameFirstNameCount > 1) {
+                        $aliases = array_filter([$assignedName]);
+                    }
+
+                    foreach ($aliases as $alias) {
+                        if (preg_match(
+                            '/(?<![A-Za-z0-9])' . preg_quote($alias, '/') . '\\s*(?:\\(\\s*|\\s*-\\s*)([0-9]+(?:\\.[0-9]+)?)(?:\\s*\\))?/i',
+                            $reason,
+                            $matches
+                        )) {
+                            $matchedHours = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!$matchedHours) {
+                    continue;
+                }
+
+                $hoursByUser[$userId] = ($hoursByUser[$userId] ?? 0) + (float) $matches[1];
+            }
+
+        }
+
+        return view('users.index', compact('data', 'group', 'teamCount', 'outsourceCount', 'resignedCount', 'hoursByUser'))
             ->with('i', ($request->input('page', 1) - 1) * 50);
     }
 
@@ -92,22 +274,71 @@ class UserController extends Controller
         $workTypeUserIds = [];
         $hoursByUser = [];
         if (!empty($workType)) {
-            $now = Carbon::now();
-            $masterHours = Hour::where('year', $now->year)
+            $selectedYear = $request->input('year', session('selected_year', Carbon::now()->year));
+            $selectedMonth = $request->input('month', session('selected_month', Carbon::now()->month));
+            try {
+                $now = Carbon::createFromDate((int) $selectedYear, (int) $selectedMonth, 1);
+            } catch (\Throwable $e) {
+                $now = Carbon::now();
+            }
+            $masterHours = (float) (Hour::where('year', $now->year)
                 ->where('month', $now->format('F'))
-                ->value('hours');
+                ->value('hours') ?? 0);
 
-            if ($masterHours) {
+            if ($masterHours > 0) {
                 $halfHours = $masterHours / 2;
-                $internalUsers = User::where('user_type', 'Internal')->get(['id']);
+                $internalUsers = User::where('user_type', 'Internal')
+                    ->whereDoesntHave('role', function ($q) {
+                        $q->where('name', \App\Support\Roles::ADMIN);
+                    })->get(['id']);
                 $services = Service::where('year', $now->year)
-                    ->where('month', $now->month)
+                    ->where(function ($q) use ($now) {
+                        $q->where('month', $now->month)
+                            ->orWhere('month', (string) $now->month)
+                            ->orWhere('month', $now->format('m'));
+                    })
                     ->where('service_type', '!=', 'external')
-                    ->get(['id', 'hours', 'working_resource']);
+                    ->get(['id', 'service_type', 'hours', 'front_resource', 'working_resource', 'cancel_reason']);
+
+                $allUsersById = User::withTrashed()->get(['id', 'employee_id'])->keyBy('id');
 
                 foreach ($services as $service) {
-                    foreach ($service->working_resource_ids as $userId) {
-                        $hoursByUser[$userId] = ($hoursByUser[$userId] ?? 0) + (float) $service->hours;
+                    $workingIds = $service->working_resource_ids;
+                    if (empty($workingIds)) {
+                        continue;
+                    }
+
+                    if ($service->service_type === 'direct') {
+                        foreach ($workingIds as $assignedUserId) {
+                            $hoursByUser[$assignedUserId] = ($hoursByUser[$assignedUserId] ?? 0) + (float) $service->hours;
+                        }
+                    } elseif ($service->service_type === 'proxy') {
+                        foreach ($workingIds as $assignedUserId) {
+                            $u = $allUsersById->get($assignedUserId);
+                            $empId = $u ? trim((string) $u->employee_id) : '';
+                            $uIdStr = (string) $assignedUserId;
+                            $parsedHours = null;
+
+                            if (!empty($service->cancel_reason)) {
+                                if ($empId !== '' && preg_match('/(?:^|[,\s])' . preg_quote($empId, '/') . '\s*-\s*([0-9]+(?:\.[0-9]+)?)/i', $service->cancel_reason, $m)) {
+                                    $parsedHours = (float) $m[1];
+                                } elseif (preg_match('/(?:^|[,\s])' . preg_quote($uIdStr, '/') . '\s*-\s*([0-9]+(?:\.[0-9]+)?)/i', $service->cancel_reason, $m)) {
+                                    $parsedHours = (float) $m[1];
+                                }
+                            }
+
+                            if ($parsedHours === null) {
+                                $count = count($workingIds);
+                                $parsedHours = $count > 0 ? ((float) $service->hours / $count) : (float) $service->hours;
+                            }
+
+                            $hoursByUser[$assignedUserId] = ($hoursByUser[$assignedUserId] ?? 0) + $parsedHours;
+                        }
+                    } else {
+                        $count = count($workingIds);
+                        foreach ($workingIds as $assignedUserId) {
+                            $hoursByUser[$assignedUserId] = ($hoursByUser[$assignedUserId] ?? 0) + ($count > 0 ? ((float) $service->hours / $count) : (float) $service->hours);
+                        }
                     }
                 }
 

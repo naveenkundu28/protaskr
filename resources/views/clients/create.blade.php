@@ -40,10 +40,8 @@
                                 Type <span class="text-danger">*</span>
                             </label>
                             <select name="type" id="type" class="form-select" required>
-                                <option value="internal_team">Internal Team</option>
-                                <option value="external_team">External Team</option>
-                                <option value="client" selected>Client</option>
-                                <option value="project">Project</option>
+                                <option value="client" @selected(old('type', 'client') === 'client')>Client</option>
+                                <option value="outsourced" @selected(old('type') === 'outsourced')>Outsourced</option>
                             </select>
 
                             @error('type')

@@ -26,9 +26,31 @@ class HomeController extends Controller
 
     public function index(Request $request)
     {
-        
         $user = Auth::user();
+
         $now = Carbon::now();
+        if ($request->filled('month') && $request->filled('year')) {
+            try {
+                $now = Carbon::createFromDate((int) $request->year, (int) $request->month, 1);
+                session(['selected_month' => (int) $request->month, 'selected_year' => (int) $request->year]);
+            } catch (\Throwable $e) {
+                $now = Carbon::now();
+            }
+        } elseif ($request->filled('month') && str_contains((string) $request->month, '-')) {
+            try {
+                [$y, $m] = explode('-', (string) $request->month);
+                $now = Carbon::createFromDate((int) $y, (int) $m, 1);
+                session(['selected_month' => (int) $m, 'selected_year' => (int) $y]);
+            } catch (\Throwable $e) {
+                $now = Carbon::now();
+            }
+        } elseif (session()->has('selected_month') && session()->has('selected_year')) {
+            try {
+                $now = Carbon::createFromDate((int) session('selected_year'), (int) session('selected_month'), 1);
+            } catch (\Throwable $e) {
+                $now = Carbon::now();
+            }
+        }
 
         if ($user->hasRole(\App\Support\Roles::RESOURCE)) {
             return view('dashboard.resources', $this->resourceDashboard($user, $now, $request));
@@ -37,7 +59,7 @@ class HomeController extends Controller
         $tasksCount = $user->tasks()->where('status', '!=', 'completed')->count();
         $filesCount = $user->files()->count();
         $recentTasks = $user->tasks()->latest()->take(5)->get();
-        
+
         $tagSummary = Tag::withCount([
                 'users' => function ($query) {
                     $query->where('user_type', 'Internal')
@@ -62,13 +84,24 @@ class HomeController extends Controller
             ->where('status', '!=', 'completed')
             ->where('type', 'client')
             ->count();
-        
-        $masterHours = Hour::where('year', $now->year)
+
+        $masterHours = (float) (Hour::where('year', $now->year)
             ->where('month', $now->format('F'))
-            ->value('hours');
-        
-        $totalHours = $masterHours * $totalResources;
-                
+            ->value('hours') ?? 0);
+
+        // Total hours: master working hours for the month * total active internal resources
+        $totalHours = round($masterHours * $totalResources, 2);
+
+        // Assigned hours: total of all services hours for the selected month/year
+        $assignedHours = (float) Service::where('year', $now->year)
+            ->where(function ($q) use ($now) {
+                $q->where('month', $now->month)
+                    ->orWhere('month', (string) $now->month)
+                    ->orWhere('month', $now->format('m'));
+            })
+            ->sum('hours');
+        $assignedHours = round($assignedHours, 2);
+
         $skillSetSummary = Skill::with(['primaryUsers' => function ($query) {
             $query->orderBy('name');
         }])
@@ -105,45 +138,83 @@ class HomeController extends Controller
             'internal_users_count' => 0,
         ];
 
-        $halfHours = $masterHours / 2;
+        $halfHours = $masterHours > 0 ? ($masterHours / 2) : 0;
         $employees = User::ofRole(\App\Support\Roles::RESOURCE)->get(['id']);
         $internalUsers = User::where('user_type', 'Internal')
             ->whereDoesntHave('role', function ($q) {
                 $q->where('name', \App\Support\Roles::ADMIN);
             })->get(['id']);
         $services = Service::where('year', $now->year)
-            ->where('month', $now->month)
-            ->where('service_type', '!=' ,'external')
-            ->get(['id', 'hours', 'front_resource', 'working_resource']);
+            ->where(function ($q) use ($now) {
+                $q->where('month', $now->month)
+                    ->orWhere('month', (string) $now->month)
+                    ->orWhere('month', $now->format('m'));
+            })
+            ->where('service_type', '!=', 'external')
+            ->get(['id', 'service_type', 'hours', 'front_resource', 'working_resource', 'cancel_reason']);
 
+        $allUsersById = User::withTrashed()->get(['id', 'employee_id'])->keyBy('id');
         $hoursByUser = [];
 
         foreach ($services as $service) {
-            $assignedUsers = collect($service->working_resource_ids)
-                ->filter()
-                ->unique();
+            $workingIds = $service->working_resource_ids;
+            if (empty($workingIds)) {
+                continue;
+            }
 
-            foreach ($assignedUsers as $assignedUserId) {
-                $hoursByUser[$assignedUserId] = ($hoursByUser[$assignedUserId] ?? 0) + (float) $service->hours;
+            if ($service->service_type === 'direct') {
+                foreach ($workingIds as $assignedUserId) {
+                    $hoursByUser[$assignedUserId] = ($hoursByUser[$assignedUserId] ?? 0) + (float) $service->hours;
+                }
+            } elseif ($service->service_type === 'proxy') {
+                foreach ($workingIds as $assignedUserId) {
+                    $u = $allUsersById->get($assignedUserId);
+                    $empId = $u ? trim((string) $u->employee_id) : '';
+                    $uIdStr = (string) $assignedUserId;
+                    $parsedHours = null;
+
+                    if (!empty($service->cancel_reason)) {
+                        if ($empId !== '' && preg_match('/(?:^|[,\s])' . preg_quote($empId, '/') . '\s*-\s*([0-9]+(?:\.[0-9]+)?)/i', $service->cancel_reason, $m)) {
+                            $parsedHours = (float) $m[1];
+                        } elseif (preg_match('/(?:^|[,\s])' . preg_quote($uIdStr, '/') . '\s*-\s*([0-9]+(?:\.[0-9]+)?)/i', $service->cancel_reason, $m)) {
+                            $parsedHours = (float) $m[1];
+                        }
+                    }
+
+                    if ($parsedHours === null) {
+                        $count = count($workingIds);
+                        $parsedHours = $count > 0 ? ((float) $service->hours / $count) : (float) $service->hours;
+                    }
+
+                    $hoursByUser[$assignedUserId] = ($hoursByUser[$assignedUserId] ?? 0) + $parsedHours;
+                }
+            } else {
+                $count = count($workingIds);
+                foreach ($workingIds as $assignedUserId) {
+                    $hoursByUser[$assignedUserId] = ($hoursByUser[$assignedUserId] ?? 0) + ($count > 0 ? ((float) $service->hours / $count) : (float) $service->hours);
+                }
             }
         }
-        
-        foreach ($internalUsers as $employee) {
-            $assignedHours = $hoursByUser[$employee->id] ?? 0;
-            $freeHours = max($masterHours - $assignedHours, 0);
 
-            if ($assignedHours <= 0) {
+        foreach ($internalUsers as $employee) {
+            $empAssignedHours = (float) ($hoursByUser[$employee->id] ?? 0);
+
+            if ($empAssignedHours <= 0) {
                 $workingHoursSummary['Bench']++;
-            } elseif ($assignedHours > $masterHours) {
-                $workingHoursSummary['FULL +']++;
-            } elseif ($assignedHours == $masterHours) {
-                $workingHoursSummary['FULL']++;
-            } elseif ($assignedHours == $halfHours) {
-                $workingHoursSummary['HALF']++;
-            } elseif ($assignedHours > $halfHours && $assignedHours < $masterHours) {
-                $workingHoursSummary['HALF +']++;
+            } elseif ($masterHours > 0) {
+                if ($empAssignedHours > $masterHours) {
+                    $workingHoursSummary['FULL +']++;
+                } elseif ($empAssignedHours == $masterHours) {
+                    $workingHoursSummary['FULL']++;
+                } elseif ($empAssignedHours == $halfHours) {
+                    $workingHoursSummary['HALF']++;
+                } elseif ($empAssignedHours > $halfHours && $empAssignedHours < $masterHours) {
+                    $workingHoursSummary['HALF +']++;
+                } else {
+                    $workingHoursSummary['ADHOC']++;
+                }
             } else {
-                $workingHoursSummary['ADHOC']++;
+                $workingHoursSummary['FULL +']++;
             }
         }
 
@@ -193,11 +264,12 @@ class HomeController extends Controller
         $assignedInternalHours = collect($hoursByUser)
             ->only($internalUserIds)
             ->sum();
-        $totalAvailableHours = $masterHours * $internalUsers->count();        
+        $totalAvailableHours = $totalHours;
         $lossHours = max($totalAvailableHours - $assignedInternalHours, 0);
         $profitHours = max($assignedInternalHours - $totalAvailableHours, 0);
 
-        $totalFreeHours = max($totalHours - $assignedInternalHours, 0);
+        // Free hours: Total capacity hours minus assigned services hours
+        $totalFreeHours = round(max($totalHours - $assignedHours, 0), 2);
 
         $profitLossSummary = [
             'total_hours' => $totalAvailableHours,
@@ -208,29 +280,35 @@ class HomeController extends Controller
             'profit_percentage' => $totalAvailableHours > 0 ? round(($profitHours / $totalAvailableHours) * 100, 2) : 0,
             'internal_users_count' => $internalUsers->count(),
         ];
-        
+
+        $recentActivity = collect()
+            ->concat(Client::query()
+                ->latest('created_at')
+                ->take(1)
+                ->get(['id', 'name', 'created_at'])
+                ->map(fn (Client $client) => [
+                    'type' => 'client',
+                    'title' => 'New client added',
+                    'name' => $client->name,
+                    'created_at' => $client->created_at,
+                ]))
+            ->concat(Service::query()
+                ->with('client:id,name')
+                ->latest('created_at')
+                ->take(1)
+                ->get(['id', 'client_id', 'service_id', 'created_at'])
+                ->map(fn (Service $service) => [
+                    'type' => 'service',
+                    'title' => 'New service added',
+                    'name' => $service->service_id,
+                    'client' => $service->client?->name,
+                    'created_at' => $service->created_at,
+                ]))
+            ->sortByDesc('created_at')
+            ->first();
+
         if ($user->hasRole(\App\Support\Roles::CLIENT)) {
             return view('dashboard.clients', $this->clientDashboard($user));
-        }
-
-        if (!$masterHours) {
-            $masterHours = null;
-            return view('dashboard.admin', compact(
-                'tasksCount',
-                'filesCount',
-                'recentTasks',
-                'tagSummary',
-                'masterHours',
-                'skillSetSummary',
-                'benchUsersSummary',
-                'workingHoursSummary',
-                'profitLossSummary',
-                'now',
-                'totalResources',
-                'currentClients',
-                'totalHours',
-                'totalFreeHours'
-            ));
         }
 
         return view('dashboard.admin', compact(
@@ -243,10 +321,12 @@ class HomeController extends Controller
             'benchUsersSummary',
             'workingHoursSummary',
             'profitLossSummary',
-            'now',                
+            'recentActivity',
+            'now',
             'totalResources',
             'currentClients',
             'totalHours',
+            'assignedHours',
             'totalFreeHours'
         ));
     }

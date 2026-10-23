@@ -7,6 +7,7 @@ use App\Models\Chat;
 use App\Models\File;
 use App\Models\Story;
 use App\Models\Task;
+use App\Models\TaskMentionNotification;
 use App\Models\User;
 use App\Models\Project;
 use Carbon\CarbonInterval;
@@ -29,7 +30,7 @@ class TaskController extends Controller
         $user = Auth::user();
 
         $tabStatuses = [
-            'active' => ['to_do', 'in_progress'],
+            'all' => null,
             'to_do' => ['to_do'],
             'in_progress' => ['in_progress'],
             'in_review' => ['in_review'],
@@ -37,7 +38,7 @@ class TaskController extends Controller
             'completed' => ['completed'],
         ];
 
-        $tab = $request->get('status') ?: $request->get('tab', 'active');
+        $tab = $request->get('status') ?: $request->get('tab', 'all');
 
         $baseQuery = Task::query()
             ->where(function ($query) {
@@ -68,9 +69,10 @@ class TaskController extends Controller
             });
 
         $tabCounts = [
-            'active' => (clone $baseQuery)->whereIn('status', $tabStatuses['active'])->count(),
+            'all' => (clone $baseQuery)->whereIn('status', ['to_do', 'in_progress', 'in_review', 'on_hold'])->count(),
             'to_do' => (clone $baseQuery)->where('status', 'to_do')->count(),
             'in_progress' => (clone $baseQuery)->where('status', 'in_progress')->count(),
+            'overdue' => (clone $baseQuery)->whereIn('status', ['to_do', 'in_progress', 'in_review'])->whereDate('due_date', '<', today())->count(),
             'in_review' => (clone $baseQuery)->where('status', 'in_review')->count(),
             'on_hold' => (clone $baseQuery)->where('status', 'on_hold')->count(),
             'completed' => (clone $baseQuery)->where('status', 'completed')->count(),
@@ -88,10 +90,10 @@ class TaskController extends Controller
             ->when($request->get('status') != '', function ($query) {
                 $query->where('status', request('status'));
             })
-            ->when(!$request->get('status'), function ($query) use ($tabStatuses, $tab) {
-                $statuses = $tabStatuses[$tab] ?? $tabStatuses['active'];
-                $query->whereIn('status', $statuses);
+            ->when(!$request->get('status') && isset($tabStatuses[$tab]) && is_array($tabStatuses[$tab]), function ($query) use ($tabStatuses, $tab) {
+                $query->whereIn('status', $tabStatuses[$tab]);
             })
+            ->when(!$request->get('status') && $tab === 'overdue', fn ($query) => $query->whereIn('status', ['to_do', 'in_progress', 'in_review'])->whereDate('due_date', '<', today()))
             ->latest()
             ->paginate(50)
             ->withQueryString();
@@ -162,6 +164,10 @@ class TaskController extends Controller
         $this->authorize('tasks-show', $task);
 
         $task->load('deliveryProject.members', 'story', 'dueDateHistories');
+        $mentionUsers = $task->deliveryProject?->members ?? collect();
+        $mentionUsers = $mentionUsers->merge(User::where(function ($query) {
+            $query->where('name', 'like', '%Naveen Kundu%')->orWhere('name', 'like', '%Anshul%');
+        })->get())->unique('id')->reject(fn ($member) => (int) $member->id === (int) Auth::id())->values();
 
         $user_id = $task->user_id;
         $files = File::where('task_id', $task->id)->latest()->get();
@@ -180,7 +186,7 @@ class TaskController extends Controller
             ? max(0, (int) Carbon::parse($runningHistory->start_time)->diffInSeconds(Carbon::now()))
             : null;
 
-        return view('tasks.show', compact('task', 'chats', 'files', 'totalTime', 'taskHistories', 'runningSeconds', 'hasTrackedTime'));
+        return view('tasks.show', compact('task', 'chats', 'files', 'totalTime', 'taskHistories', 'runningSeconds', 'hasTrackedTime', 'mentionUsers'));
     }
 
     public function update(Request $request, Task $task)
@@ -376,13 +382,35 @@ class TaskController extends Controller
                 ->withErrors(['message' => 'Message is required'])
                 ->withInput();
         }
+        $mentionedIds = array_values(array_unique(array_map('intval', (array) $request->input('mentioned_user_ids', []))));
+        $allowedIds = $task->deliveryProject?->members()->pluck('users.id')->all() ?? [];
+        $alwaysMentionIds = User::where(function ($query) { $query->where('name', 'like', '%Naveen Kundu%')->orWhere('name', 'like', '%Anshul%'); })->where('id', '!=', Auth::id())->pluck('id')->all();
+        $allowedIds = array_unique(array_merge($allowedIds, $alwaysMentionIds));
         $savechat = new Chat();
         $savechat->user_id = $userId;
         $savechat->task_id = $taskid;
         // stored as safe HTML: the text is escaped, then the light formatting is applied
-        $savechat->message = \App\Support\ChatMarkdown::toHtml($content);
+        $safeMessage = \App\Support\ChatMarkdown::toHtml($content);
+        foreach (array_intersect($mentionedIds, $allowedIds) as $mentionedId) {
+            $mentionedUser = User::find($mentionedId);
+            if ($mentionedUser) {
+                $safeMessage = preg_replace('/' . preg_quote(e('@' . $mentionedUser->name), '/') . '/u', '<span class="chat-mention">@' . e($mentionedUser->name) . '</span>', $safeMessage);
+            }
+        }
+        $savechat->message = $safeMessage;
 
         $savechat->save();
+
+        foreach (array_intersect($mentionedIds, $allowedIds) as $mentionedId) {
+            if ((int) $mentionedId === (int) $userId) continue;
+            TaskMentionNotification::create([
+                'user_id' => $mentionedId,
+                'task_id' => $task->id,
+                'chat_id' => $savechat->id,
+                'mentioned_by' => $userId,
+                'message_excerpt' => mb_substr(strip_tags($content), 0, 240),
+            ]);
+        }
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -393,6 +421,73 @@ class TaskController extends Controller
 
         return redirect()->to(route('tasks.show', $taskid) . '#tab-chat')->with('success', 'Message Sent');
     }
+
+    public function openMentionNotification(TaskMentionNotification $notification)
+    {
+        abort_unless((int) $notification->user_id === (int) Auth::id(), 403);
+        $notification->update(['read_at' => now()]);
+        return redirect()->to(route('tasks.show', $notification->task_id) . '#tab-chat');
+    }
+
+    public function mentionNotifications(Request $request)
+    {
+        $search = trim((string) $request->query('search', ''));
+        $dateRange = $request->query('date_range', 'all');
+        $query = TaskMentionNotification::with(['task.deliveryProject', 'sender'])
+            ->where('user_id', Auth::id());
+
+        if ($search !== '') {
+            $like = '%' . addcslashes($search, '%_\\\\') . '%';
+            $query->where(function ($notifications) use ($like) {
+                $notifications->where('message_excerpt', 'like', $like)
+                    ->orWhereHas('sender', fn ($sender) => $sender->where('name', 'like', $like))
+                    ->orWhereHas('task', function ($task) use ($like) {
+                        $task->where('title', 'like', $like)
+                            ->orWhereHas('deliveryProject', fn ($project) => $project->where('name', 'like', $like));
+                    });
+            });
+        }
+
+        $since = match ($dateRange) {
+            'today' => now()->startOfDay(),
+            'last_week' => now()->subWeek(),
+            'last_month' => now()->subMonth(),
+            default => null,
+        };
+        if ($since) $query->where('created_at', '>=', $since);
+
+        $notifications = $query->latest()->paginate(10)->withQueryString();
+        if ($request->expectsJson()) {
+            return response()->json([
+                'html' => view('notifications._results', compact('notifications'))->render(),
+                'from' => $notifications->firstItem(),
+                'to' => $notifications->lastItem(),
+                'total' => $notifications->total(),
+                'current_page' => $notifications->currentPage(),
+                'last_page' => $notifications->lastPage(),
+            ]);
+        }
+        return view('notifications.index', compact('notifications'));
+    }
+
+    public function unreadMentionCount()
+    {
+        return response()->json(['count' => TaskMentionNotification::where('user_id', Auth::id())->whereNull('read_at')->count()]);
+    }
+
+    public function markAllMentionsRead(Request $request)
+    {
+        $updated = TaskMentionNotification::where('user_id', Auth::id())
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        if ($request->expectsJson()) {
+            return response()->json(['ok' => true, 'updated' => $updated, 'count' => 0]);
+        }
+
+        return back()->with('success', 'All notifications marked as read.');
+    }
+
     public function startTimer($taskid)
     {
         $task = Task::findOrFail($taskid);
